@@ -29,6 +29,7 @@
 #include "sound_beeper.h"
 #include "nvic.h"
 
+#include "config/config.h"
 #include "system.h"
 
 #ifndef EXTI_CALLBACK_HANDLER_COUNT
@@ -115,6 +116,9 @@ static void cycleCounterInit(void)
 void SysTick_Handler(void)
 {
     sysTickUptime++;
+
+    pif_sigTimer1ms();
+	pifTimerManager_sigTick(&g_timer_1ms);
 }
 
 // Return system uptime in microseconds (rollover in 70minutes)

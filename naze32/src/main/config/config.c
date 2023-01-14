@@ -133,6 +133,8 @@ void useRcControlsConfig(modeActivationCondition_t *modeActivationConditions, es
 // use the last flash pages for storage
 #define CONFIG_START_FLASH_ADDRESS (0x08000000 + (uint32_t)((FLASH_PAGE_SIZE * FLASH_PAGE_COUNT) - FLASH_TO_RESERVE_FOR_CONFIG))
 
+PifTimerManager g_timer_1ms;
+
 master_t masterConfig;                 // master config struct with data independent from profiles
 profile_t *currentProfile;
 static uint32_t activeFeaturesLatch = 0;

@@ -140,10 +140,9 @@ void useRxConfig(rxConfig_t *rxConfigToUse);
 
 typedef uint16_t (*rcReadRawDataPtr)(rxRuntimeConfig_t *rxRuntimeConfig, uint8_t chan);        // used by receiver driver to return channel data
 
-void updateRx(uint32_t currentTime);
+uint16_t updateRx();
 bool rxIsReceivingSignal(void);
 bool rxAreFlightChannelsValid(void);
-bool shouldProcessRx(uint32_t currentTime);
 void calculateRxChannelsAndUpdateFailsafe(uint32_t currentTime);
 
 void parseRcChannels(const char *input, rxConfig_t *rxConfig);

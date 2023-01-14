@@ -22,6 +22,7 @@
 
 #include <platform.h>
 #include "build_config.h"
+#include "scheduler.h"
 #include "debug.h"
 
 #include "common/utils.h"
@@ -266,6 +267,7 @@ static void ppmEdgeCallback(timerCCHandlerRec_t* cbRec, captureCompare_t capture
                 captures[i] = PPM_RCVR_TIMEOUT;
             }
             ppmFrameCount++;
+            if (!cfTasks[TASK_RX].p_task->_running) cfTasks[TASK_RX].p_task->immediate = TRUE;
         }
 
         ppmDev.tracking   = true;

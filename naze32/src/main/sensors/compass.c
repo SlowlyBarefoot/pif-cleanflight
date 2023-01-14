@@ -41,8 +41,6 @@
 
 mag_t mag;                   // mag access functions
 
-extern uint32_t currentTime; // FIXME dependency on global variable, pass it in instead.
-
 int16_t magADCRaw[XYZ_AXIS_COUNT];
 int32_t magADC[XYZ_AXIS_COUNT];
 sensor_align_e magAlign = 0;
@@ -70,7 +68,7 @@ void updateCompass(flightDynamicsTrims_t *magZero)
     alignSensors(magADC, magADC, magAlign);
 
     if (STATE(CALIBRATE_MAG)) {
-        tCal = currentTime;
+        tCal = pif_timer1us;
         for (axis = 0; axis < 3; axis++) {
             magZero->raw[axis] = 0;
             magZeroTempMin.raw[axis] = magADC[axis];
@@ -86,7 +84,7 @@ void updateCompass(flightDynamicsTrims_t *magZero)
     }
 
     if (tCal != 0) {
-        if ((currentTime - tCal) < 30000000) {    // 30s: you have 30s to turn the multi in all directions
+        if ((pif_timer1us - tCal) < 30000000) {    // 30s: you have 30s to turn the multi in all directions
             LED0_TOGGLE;
             for (axis = 0; axis < 3; axis++) {
                 if (magADC[axis] < magZeroTempMin.raw[axis])

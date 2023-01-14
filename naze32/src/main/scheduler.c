@@ -23,6 +23,7 @@
 
 #include <platform.h>
 
+#include "build_config.h"
 #include "scheduler.h"
 #include "debug.h"
 
@@ -31,200 +32,55 @@
 #include "drivers/system.h"
 #include "config/config_unittest.h"
 
-cfTaskId_e currentTaskId = TASK_NONE;
-
 #define REALTIME_GUARD_INTERVAL_MIN     10
 #define REALTIME_GUARD_INTERVAL_MAX     300
 #define REALTIME_GUARD_INTERVAL_MARGIN  25
 
-static uint32_t totalWaitingTasks;
-static uint32_t totalWaitingTasksSamples;
 static uint32_t realtimeGuardInterval = REALTIME_GUARD_INTERVAL_MAX;
 
-uint32_t currentTime = 0;
-uint16_t averageSystemLoadPercent = 0;
 
-
-void taskSystem(void)
+uint16_t taskSystem(PifTask *p_task)
 {
     uint8_t taskId;
 
-    /* Calculate system load */
-    if (totalWaitingTasksSamples > 0) {
-        averageSystemLoadPercent = 100 * totalWaitingTasks / totalWaitingTasksSamples;
-        totalWaitingTasksSamples = 0;
-        totalWaitingTasks = 0;
-    }
+    UNUSED(p_task);
 
     /* Calculate guard interval */
     uint32_t maxNonRealtimeTaskTime = 0;
     for (taskId = 0; taskId < TASK_COUNT; taskId++) {
-        if (cfTasks[taskId].staticPriority != TASK_PRIORITY_REALTIME) {
-            maxNonRealtimeTaskTime = MAX(maxNonRealtimeTaskTime, cfTasks[taskId].averageExecutionTime);
-        }
+        maxNonRealtimeTaskTime = MAX(maxNonRealtimeTaskTime, cfTasks[taskId].p_task->_total_execution_time / cfTasks[taskId].p_task->_execution_count);
     }
 
     realtimeGuardInterval = constrain(maxNonRealtimeTaskTime, REALTIME_GUARD_INTERVAL_MIN, REALTIME_GUARD_INTERVAL_MAX) + REALTIME_GUARD_INTERVAL_MARGIN;
 #if defined SCHEDULER_DEBUG
     debug[2] = realtimeGuardInterval;
 #endif
+    return 0;
 }
 
 #ifndef SKIP_TASK_STATISTICS
 void getTaskInfo(cfTaskId_e taskId, cfTaskInfo_t * taskInfo)
 {
     taskInfo->taskName = cfTasks[taskId].taskName;
-    taskInfo->isEnabled= cfTasks[taskId].isEnabled;
-    taskInfo->desiredPeriod = cfTasks[taskId].desiredPeriod;
-    taskInfo->staticPriority = cfTasks[taskId].staticPriority;
-    taskInfo->maxExecutionTime = cfTasks[taskId].maxExecutionTime;
-    taskInfo->totalExecutionTime = cfTasks[taskId].totalExecutionTime;
-    taskInfo->averageExecutionTime = cfTasks[taskId].averageExecutionTime;
+    taskInfo->isEnabled= !cfTasks[taskId].p_task->pause;
+    taskInfo->maxExecutionTime = cfTasks[taskId].p_task->_max_execution_time;
+    taskInfo->totalExecutionTime = cfTasks[taskId].p_task->_total_execution_time;
+    taskInfo->averageExecutionTime = cfTasks[taskId].p_task->_total_execution_time / cfTasks[taskId].p_task->_execution_count;
 }
 #endif
 
-void rescheduleTask(cfTaskId_e taskId, uint32_t newPeriodMicros)
+void rescheduleTask(cfTaskId_e taskId, uint16_t newPeriod)
 {
-    if (taskId == TASK_SELF)
-        taskId = currentTaskId;
-
     if (taskId < TASK_COUNT) {
-        cfTasks[taskId].desiredPeriod = MAX(100, newPeriodMicros);  // Limit delay to 100us (10 kHz) to prevent scheduler clogging
+        cfTasks[taskId].desiredPeriod = newPeriod;
     }
 }
 
-void setTaskEnabled(cfTaskId_e taskId, bool newEnabledState)
+BOOL createTask(cfTaskId_e taskId, BOOL newEnabledState)
 {
-    if (taskId == TASK_SELF)
-        taskId = currentTaskId;
-
     if (taskId < TASK_COUNT) {
-        cfTasks[taskId].isEnabled = newEnabledState;
-    }
-}
-
-uint32_t getTaskDeltaTime(cfTaskId_e taskId)
-{
-    if (taskId == TASK_SELF)
-        taskId = currentTaskId;
-
-    if (taskId < TASK_COUNT) {
-        return cfTasks[taskId].taskLatestDeltaTime;
-    }
-    else {
-        return 0;
-    }
-}
-
-void scheduler(void)
-{
-    uint8_t taskId;
-    /* The task to be invoked */
-    uint8_t selectedTaskId = TASK_NONE;
-    uint8_t selectedTaskDynPrio = 0;
-    uint16_t waitingTasks = 0;
-    uint32_t timeToNextRealtimeTask = UINT32_MAX;
-
-    SET_SCHEDULER_LOCALS();
-    /* Cache currentTime */
-    currentTime = micros();
-
-    /* Check for realtime tasks */
-    for (taskId = 0; taskId < TASK_COUNT; taskId++) {
-        if (cfTasks[taskId].staticPriority == TASK_PRIORITY_REALTIME) {
-            uint32_t nextExecuteAt = cfTasks[taskId].lastExecutedAt + cfTasks[taskId].desiredPeriod;
-            if ((int32_t)(currentTime - nextExecuteAt) >= 0) {
-                timeToNextRealtimeTask = 0;
-            }
-            else {
-                uint32_t newTimeInterval = nextExecuteAt - currentTime;
-                timeToNextRealtimeTask = MIN(timeToNextRealtimeTask, newTimeInterval);
-            }
-        }
-    }
-
-    bool outsideRealtimeGuardInterval = (timeToNextRealtimeTask > realtimeGuardInterval);
-
-    /* Update task dynamic priorities */
-    for (taskId = 0; taskId < TASK_COUNT; taskId++) {
-        if (cfTasks[taskId].isEnabled) {
-            /* Task has checkFunc - event driven */
-            if (cfTasks[taskId].checkFunc != NULL) {
-                /* Increase priority for event driven tasks */
-                if (cfTasks[taskId].dynamicPriority > 0) {
-                    cfTasks[taskId].taskAgeCycles = 1 + ((currentTime - cfTasks[taskId].lastSignaledAt) / cfTasks[taskId].desiredPeriod);
-                    cfTasks[taskId].dynamicPriority = 1 + cfTasks[taskId].staticPriority * cfTasks[taskId].taskAgeCycles;
-                    waitingTasks++;
-                }
-                else if (cfTasks[taskId].checkFunc(currentTime - cfTasks[taskId].lastExecutedAt)) {
-                    cfTasks[taskId].lastSignaledAt = currentTime;
-                    cfTasks[taskId].taskAgeCycles = 1;
-                    cfTasks[taskId].dynamicPriority = 1 + cfTasks[taskId].staticPriority;
-                    waitingTasks++;
-                }
-                else {
-                    cfTasks[taskId].taskAgeCycles = 0;
-                }
-            }
-            /* Task is time-driven, dynamicPriority is last execution age measured in desiredPeriods) */
-            else {
-                // Task age is calculated from last execution
-                cfTasks[taskId].taskAgeCycles = ((currentTime - cfTasks[taskId].lastExecutedAt) / cfTasks[taskId].desiredPeriod);
-                if (cfTasks[taskId].taskAgeCycles > 0) {
-                    cfTasks[taskId].dynamicPriority = 1 + cfTasks[taskId].staticPriority * cfTasks[taskId].taskAgeCycles;
-                    waitingTasks++;
-                }
-            }
-
-            /* limit new priority to avoid overflow of uint8_t */
-            cfTasks[taskId].dynamicPriority = MIN(cfTasks[taskId].dynamicPriority, TASK_PRIORITY_MAX);;
-
-            bool taskCanBeChosenForScheduling =
-                (outsideRealtimeGuardInterval) ||
-                (cfTasks[taskId].taskAgeCycles > 1) ||
-                (cfTasks[taskId].staticPriority == TASK_PRIORITY_REALTIME);
-
-            if (taskCanBeChosenForScheduling && (cfTasks[taskId].dynamicPriority > selectedTaskDynPrio)) {
-                selectedTaskDynPrio = cfTasks[taskId].dynamicPriority;
-                selectedTaskId = taskId;
-            }
-        }
-    }
-
-    totalWaitingTasksSamples += 1;
-    totalWaitingTasks += waitingTasks;
-
-    /* Found a task that should be run */
-    if (selectedTaskId != TASK_NONE) {
-        cfTasks[selectedTaskId].taskLatestDeltaTime = currentTime - cfTasks[selectedTaskId].lastExecutedAt;
-        cfTasks[selectedTaskId].lastExecutedAt = currentTime;
-        cfTasks[selectedTaskId].dynamicPriority = 0;
-
-        currentTaskId = selectedTaskId;
-
-        uint32_t currentTimeBeforeTaskCall = micros();
-
-        /* Execute task */
-        if (cfTasks[selectedTaskId].taskFunc != NULL) {
-            cfTasks[selectedTaskId].taskFunc();
-        }
-
-        uint32_t taskExecutionTime = micros() - currentTimeBeforeTaskCall;
-
-        cfTasks[selectedTaskId].averageExecutionTime = ((uint32_t)cfTasks[selectedTaskId].averageExecutionTime * 31 + taskExecutionTime) / 32;
-#ifndef SKIP_TASK_STATISTICS
-        cfTasks[selectedTaskId].totalExecutionTime += taskExecutionTime;   // time consumed by scheduler + task
-        cfTasks[selectedTaskId].maxExecutionTime = MAX(cfTasks[selectedTaskId].maxExecutionTime, taskExecutionTime);
-#endif
-#if defined SCHEDULER_DEBUG
-        debug[3] = (micros() - currentTime) - taskExecutionTime;
-#endif
-    }
-    else {
-        currentTaskId = TASK_NONE;
-#if defined SCHEDULER_DEBUG
-        debug[3] = (micros() - currentTime);
-#endif
-    }
-    GET_SCHEDULER_LOCALS();
+		cfTasks[taskId].p_task = pifTaskManager_Add(cfTasks[taskId].taskMode, cfTasks[taskId].desiredPeriod, cfTasks[taskId].taskFunc, NULL, newEnabledState);
+	    return cfTasks[taskId].p_task != 0;
+	}
+	return FALSE;
 }

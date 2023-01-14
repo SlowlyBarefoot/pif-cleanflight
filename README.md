@@ -2,8 +2,8 @@
 
 이 프로젝트는 PIF(Platform-independent framework)을 실전에 적용하여 성능을 검증하기 위함이다.
 
-baseflight로 pif의 성능을 검증하였는데 baseflight-configurator가 더 이상 chrome-app에서 지원하지 않아 cleanflight V1.21.1로 옮기기로 결정하였다.
-cleanflight V1.21.1는 baseflight와 가장 유사하고 cleanflight-configurator의 최신 버전과 호환이 되어 결정하게 되었다.
+baseflight로 pif의 성능을 검증하였는데 baseflight-configurator가 더 이상 chrome-app에서 지원하지 않아 cleanflight V1.12.1로 옮기기로 결정하였다.
+cleanflight V1.12.1는 baseflight와 가장 유사하고 cleanflight-configurator의 최신 버전과 호환이 되어 결정하게 되었다.
 이를 기반으로 PIF를 적용하여 성능을 검증할 예정이다.
 
 PIF를 포함한 이 프로그램은 충분한 검증이 된 프로그램이 아니기에 실 생활에 적용하기 부적합하고 학습용이나 연구용으로 사용되기를 바랍니다.

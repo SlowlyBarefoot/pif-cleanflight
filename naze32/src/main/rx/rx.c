@@ -58,15 +58,12 @@ const char rcChannelLetters[] = "AERT12345678abcdefgh";
 
 uint16_t rssi = 0;                  // range: [0;1023]
 
-static bool rxDataReceived = false;
 static bool rxSignalReceived = false;
 static bool rxSignalReceivedNotDataDriven = false;
 static bool rxFlightChannelsValid = false;
 static bool rxIsInFailsafeMode = true;
 static bool rxIsInFailsafeModeNotDataDriven = true;
 
-static uint32_t rxUpdateAt = 0;
-static uint32_t needRxSignalBefore = 0;
 static uint32_t suspendRxSignalUntil = 0;
 static uint8_t  skipRxSamples = 0;
 
@@ -280,18 +277,6 @@ static bool isRxDataDriven(void) {
     return !(feature(FEATURE_RX_PARALLEL_PWM | FEATURE_RX_PPM));
 }
 
-static void resetRxSignalReceivedFlagIfNeeded(uint32_t currentTime)
-{
-    if (!rxSignalReceived) {
-        return;
-    }
-
-    if (((int32_t)(currentTime - needRxSignalBefore) >= 0)) {
-        rxSignalReceived = false;
-        rxSignalReceivedNotDataDriven = false;
-    }
-}
-
 void suspendRxSignal(void)
 {
     suspendRxSignalUntil = micros() + SKIP_RC_ON_SUSPEND_PERIOD;
@@ -306,35 +291,27 @@ void resumeRxSignal(void)
     failsafeOnRxResume();
 }
 
-void updateRx(uint32_t currentTime)
+uint16_t updateRx()
 {
-    resetRxSignalReceivedFlagIfNeeded(currentTime);
-
-    if (isRxDataDriven()) {
-        rxDataReceived = false;
-    }
-
+    uint16_t rtn = 0;
 
 #ifdef SERIAL_RX
     if (feature(FEATURE_RX_SERIAL)) {
         uint8_t frameStatus = serialRxFrameStatus(rxConfig);
 
         if (frameStatus & SERIAL_RX_FRAME_COMPLETE) {
-            rxDataReceived = true;
             rxIsInFailsafeMode = (frameStatus & SERIAL_RX_FRAME_FAILSAFE) != 0;
             rxSignalReceived = !rxIsInFailsafeMode;
-            needRxSignalBefore = currentTime + DELAY_10_HZ;
+            rtn = 100;  // 10Hz;
         }
     }
 #endif
 
     if (feature(FEATURE_RX_MSP)) {
-        rxDataReceived = rxMspFrameComplete();
-
-        if (rxDataReceived) {
+        if (rxMspFrameComplete()) {
             rxSignalReceived = true;
             rxIsInFailsafeMode = false;
-            needRxSignalBefore = currentTime + DELAY_5_HZ;
+            rtn = 200;  // 5Hz;
         }
     }
 
@@ -342,7 +319,7 @@ void updateRx(uint32_t currentTime)
         if (isPPMDataBeingReceived()) {
             rxSignalReceivedNotDataDriven = true;
             rxIsInFailsafeModeNotDataDriven = false;
-            needRxSignalBefore = currentTime + DELAY_10_HZ;
+            rtn = 100;  // 10Hz;
             resetPPMDataReceivedState();
         }
     }
@@ -351,15 +328,15 @@ void updateRx(uint32_t currentTime)
         if (isPWMDataBeingReceived()) {
             rxSignalReceivedNotDataDriven = true;
             rxIsInFailsafeModeNotDataDriven = false;
-            needRxSignalBefore = currentTime + DELAY_10_HZ;
+            rtn = 100;  // 10Hz;
         }
     }
 
-}
-
-bool shouldProcessRx(uint32_t currentTime)
-{
-    return rxDataReceived || ((int32_t)(currentTime - rxUpdateAt) >= 0); // data driven or 50Hz
+    if (!rtn) {
+        rxSignalReceived = false;
+        rxSignalReceivedNotDataDriven = false;
+    }
+    return rtn;
 }
 
 static uint16_t calculateNonDataDrivenChannel(uint8_t chan, uint16_t sample)
@@ -526,8 +503,6 @@ static void detectAndApplySignalLossBehaviour(void)
 
 void calculateRxChannelsAndUpdateFailsafe(uint32_t currentTime)
 {
-    rxUpdateAt = currentTime + DELAY_50_HZ;
-
     // only proceed when no more samples to skip and suspend period is over
     if (skipRxSamples) {
         if (currentTime > suspendRxSignalUntil) {

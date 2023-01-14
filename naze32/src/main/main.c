@@ -656,6 +656,14 @@ void processLoopback(void) {
 #endif
 
 int main(void) {
+    pif_Init(micros);
+
+    if (!pifTaskManager_Init(30)) goto bootloader;
+
+    if (!pifTimerManager_Init(&g_timer_1ms, PIF_ID_AUTO, 1000, 3)) goto bootloader;		        // 1000us
+
+    if (!createTask(TASK_SYSTEM, TRUE)) goto bootloader;
+
     init();
 
     /* Setup scheduler */
@@ -666,50 +674,52 @@ int main(void) {
         rescheduleTask(TASK_GYROPID, targetLooptime);
     }
 
-    setTaskEnabled(TASK_GYROPID, true);
-    setTaskEnabled(TASK_ACCEL, sensors(SENSOR_ACC));
-    setTaskEnabled(TASK_SERIAL, true);
+    if (!createTask(TASK_GYROPID, TRUE)) goto bootloader;
+    if (!createTask(TASK_ACCEL, sensors(SENSOR_ACC) != 0)) goto bootloader;
+    if (!createTask(TASK_SERIAL, TRUE)) goto bootloader;
 #ifdef BEEPER
-    setTaskEnabled(TASK_BEEPER, true);
+    if (!createTask(TASK_BEEPER, TRUE)) goto bootloader;
 #endif
-    setTaskEnabled(TASK_BATTERY, feature(FEATURE_VBAT) || feature(FEATURE_CURRENT_METER));
-    setTaskEnabled(TASK_RX, true);
+    if (!createTask(TASK_BATTERY, feature(FEATURE_VBAT) || feature(FEATURE_CURRENT_METER))) goto bootloader;
+    if (!createTask(TASK_RX, TRUE)) goto bootloader;
 #ifdef GPS
-    setTaskEnabled(TASK_GPS, feature(FEATURE_GPS));
+    if (!createTask(TASK_GPS, feature(FEATURE_GPS) != 0)) goto bootloader;
 #endif
 #ifdef MAG
-    setTaskEnabled(TASK_COMPASS, sensors(SENSOR_MAG));
 #ifdef SPRACINGF3EVO
     // fixme temporary solution for AK6983 via slave I2C on MPU9250
-    rescheduleTask(TASK_COMPASS, 1000000 / 40);
+    rescheduleTask(TASK_COMPASS, 25);
 #endif
+    if (!createTask(TASK_COMPASS, sensors(SENSOR_MAG) != 0)) goto bootloader;
 #endif
 #ifdef BARO
-    setTaskEnabled(TASK_BARO, sensors(SENSOR_BARO));
+    if (!createTask(TASK_BARO, sensors(SENSOR_BARO) != 0)) goto bootloader;
 #endif
 #ifdef SONAR
-    setTaskEnabled(TASK_SONAR, sensors(SENSOR_SONAR));
+    if (!createTask(TASK_SONAR, sensors(SENSOR_SONAR) != 0)) goto bootloader;
 #endif
 #if defined(BARO) || defined(SONAR)
-    setTaskEnabled(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR));
+    if (!createTask(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR))) goto bootloader;
 #endif
 #ifdef DISPLAY
-    setTaskEnabled(TASK_DISPLAY, feature(FEATURE_DISPLAY));
+    if (!createTask(TASK_DISPLAY, feature(FEATURE_DISPLAY) != 0)) goto bootloader;
 #endif
 #ifdef TELEMETRY
-    setTaskEnabled(TASK_TELEMETRY, feature(FEATURE_TELEMETRY));
+    if (!createTask(TASK_TELEMETRY, feature(FEATURE_TELEMETRY) != 0)) goto bootloader;
 #endif
 #ifdef LED_STRIP
-    setTaskEnabled(TASK_LEDSTRIP, feature(FEATURE_LED_STRIP));
+    if (!createTask(TASK_LEDSTRIP, feature(FEATURE_LED_STRIP) != 0)) goto bootloader;
 #endif
 #ifdef TRANSPONDER
-    setTaskEnabled(TASK_TRANSPONDER, feature(FEATURE_TRANSPONDER));
+    if (!createTask(TASK_TRANSPONDER, feature(FEATURE_TRANSPONDER) != 0)) goto bootloader;
 #endif
 
     while (1) {
-        scheduler();
+        pifTaskManager_Loop();
         processLoopback();
     }
+
+bootloader:;
 }
 
 void HardFault_Handler(void)

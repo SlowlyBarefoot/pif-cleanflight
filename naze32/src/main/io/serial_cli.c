@@ -2414,8 +2414,8 @@ static void cliStatus(char *cmdline)
         vbat,
         batteryCellCount,
         getBatteryStateString(),
-        averageSystemLoadPercent / 100,
-        averageSystemLoadPercent % 100
+        pif_performance._use_rate / 100,
+        pif_performance._use_rate % 100
     );
 
     cliPrintf("CPU Clock=%dMHz", (SystemCoreClock / 1000000));
@@ -2431,15 +2431,20 @@ static void cliStatus(char *cmdline)
             break;
 
         mask = (1 << i);
-        if ((detectedSensorsMask & mask) && (mask & SENSOR_NAMES_MASK)) {
-            const char *sensorHardware;
-            uint8_t sensorHardwareIndex = detectedSensors[i];
-            sensorHardware = sensorHardwareNames[i][sensorHardwareIndex];
+        if ((detectedSensorsMask & mask)) {
+            if (mask & SENSOR_NAMES_MASK) {
+                const char *sensorHardware;
+                uint8_t sensorHardwareIndex = detectedSensors[i];
+                sensorHardware = sensorHardwareNames[i][sensorHardwareIndex];
 
-            cliPrintf(", %s=%s", sensorTypeNames[i], sensorHardware);
+                cliPrintf(", %s=%s", sensorTypeNames[i], sensorHardware);
 
-            if (mask == SENSOR_ACC && acc.revisionCode) {
-                cliPrintf(".%c", acc.revisionCode);
+                if (mask == SENSOR_ACC && acc.revisionCode) {
+                    cliPrintf(".%c", acc.revisionCode);
+                }
+            }
+            else {
+                cliPrintf(", %s", sensorTypeNames[i]);
             }
         }
     }
@@ -2453,6 +2458,7 @@ static void cliStatus(char *cmdline)
 #endif
 
     cliPrintf("Cycle Time: %d, I2C Errors: %d, config size: %d\r\n", cycleTime, i2cErrorCounter, sizeof(master_t));
+    cliPrintf("Task Count=%d, Timer Count=%d\r\n", pifTaskManager_Count(), pifTimerManager_Count(&g_timer_1ms));
 }
 
 #ifndef SKIP_TASK_STATISTICS
@@ -2468,6 +2474,9 @@ static void cliTasks(char *cmdline)
         getTaskInfo(taskId, &taskInfo);
         if (taskInfo.isEnabled) {
             cliPrintf("%d - %s, max = %d us, avg = %d us, total = %d ms\r\n", taskId, taskInfo.taskName, taskInfo.maxExecutionTime, taskInfo.averageExecutionTime, taskInfo.totalExecutionTime / 1000);
+        }
+        else {
+            cliPrintf("%d - %s, disable\r\n", taskId, taskInfo.taskName);
         }
     }
 }

@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "core/pif_timer.h"
+
 #define MAX_PROFILE_COUNT 3
 #define MAX_CONTROL_RATE_PROFILE_COUNT 3
 #define ONESHOT_FEATURE_CHANGED_DELAY_ON_BOOT_MS 1500
@@ -46,6 +48,8 @@ typedef enum {
     FEATURE_CHANNEL_FORWARDING = 1 << 20,
     FEATURE_TRANSPONDER = 1 << 21,
 } features_e;
+
+extern PifTimerManager g_timer_1ms;
 
 void handleOneshotFeatureChangeOnRestart(void);
 void latchActiveFeatures(void);
