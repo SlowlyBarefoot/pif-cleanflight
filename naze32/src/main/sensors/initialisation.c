@@ -33,17 +33,13 @@
 #include "drivers/accgyro.h"
 #include "drivers/accgyro_adxl345.h"
 #include "drivers/accgyro_bma280.h"
-#include "drivers/accgyro_l3g4200d.h"
 #include "drivers/accgyro_mma845x.h"
 #include "drivers/accgyro_mpu.h"
 #include "drivers/accgyro_mpu3050.h"
 #include "drivers/accgyro_mpu6050.h"
 #include "drivers/accgyro_mpu6500.h"
-#include "drivers/accgyro_l3gd20.h"
-#include "drivers/accgyro_lsm303dlhc.h"
 
 #include "drivers/bus_spi.h"
-#include "drivers/accgyro_spi_mpu6000.h"
 #include "drivers/accgyro_spi_mpu6500.h"
 #include "drivers/gyro_sync.h"
 
@@ -54,8 +50,6 @@
 
 #include "drivers/compass.h"
 #include "drivers/compass_hmc5883l.h"
-#include "drivers/compass_ak8975.h"
-#include "drivers/compass_ak8963.h"
 
 #include "drivers/sonar_hcsr04.h"
 
@@ -113,103 +107,8 @@ const extiConfig_t *selectMPUIntExtiConfig(void)
     }
 #endif
 
-#if defined(SPRACINGF3) || defined(SPRACINGF3MINI) || defined(SPRACINGF3EVO)
-    static const extiConfig_t spRacingF3MPUIntExtiConfig = {
-            .gpioAHBPeripherals = RCC_AHBPeriph_GPIOC,
-            .gpioPort = GPIOC,
-            .gpioPin = Pin_13,
-            .exti_port_source = EXTI_PortSourceGPIOC,
-            .exti_pin_source = EXTI_PinSource13,
-            .exti_line = EXTI_Line13,
-            .exti_irqn = EXTI15_10_IRQn
-    };
-    return &spRacingF3MPUIntExtiConfig;
-#endif
-
-#if defined(CC3D)
-    static const extiConfig_t cc3dMPUIntExtiConfig = {
-            .gpioAPB2Peripherals = RCC_APB2Periph_GPIOA,
-            .gpioPort = GPIOA,
-            .gpioPin = Pin_3,
-            .exti_port_source = GPIO_PortSourceGPIOA,
-            .exti_pin_source = GPIO_PinSource3,
-            .exti_line = EXTI_Line3,
-            .exti_irqn = EXTI3_IRQn
-    };
-    return &cc3dMPUIntExtiConfig;
-#endif
-
-#ifdef MOTOLAB
-    static const extiConfig_t MotolabF3MPUIntExtiConfig = {
-            .gpioAHBPeripherals = RCC_AHBPeriph_GPIOA,
-            .gpioPort = GPIOA,
-            .gpioPin = Pin_15,
-            .exti_port_source = EXTI_PortSourceGPIOA,
-            .exti_pin_source = EXTI_PinSource15,
-            .exti_line = EXTI_Line15,
-            .exti_irqn = EXTI15_10_IRQn
-    };
-    return &MotolabF3MPUIntExtiConfig;
-#endif
-
-#if defined(COLIBRI_RACE) || defined(LUX_RACE)
-    static const extiConfig_t colibriRaceMPUIntExtiConfig = {
-         .gpioAHBPeripherals = RCC_AHBPeriph_GPIOA,
-         .gpioPort = GPIOA,
-         .gpioPin = Pin_5,
-         .exti_port_source = EXTI_PortSourceGPIOA,
-         .exti_pin_source = EXTI_PinSource5,
-         .exti_line = EXTI_Line5,
-         .exti_irqn = EXTI9_5_IRQn
-    };
-    return &colibriRaceMPUIntExtiConfig;
-#endif
-
     return NULL;
 }
-
-#ifdef USE_FAKE_GYRO
-static void fakeGyroInit(uint8_t lpf)
-{
-    UNUSED(lpf);
-}
-
-static bool fakeGyroRead(int16_t *gyroADC)
-{
-    memset(gyroADC, 0, sizeof(int16_t[XYZ_AXIS_COUNT]));
-    return true;
-}
-
-static bool fakeGyroReadTemp(int16_t *tempData)
-{
-    UNUSED(tempData);
-    return true;
-}
-
-bool fakeGyroDetect(gyro_t *gyro)
-{
-    gyro->init = fakeGyroInit;
-    gyro->read = fakeGyroRead;
-    gyro->temperature = fakeGyroReadTemp;
-    return true;
-}
-#endif
-
-#ifdef USE_FAKE_ACC
-static void fakeAccInit(void) {}
-static bool fakeAccRead(int16_t *accData) {
-    memset(accData, 0, sizeof(int16_t[XYZ_AXIS_COUNT]));
-    return true;
-}
-
-bool fakeAccDetect(acc_t *acc)
-{
-    acc->init = fakeAccInit;
-    acc->read = fakeAccRead;
-    acc->revisionCode = 0;
-    return true;
-}
-#endif
 
 bool detectGyro(void)
 {
@@ -231,17 +130,6 @@ bool detectGyro(void)
             }
 #endif
             ; // fallthrough
-        case GYRO_L3G4200D:
-#ifdef USE_GYRO_L3G4200D
-            if (l3g4200dDetect(&gyro)) {
-#ifdef GYRO_L3G4200D_ALIGN
-                gyroHardware = GYRO_L3G4200D;
-                gyroAlign = GYRO_L3G4200D_ALIGN;
-#endif
-                break;
-            }
-#endif
-            ; // fallthrough
 
         case GYRO_MPU3050:
 #ifdef USE_GYRO_MPU3050
@@ -249,30 +137,6 @@ bool detectGyro(void)
 #ifdef GYRO_MPU3050_ALIGN
                 gyroHardware = GYRO_MPU3050;
                 gyroAlign = GYRO_MPU3050_ALIGN;
-#endif
-                break;
-            }
-#endif
-            ; // fallthrough
-
-        case GYRO_L3GD20:
-#ifdef USE_GYRO_L3GD20
-            if (l3gd20Detect(&gyro)) {
-#ifdef GYRO_L3GD20_ALIGN
-                gyroHardware = GYRO_L3GD20;
-                gyroAlign = GYRO_L3GD20_ALIGN;
-#endif
-                break;
-            }
-#endif
-            ; // fallthrough
-
-        case GYRO_MPU6000:
-#ifdef USE_GYRO_SPI_MPU6000
-            if (mpu6000SpiGyroDetect(&gyro)) {
-#ifdef GYRO_MPU6000_ALIGN
-                gyroHardware = GYRO_MPU6000;
-                gyroAlign = GYRO_MPU6000_ALIGN;
 #endif
                 break;
             }
@@ -302,14 +166,6 @@ bool detectGyro(void)
 #endif
             ; // fallthrough
 
-        case GYRO_FAKE:
-#ifdef USE_FAKE_GYRO
-            if (fakeGyroDetect(&gyro)) {
-                gyroHardware = GYRO_FAKE;
-                break;
-            }
-#endif
-            ; // fallthrough
         case GYRO_NONE:
             gyroHardware = GYRO_NONE;
     }
@@ -359,17 +215,6 @@ retry:
             }
 #endif
             ; // fallthrough
-        case ACC_LSM303DLHC:
-#ifdef USE_ACC_LSM303DLHC
-            if (lsm303dlhcAccDetect(&acc)) {
-#ifdef ACC_LSM303DLHC_ALIGN
-                accAlign = ACC_LSM303DLHC_ALIGN;
-#endif
-                accHardware = ACC_LSM303DLHC;
-                break;
-            }
-#endif
-            ; // fallthrough
         case ACC_MPU6050: // MPU6050
 #ifdef USE_ACC_MPU6050
             if (mpu6050AccDetect(&acc)) {
@@ -408,17 +253,6 @@ retry:
             }
 #endif
             ; // fallthrough
-        case ACC_MPU6000:
-#ifdef USE_ACC_SPI_MPU6000
-            if (mpu6000SpiAccDetect(&acc)) {
-#ifdef ACC_MPU6000_ALIGN
-                accAlign = ACC_MPU6000_ALIGN;
-#endif
-                accHardware = ACC_MPU6000;
-                break;
-            }
-#endif
-            ; // fallthrough
         case ACC_MPU6500:
 #ifdef USE_ACC_MPU6500
             if (mpu6500AccDetect(&acc)) {
@@ -436,14 +270,6 @@ retry:
                 accAlign = ACC_MPU6500_ALIGN;
 #endif
                 accHardware = ACC_MPU6500;
-                break;
-            }
-#endif
-            ; // fallthrough
-        case ACC_FAKE:
-#ifdef USE_FAKE_ACC
-            if (fakeAccDetect(&acc)) {
-                accHardware = ACC_FAKE;
                 break;
             }
 #endif
@@ -580,20 +406,6 @@ static void detectMag(magSensor_e magHardwareToUse)
     }
 #endif
 
-#ifdef SPRACINGF3
-    static const hmc5883Config_t spRacingF3Hmc5883Config = {
-        .gpioAHBPeripherals = RCC_AHBPeriph_GPIOC,
-        .gpioPin = Pin_14,
-        .gpioPort = GPIOC,
-        .exti_port_source = EXTI_PortSourceGPIOC,
-        .exti_pin_source = EXTI_PinSource14,
-        .exti_line = EXTI_Line14,
-        .exti_irqn = EXTI15_10_IRQn
-    };
-
-    hmc5883Config = &spRacingF3Hmc5883Config;
-#endif
-
 #endif
 
 retry:
@@ -611,29 +423,6 @@ retry:
                 magAlign = MAG_HMC5883_ALIGN;
 #endif
                 magHardware = MAG_HMC5883;
-                break;
-            }
-#endif
-            ; // fallthrough
-
-        case MAG_AK8975:
-#ifdef USE_MAG_AK8975
-            if (ak8975Detect(&mag)) {
-#ifdef MAG_AK8975_ALIGN
-                magAlign = MAG_AK8975_ALIGN;
-#endif
-                magHardware = MAG_AK8975;
-                break;
-            }
-#endif
-            ; // fallthrough
-        case MAG_AK8963:
-#ifdef USE_MAG_AK8963
-            if (ak8963Detect(&mag)) {
-#ifdef MAG_AK8963_ALIGN
-                magAlign = MAG_AK8963_ALIGN;
-#endif
-                magHardware = MAG_AK8963;
                 break;
             }
 #endif
@@ -686,7 +475,7 @@ bool sensorsAutodetect(sensorAlignmentConfig_t *sensorAlignmentConfig, uint8_t g
     memset(&acc, 0, sizeof(acc));
     memset(&gyro, 0, sizeof(gyro));
 
-#if defined(USE_GYRO_MPU6050) || defined(USE_GYRO_MPU3050) || defined(USE_GYRO_MPU6500) || defined(USE_GYRO_SPI_MPU6500) || defined(USE_GYRO_SPI_MPU6000) || defined(USE_ACC_MPU6050)
+#if defined(USE_GYRO_MPU6050) || defined(USE_GYRO_MPU3050) || defined(USE_GYRO_MPU6500) || defined(USE_GYRO_SPI_MPU6500) || defined(USE_ACC_MPU6050)
 
     const extiConfig_t *extiConfig = selectMPUIntExtiConfig();
 

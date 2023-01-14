@@ -31,46 +31,6 @@ typedef enum
 } GPIO_Mode;
 #endif
 
-#ifdef STM32F303xC
-
-/*
-typedef enum
-{
-  GPIO_Mode_IN   = 0x00, // GPIO Input Mode
-  GPIO_Mode_OUT  = 0x01, // GPIO Output Mode
-  GPIO_Mode_AF   = 0x02, // GPIO Alternate function Mode
-  GPIO_Mode_AN   = 0x03  // GPIO Analog In/Out Mode
-}GPIOMode_TypeDef;
-
-typedef enum
-{
-  GPIO_OType_PP = 0x00,
-  GPIO_OType_OD = 0x01
-}GPIOOType_TypeDef;
-
-typedef enum
-{
-  GPIO_PuPd_NOPULL = 0x00,
-  GPIO_PuPd_UP     = 0x01,
-  GPIO_PuPd_DOWN   = 0x02
-}GPIOPuPd_TypeDef;
-*/
-
-typedef enum
-{
-    Mode_AIN =          (GPIO_PuPd_NOPULL << 2) | GPIO_Mode_AN,
-    Mode_IN_FLOATING =  (GPIO_PuPd_NOPULL << 2) | GPIO_Mode_IN,
-    Mode_IPD =          (GPIO_PuPd_DOWN   << 2) | GPIO_Mode_IN,
-    Mode_IPU =          (GPIO_PuPd_UP     << 2) | GPIO_Mode_IN,
-    Mode_Out_OD =       (GPIO_OType_OD << 4) | GPIO_Mode_OUT,
-    Mode_Out_PP =       (GPIO_OType_PP << 4) | GPIO_Mode_OUT,
-    Mode_AF_OD =        (GPIO_OType_OD << 4) | GPIO_Mode_AF,
-    Mode_AF_PP =        (GPIO_OType_PP << 4) | GPIO_Mode_AF,
-    Mode_AF_PP_PD =     (GPIO_OType_PP << 4) | (GPIO_PuPd_DOWN  << 2) | GPIO_Mode_AF,
-    Mode_AF_PP_PU =     (GPIO_OType_PP << 4) | (GPIO_PuPd_UP    << 2) | GPIO_Mode_AF
-} GPIO_Mode;
-#endif
-
 typedef enum
 {
     Speed_10MHz = 1,

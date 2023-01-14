@@ -196,15 +196,3 @@
 // STM32F103CBT6-LQFP48 Pin31 (PA10) RX - PC1 to onboard CP2102 TX
 #define S1W_RX_GPIO         GPIOA
 #define S1W_RX_PIN          GPIO_Pin_10
-
-// alternative defaults for AlienWii32 F1 target
-#ifdef ALIENWII32
-#undef TARGET_BOARD_IDENTIFIER
-#define TARGET_BOARD_IDENTIFIER "AWF1" // AlienWii32 F1.
-#undef BOARD_HAS_VOLTAGE_DIVIDER
-#define HARDWARE_BIND_PLUG
-
-// Hardware bind plug at PB5 (Pin 41)
-#define BINDPLUG_PORT  GPIOB
-#define BINDPLUG_PIN   Pin_5
-#endif

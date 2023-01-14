@@ -83,29 +83,13 @@ void Set_System(void)
      To reconfigure the default setting of SystemInit() function, refer to
      system_stm32f10x.c file
      */
-#if defined(STM32L1XX_MD) || defined(STM32L1XX_HD)|| defined(STM32L1XX_MD_PLUS) || defined(STM32F37X) || defined(STM32F303xC)
+#if defined(STM32L1XX_MD) || defined(STM32L1XX_HD)|| defined(STM32L1XX_MD_PLUS) 
     /* Enable the SYSCFG module clock */
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
 #endif /* STM32L1XX_XD */ 
 
     usbGenerateDisconnectPulse();
 
-#if defined(STM32F37X) || defined(STM32F303xC)
-
-    /*Set PA11,12 as IN - USB_DM,DP*/
-    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_12;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-    /*SET PA11,12 for USB: USB_DM,DP*/
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource11, GPIO_AF_14);
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource12, GPIO_AF_14);
-
-#endif /* STM32F37X  && STM32F303xC)*/
 #if defined(STM32F10X)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_12;

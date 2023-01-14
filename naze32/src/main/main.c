@@ -50,9 +50,7 @@
 #include "drivers/inverter.h"
 #include "drivers/flash_m25p16.h"
 #include "drivers/sonar_hcsr04.h"
-#include "drivers/sdcard.h"
 #include "drivers/usb_io.h"
-#include "drivers/transponder_ir.h"
 #include "drivers/gyro_sync.h"
 
 #include "rx/rx.h"
@@ -130,10 +128,6 @@ const sonarHardware_t *sonarGetHardwareConfiguration(batteryConfig_t *batteryCon
 void sonarInit(const sonarHardware_t *sonarHardware);
 void transponderInit(uint8_t* transponderCode);
 
-#ifdef STM32F303xC
-// from system_stm32f30x.c
-void SetSysClock(void);
-#endif
 #ifdef STM32F10X
 // from system_stm32f10x.c
 void SetSysClock(bool overclock);
@@ -237,14 +231,6 @@ void init(void)
 
     systemState |= SYSTEM_STATE_CONFIG_LOADED;
 
-#ifdef STM32F303
-    // start fpu
-    SCB->CPACR = (0x3 << (10*2)) | (0x3 << (11*2));
-#endif
-
-#ifdef STM32F303xC
-    SetSysClock();
-#endif
 #ifdef STM32F10X
     // Configure the System clock frequency, HCLK, PCLK2 and PCLK1 prescalers
     // Configure the Flash Latency cycles and enable prefetch buffer
@@ -416,19 +402,6 @@ void init(void)
     }
 #endif
 
-#if defined(SPRACINGF3) && defined(SONAR) && defined(USE_SOFTSERIAL2)
-    if (feature(FEATURE_SONAR) && feature(FEATURE_SOFTSERIAL)) {
-        serialRemovePort(SERIAL_PORT_SOFTSERIAL2);
-    }
-#endif
-
-#if defined(SPRACINGF3MINI) && defined(SONAR) && defined(USE_SOFTSERIAL1)
-    if (feature(FEATURE_SONAR) && feature(FEATURE_SOFTSERIAL)) {
-        serialRemovePort(SERIAL_PORT_SOFTSERIAL1);
-    }
-#endif
-
-
 #ifdef USE_I2C
 #if defined(NAZE)
     if (hardwareRevision != NAZE32_SP) {
@@ -437,10 +410,6 @@ void init(void)
         if (!doesConfigurationUsePort(SERIAL_PORT_USART3)) {
             i2cInit(I2C_DEVICE);
         }
-    }
-#elif defined(CC3D)
-    if (!doesConfigurationUsePort(SERIAL_PORT_USART3)) {
-        i2cInit(I2C_DEVICE);
     }
 #else
     i2cInit(I2C_DEVICE);
@@ -454,9 +423,6 @@ void init(void)
     adc_params.enableRSSI = feature(FEATURE_RSSI_ADC);
     adc_params.enableCurrentMeter = feature(FEATURE_CURRENT_METER);
     adc_params.enableExternal1 = false;
-#ifdef OLIMEXINO
-    adc_params.enableExternal1 = true;
-#endif
 #ifdef NAZE
     // optional ADC5 input on rev.5 hardware
     adc_params.enableExternal1 = (hardwareRevision >= NAZE32_REV5);
@@ -630,10 +596,6 @@ void init(void)
     }
 #endif
 
-#ifdef CJMCU
-    LED2_ON;
-#endif
-
     // Latch active features AGAIN since some may be modified by init().
     latchActiveFeatures();
     motorControlEnable = true;
@@ -686,10 +648,6 @@ int main(void) {
     if (!createTask(TASK_GPS, feature(FEATURE_GPS) != 0)) goto bootloader;
 #endif
 #ifdef MAG
-#ifdef SPRACINGF3EVO
-    // fixme temporary solution for AK6983 via slave I2C on MPU9250
-    rescheduleTask(TASK_COMPASS, 25);
-#endif
     if (!createTask(TASK_COMPASS, sensors(SENSOR_MAG) != 0)) goto bootloader;
 #endif
 #ifdef BARO

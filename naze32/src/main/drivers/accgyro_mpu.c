@@ -39,7 +39,6 @@
 #include "accgyro_mpu3050.h"
 #include "accgyro_mpu6050.h"
 #include "accgyro_mpu6500.h"
-#include "accgyro_spi_mpu6000.h"
 #include "accgyro_spi_mpu6500.h"
 #include "accgyro_mpu.h"
 
@@ -128,16 +127,6 @@ static bool detectSPISensorsAndUpdateDetectionResult(void)
     }
 #endif
 
-#ifdef USE_GYRO_SPI_MPU6000
-    if (mpu6000SpiDetect()) {
-        mpuDetectionResult.sensor = MPU_60x0_SPI;
-        mpuConfiguration.gyroReadXRegister = MPU_RA_GYRO_XOUT_H;
-        mpuConfiguration.read = mpu6000ReadRegister;
-        mpuConfiguration.write = mpu6000WriteRegister;
-        return true;
-    }
-#endif
-
     return false;
 }
 #endif
@@ -215,16 +204,7 @@ void configureMPUDataReadyInterruptHandling(void)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 #endif
 
-#ifdef STM32F303xC
-    /* Enable SYSCFG clock otherwise the EXTI irq handlers are not called */
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
-#endif
-
 #ifdef STM32F10X
-    gpioExtiLineConfig(mpuIntExtiConfig->exti_port_source, mpuIntExtiConfig->exti_pin_source);
-#endif
-
-#ifdef STM32F303xC
     gpioExtiLineConfig(mpuIntExtiConfig->exti_port_source, mpuIntExtiConfig->exti_pin_source);
 #endif
 
@@ -266,11 +246,6 @@ void mpuIntExtiInit(void)
         return;
     }
 
-#ifdef STM32F303
-        if (mpuIntExtiConfig->gpioAHBPeripherals) {
-            RCC_AHBPeriphClockCmd(mpuIntExtiConfig->gpioAHBPeripherals, ENABLE);
-        }
-#endif
 #ifdef STM32F10X
         if (mpuIntExtiConfig->gpioAPB2Peripherals) {
             RCC_APB2PeriphClockCmd(mpuIntExtiConfig->gpioAPB2Peripherals, ENABLE);

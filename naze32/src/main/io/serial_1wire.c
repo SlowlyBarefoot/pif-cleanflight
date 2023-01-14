@@ -120,11 +120,6 @@ static void gpioSetOne(uint32_t escIndex, GPIO_Mode mode) {
 #define TX_SET_HIGH            S1W_TX_GPIO->BSRR = S1W_TX_PIN
 #define TX_SET_LO              S1W_TX_GPIO->BRR = S1W_TX_PIN
 
-#ifdef STM32F303xC
-#define ESC_INPUT(escIndex)    escHardware[escIndex].gpio->MODER &= ~(GPIO_MODER_MODER0 << (escHardware[escIndex].pinpos * 2))
-#define ESC_OUTPUT(escIndex)   escHardware[escIndex].gpio->MODER |= GPIO_Mode_OUT << (escHardware[escIndex].pinpos * 2)
-#endif
-
 #ifdef STM32F10X
 #define ESC_INPUT(escIndex)    gpioSetOne(escIndex, Mode_IPU)
 #define ESC_OUTPUT(escIndex)   gpioSetOne(escIndex, Mode_Out_PP)

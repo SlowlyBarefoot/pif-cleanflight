@@ -41,7 +41,6 @@
 #include "drivers/gpio.h"
 #include "drivers/timer.h"
 #include "drivers/pwm_rx.h"
-#include "drivers/sdcard.h"
 #include "drivers/buf_writer.h"
 #include "rx/rx.h"
 #include "rx/msp.h"

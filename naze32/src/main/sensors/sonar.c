@@ -52,7 +52,7 @@ static int32_t calculatedAltitude;
 
 const sonarHardware_t *sonarGetHardwareConfiguration(batteryConfig_t *batteryConfig)
 {
-#if defined(NAZE) || defined(EUSTM32F103RC) || defined(PORT103R)
+#if defined(NAZE)
     static const sonarHardware_t const sonarPWM56 = {
         .trigger_pin = Pin_8,   // PWM5 (PB8) - 5v tolerant
         .trigger_gpio = GPIOB,
@@ -79,54 +79,6 @@ const sonarHardware_t *sonarGetHardwareConfiguration(batteryConfig_t *batteryCon
     } else {
         return &sonarRC78;
     }
-#elif defined(OLIMEXINO)
-    UNUSED(batteryConfig);
-    static const sonarHardware_t const sonarHardware = {
-        .trigger_pin = Pin_0,   // RX7 (PB0) - only 3.3v ( add a 1K Ohms resistor )
-        .trigger_gpio = GPIOB,
-        .echo_pin = Pin_1,      // RX8 (PB1) - only 3.3v ( add a 1K Ohms resistor )
-        .echo_gpio = GPIOB,
-        .exti_line = EXTI_Line1,
-        .exti_pin_source = GPIO_PinSource1,
-        .exti_irqn = EXTI1_IRQn
-    };
-    return &sonarHardware;
-#elif defined(CC3D)
-    UNUSED(batteryConfig);
-    static const sonarHardware_t const sonarHardware = {
-        .trigger_pin = Pin_5,   // (PB5)
-        .trigger_gpio = GPIOB,
-        .echo_pin = Pin_0,      // (PB0) - only 3.3v ( add a 1K Ohms resistor )
-        .echo_gpio = GPIOB,
-        .exti_line = EXTI_Line0,
-        .exti_pin_source = GPIO_PinSource0,
-        .exti_irqn = EXTI0_IRQn
-    };
-    return &sonarHardware;
-#elif defined(SPRACINGF3) || defined(SPRACINGF3MINI)
-    UNUSED(batteryConfig);
-    static const sonarHardware_t const sonarHardware = {
-        .trigger_pin = Pin_0,   // RC_CH7 (PB0) - only 3.3v ( add a 1K Ohms resistor )
-        .trigger_gpio = GPIOB,
-        .echo_pin = Pin_1,      // RC_CH8 (PB1) - only 3.3v ( add a 1K Ohms resistor )
-        .echo_gpio = GPIOB,
-        .exti_line = EXTI_Line1,
-        .exti_pin_source = EXTI_PinSource1,
-        .exti_irqn = EXTI1_IRQn
-    };
-    return &sonarHardware;
-#elif defined(SPARKY)
-    UNUSED(batteryConfig);
-    static const sonarHardware_t const sonarHardware = {
-        .trigger_pin = Pin_2,   // PWM6 (PA2) - only 3.3v ( add a 1K Ohms resistor )
-        .trigger_gpio = GPIOA,
-        .echo_pin = Pin_1,      // PWM7 (PB1) - only 3.3v ( add a 1K Ohms resistor )
-        .echo_gpio = GPIOB,
-        .exti_line = EXTI_Line1,
-        .exti_pin_source = EXTI_PinSource1,
-        .exti_irqn = EXTI1_IRQn
-    };
-    return &sonarHardware;
 #elif defined(UNIT_TEST)
     UNUSED(batteryConfig);
     return 0;

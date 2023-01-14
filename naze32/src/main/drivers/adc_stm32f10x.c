@@ -53,11 +53,6 @@
 
 void adcInit(drv_adc_config_t *init)
 {
-#if defined(CJMCU) || defined(CC3D)
-    UNUSED(init);
-#endif
-
-
     uint8_t i;
     uint8_t configuredAdcChannels = 0;
 
