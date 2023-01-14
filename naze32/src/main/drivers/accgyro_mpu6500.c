@@ -30,52 +30,61 @@
 #include "gpio.h"
 #include "gyro_sync.h"
 
-#include "sensor.h"
-#include "accgyro.h"
 #include "accgyro_mpu.h"
 #include "accgyro_mpu6500.h"
 
-extern uint16_t acc_1G;
+const char* mpu6500_name = "MPU6500";
 
-bool mpu6500AccDetect(acc_t *acc)
+bool mpu6500AccDetect(sensor_link_t* p_sensor_link, void* p_param)
 {
+    (void)p_param;
+
     if (mpuDetectionResult.sensor != MPU_65xx_I2C) {
         return false;
     }
 
-    acc->init = mpu6500AccInit;
-    acc->read = mpuAccRead;
+    p_sensor_link->acc.hw_name = mpu6500_name;
+    p_sensor_link->acc.init = mpu6500AccInit;
+    p_sensor_link->acc.read = mpuAccRead;
 
     return true;
 }
 
-bool mpu6500GyroDetect(gyro_t *gyro)
+bool mpu6500GyroDetect(sensor_link_t* p_sensor_link, void* p_param)
 {
+    (void)p_param;
+
     if (mpuDetectionResult.sensor != MPU_65xx_I2C) {
         return false;
     }
 
-    gyro->init = mpu6500GyroInit;
-    gyro->read = mpuGyroRead;
-    gyro->isDataReady = mpuIsDataReady;
+    p_sensor_link->gyro.hw_name = mpu6500_name;
+    p_sensor_link->gyro.init = mpu6500GyroInit;
+    p_sensor_link->gyro.read = mpuGyroRead;
 
     // 16.4 dps/lsb scalefactor
-    gyro->scale = 1.0f / 16.4f;
+    p_sensor_link->gyro.scale = 1.0f / 16.4f;
 
     return true;
 }
 
-void mpu6500AccInit(void)
+void mpu6500AccInit(sensor_link_t* p_sensor_link, void* p_param)
 {
-    mpuIntExtiInit();
+    (void)p_param;
 
-    acc_1G = 512 * 8;
+    mpuIntExtiInit(NULL);
+
+    p_sensor_link->acc.acc_1G = 512 * 8;
 }
 
-void mpu6500GyroInit(uint8_t lpf)
+void mpu6500GyroInit(sensor_link_t* p_sensor_link, void* p_param)
 {
-    mpuIntExtiInit();
+    uint8_t lpf = 1;        // default
 
+
+    if (mpuIntExtiInit(p_sensor_link)) p_sensor_link->gyro.can_sync = true;
+
+    if (p_param) lpf = ((gyro_param_t*)p_param)->lpf;
     mpuConfiguration.write(MPU_RA_PWR_MGMT_1, MPU6500_BIT_RESET);
     delay(100);
     mpuConfiguration.write(MPU_RA_SIGNAL_PATH_RESET, 0x07);

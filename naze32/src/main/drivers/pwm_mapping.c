@@ -22,6 +22,8 @@
 
 #include <platform.h>
 
+#include "core/pif_i2c.h"
+
 #include "gpio.h"
 #include "timer.h"
 #include "drivers/bus_i2c.h"

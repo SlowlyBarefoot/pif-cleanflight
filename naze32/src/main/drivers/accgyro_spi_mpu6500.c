@@ -24,21 +24,21 @@
 #include "common/axis.h"
 #include "common/maths.h"
 
+#include "sensors/sensors.h"
+
 #include "system.h"
 #include "exti.h"
 #include "gpio.h"
 #include "bus_spi.h"
 
-#include "sensor.h"
-#include "accgyro.h"
 #include "accgyro_mpu.h"
 #include "accgyro_mpu6500.h"
 #include "accgyro_spi_mpu6500.h"
 
+const char* mpu6500_spi_name = "MPU6500";
+
 #define DISABLE_MPU6500       GPIO_SetBits(MPU6500_CS_GPIO,   MPU6500_CS_PIN)
 #define ENABLE_MPU6500        GPIO_ResetBits(MPU6500_CS_GPIO, MPU6500_CS_PIN)
-
-extern uint16_t acc_1G;
 
 bool mpu6500WriteRegister(uint8_t reg, uint8_t data)
 {
@@ -60,9 +60,12 @@ bool mpu6500ReadRegister(uint8_t reg, uint8_t length, uint8_t *data)
     return true;
 }
 
-static void mpu6500SpiInit(void)
+static void mpu6500SpiInit(sensor_link_t* p_sensor_link, void* p_param)
 {
     static bool hardwareInitialised = false;
+
+    (void)p_sensor_link;
+    (void)p_param;
 
     if (hardwareInitialised) {
         return;
@@ -86,11 +89,11 @@ static void mpu6500SpiInit(void)
     hardwareInitialised = true;
 }
 
-bool mpu6500SpiDetect(void)
+bool mpu6500SpiDetect(sensor_link_t* p_sensor_link)
 {
     uint8_t sig;
 
-    mpu6500SpiInit();
+    mpu6500SpiInit(p_sensor_link, NULL);
 
     mpu6500ReadRegister(MPU_RA_WHO_AM_I, 1, &sig);
 
@@ -101,30 +104,35 @@ bool mpu6500SpiDetect(void)
     return true;
 }
 
-bool mpu6500SpiAccDetect(acc_t *acc)
+bool mpu6500SpiAccDetect(sensor_link_t* p_sensor_link, void* p_param)
 {
+    (void)p_param;
+
     if (mpuDetectionResult.sensor != MPU_65xx_SPI) {
         return false;
     }
 
-    acc->init = mpu6500AccInit;
-    acc->read = mpuAccRead;
+    p_sensor_link->acc.hw_name = mpu6500_spi_name;
+    p_sensor_link->acc.init = mpu6500AccInit;
+    p_sensor_link->acc.read = mpuAccRead;
 
     return true;
 }
 
-bool mpu6500SpiGyroDetect(gyro_t *gyro)
+bool mpu6500SpiGyroDetect(sensor_link_t* p_sensor_link, void* p_param)
 {
+    (void)p_param;
+
     if (mpuDetectionResult.sensor != MPU_65xx_SPI) {
         return false;
     }
 
-    gyro->init = mpu6500GyroInit;
-    gyro->read = mpuGyroRead;
-    gyro->isDataReady = mpuIsDataReady;
+    p_sensor_link->gyro.hw_name = mpu6500_spi_name;
+    p_sensor_link->gyro.init = mpu6500GyroInit;
+    p_sensor_link->gyro.read = mpuGyroRead;
 
     // 16.4 dps/lsb scalefactor
-    gyro->scale = 1.0f / 16.4f;
+    p_sensor_link->gyro.scale = 1.0f / 16.4f;
 
     return true;
 }

@@ -17,10 +17,10 @@
 
 #pragma once
 
-bool mpu6500SpiDetect(void);
+bool mpu6500SpiDetect(sensor_link_t* p_sensor_link);
 
-bool mpu6500SpiAccDetect(acc_t *acc);
-bool mpu6500SpiGyroDetect(gyro_t *gyro);
+bool mpu6500SpiAccDetect(sensor_link_t* p_sensor_link, void* p_param);
+bool mpu6500SpiGyroDetect(sensor_link_t* p_sensor_link, void* p_param);
 
 bool mpu6500WriteRegister(uint8_t reg, uint8_t data);
 bool mpu6500ReadRegister(uint8_t reg, uint8_t length, uint8_t *data);

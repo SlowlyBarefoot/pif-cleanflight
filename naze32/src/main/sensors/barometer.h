@@ -17,16 +17,7 @@
 
 #pragma once
 
-typedef enum {
-    BARO_DEFAULT = 0,
-    BARO_NONE = 1,
-    BARO_BMP085 = 2,
-    BARO_MS5611 = 3,
-    BARO_BMP280 = 4
-} baroSensor_e;
-
 #define BARO_SAMPLE_COUNT_MAX   48
-#define BARO_MAX BARO_BMP280
 
 typedef struct barometerConfig_s {
     uint8_t baro_sample_count;              // size of baro filter array
@@ -35,15 +26,11 @@ typedef struct barometerConfig_s {
     float baro_cf_alt;                      // apply CF to use ACC for height estimation
 } barometerConfig_t;
 
-extern int32_t BaroAlt;
-extern int32_t baroTemperature;             // Use temperature for telemetry
-
 #ifdef BARO
 void useBarometerConfig(barometerConfig_t *barometerConfigToUse);
 bool isBaroCalibrationComplete(void);
 void baroSetCalibrationCycles(uint16_t calibrationCyclesRequired);
-uint32_t baroUpdate(void);
-bool isBaroReady(void);
+uint32_t baroUpdate(PifTask *p_task);
 int32_t baroCalculateAltitude(void);
 void performBaroCalibrationCycle(void);
 #endif

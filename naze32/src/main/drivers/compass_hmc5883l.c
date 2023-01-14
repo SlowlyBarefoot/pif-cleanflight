@@ -22,7 +22,11 @@
 #include <math.h>
 
 #include <platform.h>
+
+#include "build_config.h"
 #include "debug.h"
+
+#include "core/pif_i2c.h"
 
 #include "common/axis.h"
 #include "common/maths.h"
@@ -33,12 +37,13 @@
 #include "bus_i2c.h"
 #include "light_led.h"
 
-#include "sensor.h"
-#include "compass.h"
-
 #include "sensors/sensors.h"
 
 #include "compass_hmc5883l.h"
+
+#ifdef NAZE
+#include "hardware_revision.h"
+#endif
 
 //#define DEBUG_MAG_DATA_READY_INTERRUPT
 
@@ -116,7 +121,33 @@
 #define HMC_POS_BIAS 1
 #define HMC_NEG_BIAS 2
 
+const char* hmc5883_name = "HMC5883";
+
 static float magGain[3] = { 1.0f, 1.0f, 1.0f };
+
+#ifdef NAZE
+static const hmc5883Config_t nazeHmc5883Config_v1_v4 = {
+        .gpioAPB2Peripherals = RCC_APB2Periph_GPIOB,
+        .gpioPin = Pin_12,
+        .gpioPort = GPIOB,
+
+        /* Disabled for v4 needs more work.
+        .exti_port_source = GPIO_PortSourceGPIOB,
+        .exti_pin_source = GPIO_PinSource12,
+        .exti_line = EXTI_Line12,
+        .exti_irqn = EXTI15_10_IRQn
+        */
+};
+static const hmc5883Config_t nazeHmc5883Config_v5 = {
+        .gpioAPB2Peripherals = RCC_APB2Periph_GPIOC,
+        .gpioPin = Pin_14,
+        .gpioPort = GPIOC,
+        .exti_port_source = GPIO_PortSourceGPIOC,
+        .exti_line = EXTI_Line14,
+        .exti_pin_source = GPIO_PinSource14,
+        .exti_irqn = EXTI15_10_IRQn
+};
+#endif
 
 static const hmc5883Config_t *hmc5883Config = NULL;
 
@@ -188,29 +219,41 @@ static void hmc5883lConfigureDataReadyInterruptHandling(void)
 #endif
 }
 
-bool hmc5883lDetect(mag_t* mag, const hmc5883Config_t *hmc5883ConfigToUse)
+bool hmc5883lDetect(sensor_link_t* p_sensor_link, void* p_param)
 {
     bool ack = false;
     uint8_t sig = 0;
 
-    hmc5883Config = hmc5883ConfigToUse;
+    UNUSED(p_param);
+
+#ifdef NAZE
+    if (hardwareRevision < NAZE32_REV5) {
+        hmc5883Config = &nazeHmc5883Config_v1_v4;
+    } else {
+        hmc5883Config = &nazeHmc5883Config_v5;
+    }
+#endif    
 
     ack = i2cRead(MAG_ADDRESS, 0x0A, 1, &sig);
     if (!ack || sig != 'H')
         return false;
 
-    mag->init = hmc5883lInit;
-    mag->read = hmc5883lRead;
+    p_sensor_link->mag.hw_name = hmc5883_name;
+    p_sensor_link->mag.init = hmc5883lInit;
+    p_sensor_link->mag.read = hmc5883lRead;
 
     return true;
 }
 
-void hmc5883lInit(void)
+void hmc5883lInit(sensor_link_t* p_sensor_link, void* p_param)
 {
     int16_t magADC[3];
     int i;
     int32_t xyz_total[3] = { 0, 0, 0 }; // 32 bit totals so they won't overflow.
     bool bret = true;           // Error indicator
+
+    (void)p_sensor_link;
+    (void)p_param;
 
     gpio_config_t gpio;
 

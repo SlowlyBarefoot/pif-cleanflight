@@ -24,6 +24,8 @@
 #include "build_config.h"
 #include "debug.h"
 
+#include "core/pif_i2c.h"
+
 #include "common/maths.h"
 
 #include "nvic.h"
@@ -34,13 +36,15 @@
 #include "bus_i2c.h"
 #include "gyro_sync.h"
 
-#include "sensor.h"
-#include "accgyro.h"
 #include "accgyro_mpu3050.h"
 #include "accgyro_mpu6050.h"
 #include "accgyro_mpu6500.h"
 #include "accgyro_spi_mpu6500.h"
 #include "accgyro_mpu.h"
+
+#ifdef NAZE
+#include "hardware_revision.h"
+#endif
 
 //#define DEBUG_MPU_DATA_READY_INTERRUPT
 
@@ -49,7 +53,7 @@ static bool mpuWriteRegisterI2C(uint8_t reg, uint8_t data);
 
 static void mpu6050FindRevision(void);
 
-static volatile bool mpuDataReady;
+static sensor_link_t* sp_sensor_link = NULL;
 
 #ifdef USE_SPI
 static bool detectSPISensorsAndUpdateDetectionResult(void);
@@ -62,12 +66,46 @@ static const extiConfig_t *mpuIntExtiConfig = NULL;
 
 #define MPU_ADDRESS             0x68
 
-mpuDetectionResult_t *detectMpu(const extiConfig_t *configToUse)
+const extiConfig_t *selectMPUIntExtiConfig(void)
+{
+#ifdef NAZE
+    // MPU_INT output on rev4 PB13
+    static const extiConfig_t nazeRev4MPUIntExtiConfig = {
+            .gpioAPB2Peripherals = RCC_APB2Periph_GPIOB,
+            .gpioPin = Pin_13,
+            .gpioPort = GPIOB,
+            .exti_port_source = GPIO_PortSourceGPIOB,
+            .exti_line = EXTI_Line13,
+            .exti_pin_source = GPIO_PinSource13,
+            .exti_irqn = EXTI15_10_IRQn
+    };
+    // MPU_INT output on rev5 hardware PC13
+    static const extiConfig_t nazeRev5MPUIntExtiConfig = {
+            .gpioAPB2Peripherals = RCC_APB2Periph_GPIOC,
+            .gpioPin = Pin_13,
+            .gpioPort = GPIOC,
+            .exti_port_source = GPIO_PortSourceGPIOC,
+            .exti_line = EXTI_Line13,
+            .exti_pin_source = GPIO_PinSource13,
+            .exti_irqn = EXTI15_10_IRQn
+    };
+
+    if (hardwareRevision < NAZE32_REV5) {
+        return &nazeRev4MPUIntExtiConfig;
+    } else {
+        return &nazeRev5MPUIntExtiConfig;
+    }
+#endif
+
+    return NULL;
+}
+
+mpuDetectionResult_t *detectMpu()
 {
     memset(&mpuDetectionResult, 0, sizeof(mpuDetectionResult));
     memset(&mpuConfiguration, 0, sizeof(mpuConfiguration));
 
-    mpuIntExtiConfig = configToUse;
+    mpuIntExtiConfig = selectMPUIntExtiConfig();
 
     bool ack;
     uint8_t sig;
@@ -76,7 +114,7 @@ mpuDetectionResult_t *detectMpu(const extiConfig_t *configToUse)
     // MPU datasheet specifies 30ms.
     delay(35);
 
-    ack = mpuReadRegisterI2C(MPU_RA_WHO_AM_I, 1, &sig);
+    ack = actI2cRead(MPU_ADDRESS, MPU_RA_WHO_AM_I, 1, &sig, 1);
     if (ack) {
         mpuConfiguration.read = mpuReadRegisterI2C;
         mpuConfiguration.write = mpuWriteRegisterI2C;
@@ -92,7 +130,7 @@ mpuDetectionResult_t *detectMpu(const extiConfig_t *configToUse)
     mpuConfiguration.gyroReadXRegister = MPU_RA_GYRO_XOUT_H;
 
     // If an MPU3050 is connected sig will contain 0.
-    ack = mpuReadRegisterI2C(MPU_RA_WHO_AM_I_LEGACY, 1, &inquiryResult);
+    ack = actI2cRead(MPU_ADDRESS, MPU_RA_WHO_AM_I_LEGACY, 1, &inquiryResult, 1);
     inquiryResult &= MPU_INQUIRY_MASK;
     if (ack && inquiryResult == MPUx0x0_WHO_AM_I_CONST) {
         mpuDetectionResult.sensor = MPU_3050;
@@ -118,7 +156,7 @@ mpuDetectionResult_t *detectMpu(const extiConfig_t *configToUse)
 static bool detectSPISensorsAndUpdateDetectionResult(void)
 {
 #ifdef USE_GYRO_SPI_MPU6500
-    if (mpu6500SpiDetect()) {
+    if (mpu6500SpiDetect(&sensor_link)) {
         mpuDetectionResult.sensor = MPU_65xx_SPI;
         mpuConfiguration.gyroReadXRegister = MPU_RA_GYRO_XOUT_H;
         mpuConfiguration.read = mpu6500ReadRegister;
@@ -178,7 +216,7 @@ void MPU_DATA_READY_EXTI_Handler(void)
 
     EXTI_ClearITPendingBit(mpuIntExtiConfig->exti_line);
 
-    mpuDataReady = true;
+    if (sp_sensor_link && sp_sensor_link->gyro.p_task) sp_sensor_link->gyro.p_task->immediate = true;;
 
 #ifdef DEBUG_MPU_DATA_READY_INTERRUPT
     // Measure the delta in micro seconds between calls to the interrupt handler
@@ -195,7 +233,7 @@ void MPU_DATA_READY_EXTI_Handler(void)
 #endif
 }
 
-void configureMPUDataReadyInterruptHandling(void)
+static void configureMPUDataReadyInterruptHandling(void)
 {
 #ifdef USE_MPU_DATA_READY_SIGNAL
 
@@ -236,15 +274,17 @@ void configureMPUDataReadyInterruptHandling(void)
 #endif
 }
 
-void mpuIntExtiInit(void)
+bool mpuIntExtiInit(sensor_link_t* p_sensor_link)
 {
     gpio_config_t gpio;
 
     static bool mpuExtiInitDone = false;
 
-    if (mpuExtiInitDone || !mpuIntExtiConfig) {
-        return;
-    }
+    if (!mpuIntExtiConfig) return false;
+
+    if (p_sensor_link) sp_sensor_link = p_sensor_link;
+
+    if (mpuExtiInitDone) return true;
 
 #ifdef STM32F10X
         if (mpuIntExtiConfig->gpioAPB2Peripherals) {
@@ -260,6 +300,7 @@ void mpuIntExtiInit(void)
     configureMPUDataReadyInterruptHandling();
 
     mpuExtiInitDone = true;
+    return true;
 }
 
 static bool mpuReadRegisterI2C(uint8_t reg, uint8_t length, uint8_t* data)
@@ -304,14 +345,4 @@ bool mpuGyroRead(int16_t *gyroADC)
     gyroADC[2] = (int16_t)((data[4] << 8) | data[5]);
 
     return true;
-}
-
-bool mpuIsDataReady(void)
-{
-    if (mpuDataReady) {
-        mpuDataReady = false;
-        return true;
-    }
-
-    return false;
 }

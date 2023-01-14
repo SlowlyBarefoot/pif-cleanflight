@@ -32,8 +32,6 @@
 #include "config/runtime_config.h"
 
 #include "drivers/system.h"
-#include "drivers/sensor.h"
-#include "drivers/accgyro.h"
 
 #include "io/rc_controls.h"
 

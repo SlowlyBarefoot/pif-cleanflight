@@ -22,7 +22,9 @@
 
 #include "build_config.h"
 
-#include "barometer.h"
+#include "core/pif_i2c.h"
+
+#include "sensors/sensors.h"
 
 #include "gpio.h"
 #include "system.h"
@@ -30,6 +32,8 @@
 #include "nvic.h"
 
 #include "barometer_bmp085.h"
+
+#include "hardware_revision.h"
 
 #ifdef BARO
 
@@ -110,6 +114,18 @@ STATIC_UNIT_TESTED bmp085_t bmp085;
 #define UT_DELAY    6000        // 1.5ms margin according to the spec (4.5ms T conversion time)
 #define UP_DELAY    27000       // 6000+21000=27000 1.5ms margin according to the spec (25.5ms P conversion time with OSS=3)
 
+const char* bmp085_name = "BMP085";
+
+#if defined(BARO_XCLR_GPIO) && defined(BARO_EOC_GPIO)
+static const bmp085Config_t bmp085Config = {
+    .gpioAPB2Peripherals = BARO_APB2_PERIPHERALS,
+    .xclrGpioPin = BARO_XCLR_PIN,
+    .xclrGpioPort = BARO_XCLR_GPIO,
+    .eocGpioPin = BARO_EOC_PIN,
+    .eocGpioPort = BARO_EOC_GPIO
+};
+#endif
+
 static bool bmp085InitDone = false;
 STATIC_UNIT_TESTED uint16_t bmp085_ut;  // static result of temperature measurement
 STATIC_UNIT_TESTED uint32_t bmp085_up;  // static result of pressure measurement
@@ -142,21 +158,31 @@ void bmp085InitXCLRGpio(const bmp085Config_t *config) {
     gpioInit(config->xclrGpioPort, &gpio);
 }
 
-void bmp085Disable(const bmp085Config_t *config)
+void bmp085Disable(sensor_link_t* p_sensor_link, void* p_param)
 {
-    bmp085InitXCLRGpio(config);
-    BMP085_OFF;
+    UNUSED(p_sensor_link);
+    UNUSED(p_param);
+#if defined(BARO_XCLR_GPIO) && defined(BARO_EOC_GPIO) && defined(NAZE)
+    if (hardwareRevision == NAZE32) {
+        bmp085InitXCLRGpio(&bmp085Config);
+        BMP085_OFF;
+    }
+#endif
 }
 
-bool bmp085Detect(const bmp085Config_t *config, baro_t *baro)
+bool bmp085Detect(sensor_link_t* p_sensor_link, void* p_param)
 {
     uint8_t data;
     bool ack;
+    const bmp085Config_t *config = NULL;
+
+    UNUSED(p_param);
 
     if (bmp085InitDone)
         return true;
 
 #if defined(BARO_XCLR_GPIO) && defined(BARO_EOC_GPIO)
+    config = &bmp085Config;
     if (config) {
         EXTI_InitTypeDef EXTI_InitStructure;
         NVIC_InitTypeDef NVIC_InitStructure;
@@ -202,16 +228,17 @@ bool bmp085Detect(const bmp085Config_t *config, baro_t *baro)
             bmp085.ml_version = BMP085_GET_BITSLICE(data, BMP085_ML_VERSION); /* get ML Version */
             bmp085.al_version = BMP085_GET_BITSLICE(data, BMP085_AL_VERSION); /* get AL Version */
             bmp085_get_cal_param(); /* readout bmp085 calibparam structure */
-            baro->ut_delay = UT_DELAY;
-            baro->up_delay = UP_DELAY;
-            baro->start_ut = bmp085_start_ut;
-            baro->get_ut = bmp085_get_ut;
-            baro->start_up = bmp085_start_up;
-            baro->get_up = bmp085_get_up;
-            baro->calculate = bmp085_calculate;
+            p_sensor_link->baro.ut_delay = UT_DELAY;
+            p_sensor_link->baro.up_delay = UP_DELAY;
+            p_sensor_link->baro.start_ut = bmp085_start_ut;
+            p_sensor_link->baro.get_ut = bmp085_get_ut;
+            p_sensor_link->baro.start_up = bmp085_start_up;
+            p_sensor_link->baro.get_up = bmp085_get_up;
+            p_sensor_link->baro.calculate = bmp085_calculate;
 #if defined(BARO_EOC_GPIO)
             isEOCConnected = bmp085TestEOCConnected(config);
 #endif
+            p_sensor_link->baro.hw_name = bmp085_name;
             bmp085InitDone = true;
             return true;
         }

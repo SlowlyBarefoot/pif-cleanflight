@@ -22,6 +22,8 @@
 #include <platform.h>
 #include "scheduler.h"
 
+#define DISALLOW_YIELD_ID_I2C           1
+
 uint16_t taskMainPidLoopChecker(PifTask *p_task);
 uint16_t taskUpdateAccelerometer(PifTask *p_task);
 uint16_t taskHandleSerial(PifTask *p_task);
@@ -50,15 +52,17 @@ cfTask_t cfTasks[TASK_COUNT] = {
     [TASK_GYROPID] = {
         .taskName = "GYRO/PID",
         .taskFunc = taskMainPidLoopChecker,
-        .desiredPeriod = 1000,
-        .taskMode = TM_PERIOD_US
+        .desiredPeriod = 0,
+        .taskMode = TM_NEED,
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C
     },
 
     [TASK_ACCEL] = {
         .taskName = "ACCEL",
         .taskFunc = taskUpdateAccelerometer,
         .desiredPeriod = 10,        // every 10ms
-        .taskMode = TM_PERIOD_MS
+        .taskMode = TM_PERIOD_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C
     },
 
     [TASK_SERIAL] = {
@@ -105,7 +109,8 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "COMPASS",
         .taskFunc = taskUpdateCompass,
         .desiredPeriod = 100, 		// Compass is updated at 10 Hz
-        .taskMode = TM_PERIOD_MS
+        .taskMode = TM_PERIOD_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C
     },
 #endif
 
@@ -114,7 +119,8 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "BARO",
         .taskFunc = taskUpdateBaro,
         .desiredPeriod = 50, 		// 20 Hz
-        .taskMode = TM_CHANGE_MS
+        .taskMode = TM_CHANGE_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C
     },
 #endif
 
@@ -131,8 +137,8 @@ cfTask_t cfTasks[TASK_COUNT] = {
     [TASK_ALTITUDE] = {
         .taskName = "ALTITUDE",
         .taskFunc = taskCalculateAltitude,
-        .desiredPeriod = 25, 		// 40 Hz
-        .taskMode = TM_PERIOD_MS
+        .desiredPeriod = 0,
+        .taskMode = TM_NEED
     },
 #endif
 

@@ -69,42 +69,42 @@ void alignSensors(int32_t *src, int32_t *dest, uint8_t rotation)
 
     switch (rotation) {
         default:
-        case CW0_DEG:
+        case IMUS_ALIGN_CW0_DEG:
             dest[X] = swap[X];
             dest[Y] = swap[Y];
             dest[Z] = swap[Z];
             break;
-        case CW90_DEG:
+        case IMUS_ALIGN_CW90_DEG:
             dest[X] = swap[Y];
             dest[Y] = -swap[X];
             dest[Z] = swap[Z];
             break;
-        case CW180_DEG:
+        case IMUS_ALIGN_CW180_DEG:
             dest[X] = -swap[X];
             dest[Y] = -swap[Y];
             dest[Z] = swap[Z];
             break;
-        case CW270_DEG:
+        case IMUS_ALIGN_CW270_DEG:
             dest[X] = -swap[Y];
             dest[Y] = swap[X];
             dest[Z] = swap[Z];
             break;
-        case CW0_DEG_FLIP:
+        case IMUS_ALIGN_CW0_DEG_FLIP:
             dest[X] = -swap[X];
             dest[Y] = swap[Y];
             dest[Z] = -swap[Z];
             break;
-        case CW90_DEG_FLIP:
+        case IMUS_ALIGN_CW90_DEG_FLIP:
             dest[X] = swap[Y];
             dest[Y] = swap[X];
             dest[Z] = -swap[Z];
             break;
-        case CW180_DEG_FLIP:
+        case IMUS_ALIGN_CW180_DEG_FLIP:
             dest[X] = swap[X];
             dest[Y] = -swap[Y];
             dest[Z] = -swap[Z];
             break;
-        case CW270_DEG_FLIP:
+        case IMUS_ALIGN_CW270_DEG_FLIP:
             dest[X] = -swap[Y];
             dest[Y] = -swap[X];
             dest[Z] = -swap[Z];

@@ -17,4 +17,4 @@
 
 #pragma once
 
-bool ms5611Detect(baro_t *baro);
+bool ms5611Detect(sensor_link_t* p_sensor_link, void* p_param);

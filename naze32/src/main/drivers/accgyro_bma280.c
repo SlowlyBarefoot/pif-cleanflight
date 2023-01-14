@@ -20,10 +20,12 @@
 
 #include <platform.h>
 
+#include "core/pif_i2c.h"
+
+#include "sensors/sensors.h"
+
 #include "bus_i2c.h"
 
-#include "sensor.h"
-#include "accgyro.h"
 #include "accgyro_bma280.h"
 
 // BMA280, default I2C address mode 0x18
@@ -32,29 +34,36 @@
 #define BMA280_PMU_BW      0x10
 #define BMA280_PMU_RANGE   0x0F
 
-static void bma280Init(void);
+const char* bma280_name = "BMA280";
+
+static void bma280Init(sensor_link_t* p_sensor_link, void* p_param);
 static bool bma280Read(int16_t *accelData);
 
-bool bma280Detect(acc_t *acc)
+bool bma280Detect(sensor_link_t* p_sensor_link, void* p_param)
 {
     bool ack = false;
     uint8_t sig = 0;
+
+    (void)p_param;
 
     ack = i2cRead(BMA280_ADDRESS, 0x00, 1, &sig);
     if (!ack || sig != 0xFB)
         return false;
 
-    acc->init = bma280Init;
-    acc->read = bma280Read;
+    p_sensor_link->acc.hw_name = bma280_name;
+    p_sensor_link->acc.init = bma280Init;
+    p_sensor_link->acc.read = bma280Read;
     return true;
 }
 
-static void bma280Init(void)
+static void bma280Init(sensor_link_t* p_sensor_link, void* p_param)
 {
+    (void)p_param;
+
     i2cWrite(BMA280_ADDRESS, BMA280_PMU_RANGE, 0x08); // +-8g range
     i2cWrite(BMA280_ADDRESS, BMA280_PMU_BW, 0x0E); // 500Hz BW
 
-    acc_1G = 512 * 8;
+    p_sensor_link->acc.acc_1G = 512 * 8;
 }
 
 static bool bma280Read(int16_t *accelData)

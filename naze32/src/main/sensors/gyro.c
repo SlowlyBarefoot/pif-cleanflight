@@ -25,29 +25,23 @@
 #include "common/maths.h"
 #include "common/filter.h"
 
-#include "drivers/sensor.h"
-#include "drivers/accgyro.h"
 #include "drivers/gyro_sync.h"
-#include "sensors/sensors.h"
 #include "io/beeper.h"
 #include "io/statusindicator.h"
 #include "sensors/boardalignment.h"
 
 #include "sensors/gyro.h"
 
-uint16_t calibratingG = 0;
-int16_t gyroADCRaw[XYZ_AXIS_COUNT];
+static uint16_t calibratingG = 0;
+static int16_t gyroADCRaw[XYZ_AXIS_COUNT];
 int32_t gyroADC[XYZ_AXIS_COUNT];
-int32_t gyroZero[FLIGHT_DYNAMICS_INDEX_COUNT] = { 0, 0, 0 };
+static int32_t gyroZero[FLIGHT_DYNAMICS_INDEX_COUNT] = { 0, 0, 0 };
 
 static gyroConfig_t *gyroConfig;
 static biquad_t gyroFilterState[3];
 static bool gyroFilterStateIsSet;
 static float gyroLpfCutFreq;
 int axis;
-
-gyro_t gyro;                      // gyro access functions
-sensor_align_e gyroAlign = 0;
 
 void useGyroConfig(gyroConfig_t *gyroConfigToUse, float gyro_lpf_hz)
 {
@@ -133,14 +127,14 @@ static void applyGyroZero(void)
 void gyroUpdate(void)
 {
     // range: +/- 8192; +/- 2000 deg/sec
-    if (!gyro.read(gyroADCRaw)) {
+    if (!sensor_link.gyro.read(gyroADCRaw)) {
         return;
     }
 
     // Prepare a copy of int32_t gyroADC for mangling to prevent overflow
     for (axis = 0; axis < XYZ_AXIS_COUNT; axis++) gyroADC[axis] = gyroADCRaw[axis];
 
-    alignSensors(gyroADC, gyroADC, gyroAlign);
+    alignSensors(gyroADC, gyroADC, sensor_link.gyro.align);
 
     if (gyroLpfCutFreq) {
         if (!gyroFilterStateIsSet) initGyroFilterCoefficients(); /* initialise filter coefficients */

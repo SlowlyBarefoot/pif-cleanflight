@@ -29,8 +29,6 @@
 #include "common/maths.h"
 #include "common/axis.h"
 
-#include "drivers/sensor.h"
-#include "drivers/accgyro.h"
 #include "drivers/sonar_hcsr04.h"
 
 #include "sensors/sensors.h"
@@ -244,9 +242,9 @@ void calculateEstimatedAltitude(uint32_t currentTime)
         accAlt = 0;
     }
 
-    BaroAlt = baroCalculateAltitude();
+    sensor_link.baro.BaroAlt = baroCalculateAltitude();
 #else
-    BaroAlt = 0;
+    sensor_link.baro.BaroAlt = 0;
 #endif
 
 #ifdef SONAR
@@ -255,14 +253,14 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 
     if (sonarAlt > 0 && sonarAlt < sonarCfAltCm) {
         // just use the SONAR
-        baroAlt_offset = BaroAlt - sonarAlt;
-        BaroAlt = sonarAlt;
+        baroAlt_offset = sensor_link.baro.BaroAlt - sonarAlt;
+        sensor_link.baro.BaroAlt = sonarAlt;
     } else {
-        BaroAlt -= baroAlt_offset;
+        sensor_link.baro.BaroAlt -= baroAlt_offset;
         if (sonarAlt > 0  && sonarAlt <= sonarMaxAltWithTiltCm) {
             // SONAR in range, so use complementary filter
             sonarTransition = (float)(sonarMaxAltWithTiltCm - sonarAlt) / (sonarMaxAltWithTiltCm - sonarCfAltCm);
-            BaroAlt = sonarAlt * sonarTransition + BaroAlt * (1.0f - sonarTransition);
+            sensor_link.baro.BaroAlt = sonarAlt * sonarTransition + sensor_link.baro.BaroAlt * (1.0f - sonarTransition);
         }
     }
 #endif
@@ -279,7 +277,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 
     // Integrator - Altitude in cm
     accAlt += (vel_acc * 0.5f) * dt + vel * dt;                                                                 // integrate velocity to get distance (x= a/2 * t^2)
-    accAlt = accAlt * barometerConfig->baro_cf_alt + (float)BaroAlt * (1.0f - barometerConfig->baro_cf_alt);    // complementary filter for altitude estimation (baro & acc)
+    accAlt = accAlt * barometerConfig->baro_cf_alt + (float)sensor_link.baro.BaroAlt * (1.0f - barometerConfig->baro_cf_alt);    // complementary filter for altitude estimation (baro & acc)
     vel += vel_acc;
 
 #ifdef DEBUG_ALT_HOLD
@@ -299,7 +297,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 #ifdef SONAR
     if (sonarAlt > 0 && sonarAlt < sonarCfAltCm) {
         // the sonar has the best range
-        EstAlt = BaroAlt;
+        EstAlt = sensor_link.baro.BaroAlt;
     } else {
         EstAlt = accAlt;
     }
@@ -307,8 +305,8 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     EstAlt = accAlt;
 #endif
 
-    baroVel = (BaroAlt - lastBaroAlt) * 1000000.0f / dTime;
-    lastBaroAlt = BaroAlt;
+    baroVel = (sensor_link.baro.BaroAlt - lastBaroAlt) * 1000000.0f / dTime;
+    lastBaroAlt = sensor_link.baro.BaroAlt;
 
     baroVel = constrain(baroVel, -1500, 1500);  // constrain baro velocity +/- 1500cm/s
     baroVel = applyDeadband(baroVel, 10);       // to reduce noise near zero

@@ -167,7 +167,6 @@ typedef enum {
     MPU_NONE,
     MPU_3050,
     MPU_60x0,
-    MPU_60x0_SPI,
     MPU_65xx_I2C,
     MPU_65xx_SPI
 } detectedMPUSensor_e;
@@ -184,9 +183,7 @@ typedef struct mpuDetectionResult_s {
 
 extern mpuDetectionResult_t mpuDetectionResult;
 
-void configureMPUDataReadyInterruptHandling(void);
-void mpuIntExtiInit(void);
+bool mpuIntExtiInit(sensor_link_t* p_sensor_link);
 bool mpuAccRead(int16_t *accData);
 bool mpuGyroRead(int16_t *gyroADC);
-mpuDetectionResult_t *detectMpu(const extiConfig_t *configToUse);
-bool mpuIsDataReady(void);
+mpuDetectionResult_t *detectMpu();

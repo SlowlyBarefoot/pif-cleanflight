@@ -20,7 +20,9 @@
 
 #include <platform.h>
 
-#include "barometer.h"
+#include "core/pif_i2c.h"
+
+#include "sensors/sensors.h"
 
 #include "gpio.h"
 #include "system.h"
@@ -44,6 +46,8 @@
 #define CMD_PROM_RD             0xA0 // Prom read command
 #define PROM_NB                 8
 
+const char* ms5611_name = "MS5611";
+
 static void ms5611_reset(void);
 static uint16_t ms5611_prom(int8_t coef_num);
 STATIC_UNIT_TESTED int8_t ms5611_crc(uint16_t *prom);
@@ -59,11 +63,13 @@ STATIC_UNIT_TESTED uint32_t ms5611_up;  // static result of pressure measurement
 STATIC_UNIT_TESTED uint16_t ms5611_c[PROM_NB];  // on-chip ROM
 static uint8_t ms5611_osr = CMD_ADC_4096;
 
-bool ms5611Detect(baro_t *baro)
+bool ms5611Detect(sensor_link_t* p_sensor_link, void* p_param)
 {
     bool ack = false;
     uint8_t sig;
     int i;
+
+    (void)p_param;
 
     delay(10); // No idea how long the chip takes to power-up, but let's make it 10ms
 
@@ -80,13 +86,15 @@ bool ms5611Detect(baro_t *baro)
         return false;
 
     // TODO prom + CRC
-    baro->ut_delay = 10000;
-    baro->up_delay = 10000;
-    baro->start_ut = ms5611_start_ut;
-    baro->get_ut = ms5611_get_ut;
-    baro->start_up = ms5611_start_up;
-    baro->get_up = ms5611_get_up;
-    baro->calculate = ms5611_calculate;
+    p_sensor_link->baro.ut_delay = 10000;
+    p_sensor_link->baro.up_delay = 10000;
+    p_sensor_link->baro.start_ut = ms5611_start_ut;
+    p_sensor_link->baro.get_ut = ms5611_get_ut;
+    p_sensor_link->baro.start_up = ms5611_start_up;
+    p_sensor_link->baro.get_up = ms5611_get_up;
+    p_sensor_link->baro.calculate = ms5611_calculate;
+
+    p_sensor_link->baro.hw_name = ms5611_name;
 
     return true;
 }

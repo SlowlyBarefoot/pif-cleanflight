@@ -17,7 +17,6 @@
 
 #pragma once
 
-bool sensorsAutodetect(sensorAlignmentConfig_t *sensorAlignmentConfig, uint8_t gyroLpf,
+bool sensorsAutodetect(sensor_link_t* p_sensor_link, sensorAlignmentConfig_t *sensorAlignmentConfig, gyro_param_t* p_gyro_param,
         uint8_t accHardwareToUse, uint8_t magHardwareToUse, uint8_t baroHardwareToUse,
-        int16_t magDeclinationFromConfig,
-        uint32_t looptime, uint8_t gyroSync, uint8_t gyroSyncDenominator);
+        int16_t magDeclinationFromConfig);

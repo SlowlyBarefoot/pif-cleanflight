@@ -20,12 +20,18 @@
 
 #include <platform.h>
 
+#include "core/pif_i2c.h"
+
+#include "sensors/sensors.h"
+
 #include "system.h"
 #include "bus_i2c.h"
 
-#include "sensor.h"
-#include "accgyro.h"
 #include "accgyro_adxl345.h"
+
+#ifdef NAZE
+#include "hardware_revision.h"
+#endif
 
 // ADXL345, Alternative address mode 0x53
 #define ADXL345_ADDRESS     0x53
@@ -56,15 +62,22 @@
 #define ADXL345_RANGE_16G   0x03
 #define ADXL345_FIFO_STREAM 0x80
 
-static void adxl345Init(void);
+const char* adxl345_name = "ADXL345";
+
+static void adxl345Init(sensor_link_t* p_sensor_link, void* p_param);
 static bool adxl345Read(int16_t *accelData);
 
 static bool useFifo = false;
 
-bool adxl345Detect(drv_adxl345_config_t *init, acc_t *acc)
+bool adxl345Detect(sensor_link_t* p_sensor_link, void* p_param)
 {
     bool ack = false;
     uint8_t sig = 0;
+    drv_adxl345_config_t *init = (drv_adxl345_config_t*)p_param;
+
+#ifdef NAZE
+    if (hardwareRevision >= NAZE32_REV5) return false;
+#endif
 
     ack = i2cRead(ADXL345_ADDRESS, 0x00, 1, &sig);
     if (!ack || sig != 0xE5)
@@ -73,13 +86,16 @@ bool adxl345Detect(drv_adxl345_config_t *init, acc_t *acc)
     // use ADXL345's fifo to filter data or not
     useFifo = init->useFifo;
 
-    acc->init = adxl345Init;
-    acc->read = adxl345Read;
+    p_sensor_link->acc.hw_name = adxl345_name;
+    p_sensor_link->acc.init = adxl345Init;
+    p_sensor_link->acc.read = adxl345Read;
     return true;
 }
 
-static void adxl345Init(void)
+static void adxl345Init(sensor_link_t* p_sensor_link, void* p_param)
 {
+    (void)p_param;
+
     if (useFifo) {
         uint8_t fifoDepth = 16;
         i2cWrite(ADXL345_ADDRESS, ADXL345_POWER_CTL, ADXL345_POWER_MEAS);
@@ -91,7 +107,7 @@ static void adxl345Init(void)
         i2cWrite(ADXL345_ADDRESS, ADXL345_DATA_FORMAT, ADXL345_FULL_RANGE | ADXL345_RANGE_8G);
         i2cWrite(ADXL345_ADDRESS, ADXL345_BW_RATE, ADXL345_RATE_100);
     }
-    acc_1G = 265; // 3.3V operation // FIXME verify this is supposed to be 265, not 256. Typo?
+    p_sensor_link->acc.acc_1G = 265; // 3.3V operation // FIXME verify this is supposed to be 265, not 256. Typo?
 }
 
 uint8_t acc_samples = 0;

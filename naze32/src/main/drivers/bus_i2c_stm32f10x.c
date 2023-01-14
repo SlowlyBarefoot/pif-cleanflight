@@ -23,6 +23,8 @@
 
 #include "build_config.h"
 
+#include "core/pif_i2c.h"
+
 #include "gpio.h"
 #include "system.h"
 

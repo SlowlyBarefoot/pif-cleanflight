@@ -30,9 +30,6 @@
 #include "common/utils.h"
 #include "common/filter.h"
 
-#include "drivers/sensor.h"
-#include "drivers/accgyro.h"
-#include "drivers/compass.h"
 #include "drivers/light_led.h"
 
 #include "drivers/gpio.h"
@@ -44,7 +41,6 @@
 
 #include "io/rc_controls.h"
 
-#include "sensors/sensors.h"
 #include "sensors/boardalignment.h"
 #include "sensors/sonar.h"
 #include "sensors/compass.h"
@@ -269,8 +265,8 @@ void annexCode(void)
     }
 
     // Read out gyro temperature. can use it for something somewhere. maybe get MCU temperature instead? lots of fun possibilities.
-    if (gyro.temperature)
-        gyro.temperature(&telemTemperature1);
+    if (sensor_link.gyro.temperature)
+        sensor_link.gyro.temperature(&telemTemperature1);
 }
 
 void mwDisarm(void)
@@ -620,7 +616,7 @@ void filterRc(void){
 static bool haveProcessedAnnexCodeOnce = false;
 #endif
 
-void taskMainPidLoop(void)
+static void taskMainPidLoop(void)
 {
     dT = (float)cycleTime * 0.000001f;
 
@@ -718,19 +714,6 @@ void taskMainPidLoop(void)
 // Function for loop trigger
 uint16_t taskMainPidLoopChecker(PifTask *p_task)
 {
-    // pifTask_GetDeltaTime() returns delta time freezed at the moment of entering the scheduler. pif_timer1us is freezed at the very same point. 
-    // To make busy-waiting timeout work we need to account for time spent within busy-waiting loop
-    uint32_t currentDeltaTime;
-
-    if (masterConfig.gyroSync) {
-        currentDeltaTime = pifTask_GetDeltaTime(p_task, FALSE);
-        while (1) {
-            if (gyroSyncCheckUpdate() || ((currentDeltaTime + (micros() - pif_timer1us)) >= (targetLooptime + GYRO_WATCHDOG_DELAY))) {
-                break;
-            }
-        }
-    }
-
     cycleTime = pifTask_GetDeltaTime(p_task, TRUE);
     taskMainPidLoop();
     return 0;
@@ -790,7 +773,7 @@ uint16_t taskUpdateRxMain(PifTask *p_task)
 {
     uint16_t period;
 
-    UNUSED(p_task);
+    pifTask_GetDeltaTime(p_task, TRUE);
     period = updateRx();
     processRx();
     isRXDataNew = true;
@@ -847,9 +830,9 @@ uint16_t taskUpdateCompass(PifTask *p_task)
 #ifdef BARO
 uint16_t taskUpdateBaro(PifTask *p_task)
 {
-    UNUSED(p_task);
     if (sensors(SENSOR_BARO)) {
-        uint32_t newDeadline = baroUpdate();
+        pifTask_GetDeltaTime(p_task, TRUE);
+        uint32_t newDeadline = baroUpdate(cfTasks[TASK_ALTITUDE].p_task);
         return newDeadline / 1000;   // 1000 : us -> ms
     }
     return 0;
@@ -870,17 +853,8 @@ uint16_t taskUpdateSonar(PifTask *p_task)
 #if defined(BARO) || defined(SONAR)
 uint16_t taskCalculateAltitude(PifTask *p_task)
 {
-    UNUSED(p_task);
-    if (false
-#if defined(BARO)
-        || (sensors(SENSOR_BARO) && isBaroReady())
-#endif
-#if defined(SONAR)
-        || sensors(SENSOR_SONAR)
-#endif
-        ) {
-        calculateEstimatedAltitude(pif_timer1us);
-    }
+    pifTask_GetDeltaTime(p_task, TRUE);
+    calculateEstimatedAltitude(pif_timer1us);
     return 0;
 }
 #endif

@@ -23,11 +23,11 @@
 
 #include "build_config.h"
 
+#include "sensors/sensors.h"
+
 #include "drivers/system.h"
 #include "drivers/bus_spi.h"
-#include "drivers/sensor.h"
 #include "drivers/exti.h"
-#include "drivers/accgyro.h"
 #include "drivers/accgyro_mpu.h"
 #include "drivers/accgyro_mpu6500.h"
 

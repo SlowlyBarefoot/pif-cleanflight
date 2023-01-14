@@ -17,16 +17,15 @@
 
 #pragma once
 
-typedef enum {
-    SENSOR_INDEX_GYRO = 0,
-    SENSOR_INDEX_ACC,
-    SENSOR_INDEX_BARO,
-    SENSOR_INDEX_MAG
-} sensorIndex_e;
+#include "core/pif_task.h"
+#include "sensor/pif_imu_sensor.h"
 
-#define MAX_SENSORS_TO_DETECT (SENSOR_INDEX_MAG + 1)
+#define SENSOR_DEFAULT  1
 
-extern uint8_t detectedSensors[MAX_SENSORS_TO_DETECT];
+#define GYRO_MAX    4
+#define ACC_MAX     6
+#define MAG_MAX     2
+#define BARO_MAX    4
 
 typedef struct int16_flightDynamicsTrims_s {
     int16_t roll;
@@ -53,20 +52,86 @@ typedef enum {
     SENSOR_GPSMAG = 1 << 6,
 } sensors_e;
 
-typedef enum {
-    ALIGN_DEFAULT = 0,                                      // driver-provided alignment
-    CW0_DEG = 1,
-    CW90_DEG = 2,
-    CW180_DEG = 3,
-    CW270_DEG = 4,
-    CW0_DEG_FLIP = 5,
-    CW90_DEG_FLIP = 6,
-    CW180_DEG_FLIP = 7,
-    CW270_DEG_FLIP = 8
-} sensor_align_e;
-
 typedef struct sensorAlignmentConfig_s {
-    sensor_align_e gyro_align;              // gyro alignment
-    sensor_align_e acc_align;               // acc alignment
-    sensor_align_e mag_align;               // mag alignment
+    PifImuSensorAlign gyro_align;              // gyro alignment
+    PifImuSensorAlign acc_align;               // acc alignment
+    PifImuSensorAlign mag_align;               // mag alignment
 } sensorAlignmentConfig_t;
+
+typedef struct gyro_param_s {
+    uint8_t lpf;
+    uint8_t sync;
+    uint8_t sync_denominator;
+    uint32_t looptime;
+} gyro_param_t;
+
+struct sensor_link_s;
+typedef struct sensor_link_s sensor_link_t;
+
+typedef void (*imuInitFuncPtr)(sensor_link_t* p_sensor_link, void* p_param);    // imu init prototype
+typedef bool (*imuReadFuncPtr)(int16_t *data);                                  // imu read prototype
+typedef void (*baroOpFuncPtr)(void);                                            // baro start operation
+typedef void (*baroCalculateFuncPtr)(int32_t *pressure, int32_t *temperature);  // baro calculation (filled params are pressure and temperature)
+
+struct sensor_link_s {
+    struct {
+        const char* hw_name;
+        PifImuSensorAlign align;
+        imuInitFuncPtr init;                            // initialize function
+        imuReadFuncPtr read;                            // read 3 axis data function
+        imuReadFuncPtr temperature;                     // read temperature if available
+        PifTask* p_task;
+        bool can_sync;
+        float scale;                                    // scalefactor
+    } gyro;
+
+    struct {
+        const char* hw_name;
+        PifImuSensorAlign align;
+        imuInitFuncPtr init;                            // initialize function
+        imuReadFuncPtr read;                            // read 3 axis data function
+        char revisionCode;                              // a revision code for the sensor, if known
+        uint16_t acc_1G;
+    } acc;
+
+    struct {
+        const char* hw_name;
+        PifImuSensorAlign align;
+        imuInitFuncPtr init;                            // initialize function
+        imuReadFuncPtr read;                            // read 3 axis data function
+        float declination;                              // calculated at startup from config
+    } mag;
+
+    struct {
+        const char* hw_name;
+        uint16_t ut_delay;
+        uint16_t up_delay;
+        baroOpFuncPtr start_ut;
+        baroOpFuncPtr get_ut;
+        baroOpFuncPtr start_up;
+        baroOpFuncPtr get_up;
+        baroCalculateFuncPtr calculate;
+        int32_t temperature;                            // Use temperature for telemetry
+        int32_t BaroAlt;
+    } baro;
+};
+
+typedef void (*sensorDisableFuncPtr)(sensor_link_t *p_sensor_link, void* p_param);
+
+typedef struct sensor_disable_s {
+	sensorDisableFuncPtr p_func;
+	void* p_param;
+} sensorDisable_t;
+
+typedef bool (*sensorDetectFuncPtr)(sensor_link_t *p_sensor_link, void* p_param);
+
+typedef struct sensor_detect_s {
+    int sensor_no;
+    PifImuSensorAlign align;
+	sensorDetectFuncPtr p_func;
+	void* p_param;
+} sensorDetect_t;
+
+extern sensor_link_t sensor_link;
+
+extern void initSensorLink();

@@ -17,23 +17,6 @@
 
 #pragma once
 
-// Type of accelerometer used/detected
-typedef enum {
-    ACC_DEFAULT = 0,
-    ACC_NONE = 1,
-    ACC_ADXL345 = 2,
-    ACC_MPU6050 = 3,
-    ACC_MMA8452 = 4,
-    ACC_BMA280 = 5,
-    ACC_MPU6500 = 6
-} accelerationSensor_e;
-
-#define ACC_MAX  ACC_MPU6500
-
-extern sensor_align_e accAlign;
-extern acc_t acc;
-extern uint16_t acc_1G;
-
 extern int32_t accADC[XYZ_AXIS_COUNT];
 
 typedef struct rollAndPitchTrims_s {

@@ -21,6 +21,8 @@
 
 #include <platform.h>
 
+#include "core/pif_i2c.h"
+
 #include "bus_i2c.h"
 #include "system.h"
 

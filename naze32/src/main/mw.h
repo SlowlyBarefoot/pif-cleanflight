@@ -17,6 +17,7 @@
 
 #pragma once
 
+extern uint16_t cycleTime;
 extern int16_t magHold;
 
 void applyAndSaveAccelerometerTrimsDelta(rollAndPitchTrims_t *rollAndPitchTrimsDelta);

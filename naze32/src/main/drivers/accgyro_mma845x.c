@@ -20,13 +20,19 @@
 
 #include <platform.h>
 
+#include "core/pif_i2c.h"
+
+#include "sensors/sensors.h"
+
 #include "system.h"
 #include "gpio.h"
 #include "bus_i2c.h"
 
-#include "sensor.h"
-#include "accgyro.h"
 #include "accgyro_mma845x.h"
+
+#ifdef NAZE
+#include "hardware_revision.h"
+#endif
 
 // MMA8452QT, Standard address 0x1C
 // ACC_INT2 routed to PA5
@@ -75,22 +81,31 @@
 #define MMA8452_CTRL_REG1_LNOISE        0x04
 #define MMA8452_CTRL_REG1_ACTIVE        0x01
 
+const char* mma845x_name = "MMA845x";
+
 static uint8_t device_id;
 
-static void mma8452Init(void);
+static void mma8452Init(sensor_link_t* p_sensor_link, void* p_param);
 static bool mma8452Read(int16_t *accelData);
 
-bool mma8452Detect(acc_t *acc)
+bool mma8452Detect(sensor_link_t* p_sensor_link, void* p_param)
 {
     bool ack = false;
     uint8_t sig = 0;
+
+    (void)p_param;
+
+#ifdef NAZE
+    if (hardwareRevision >= NAZE32_REV5) return false;
+#endif
 
     ack = i2cRead(MMA8452_ADDRESS, MMA8452_WHO_AM_I, 1, &sig);
     if (!ack || (sig != MMA8452_DEVICE_SIGNATURE && sig != MMA8451_DEVICE_SIGNATURE))
         return false;
 
-    acc->init = mma8452Init;
-    acc->read = mma8452Read;
+    p_sensor_link->acc.hw_name = mma845x_name;
+    p_sensor_link->acc.init = mma8452Init;
+    p_sensor_link->acc.read = mma8452Read;
     device_id = sig;
     return true;
 }
@@ -116,8 +131,9 @@ static inline void mma8451ConfigureInterrupt(void)
     i2cWrite(MMA8452_ADDRESS, MMA8452_CTRL_REG5, 0); // DRDY routed to INT2
 }
 
-static void mma8452Init(void)
+static void mma8452Init(sensor_link_t* p_sensor_link, void* p_param)
 {
+    (void)p_param;
 
     i2cWrite(MMA8452_ADDRESS, MMA8452_CTRL_REG1, 0); // Put device in standby to configure stuff
     i2cWrite(MMA8452_ADDRESS, MMA8452_XYZ_DATA_CFG, MMA8452_FS_RANGE_8G);
@@ -128,7 +144,7 @@ static void mma8452Init(void)
 
     i2cWrite(MMA8452_ADDRESS, MMA8452_CTRL_REG1, MMA8452_CTRL_REG1_LNOISE | MMA8452_CTRL_REG1_ACTIVE); // Turn on measurements, low noise at max scale mode, Data Rate 800Hz. LNoise mode makes range +-4G.
 
-    acc_1G = 256;
+    p_sensor_link->acc.acc_1G = 256;
 }
 
 static bool mma8452Read(int16_t *accelData)

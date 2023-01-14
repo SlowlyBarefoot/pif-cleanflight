@@ -23,6 +23,8 @@
 #include "build_config.h"
 #include "debug.h"
 
+#include "core/pif_i2c.h"
+
 #include "common/maths.h"
 
 #include "nvic.h"
@@ -33,8 +35,6 @@
 #include "bus_i2c.h"
 #include "gyro_sync.h"
 
-#include "sensor.h"
-#include "accgyro.h"
 #include "accgyro_mpu.h"
 #include "accgyro_mpu6050.h"
 
@@ -51,57 +51,68 @@ extern uint8_t mpuLowPassFilter;
 
 #define MPU6050_SMPLRT_DIV      0       // 8000Hz
 
-static void mpu6050AccInit(void);
-static void mpu6050GyroInit(uint8_t lpf);
+const char* mpu6050_name = "MPU6050";
 
-bool mpu6050AccDetect(acc_t *acc)
+static void mpu6050AccInit(sensor_link_t* p_sensor_link, void* p_param);
+static void mpu6050GyroInit(sensor_link_t* p_sensor_link, void* p_param);
+
+bool mpu6050AccDetect(sensor_link_t* p_sensor_link, void* p_param)
 {
+    (void)p_param;
+
     if (mpuDetectionResult.sensor != MPU_60x0) {
         return false;
     }
 
-    acc->init = mpu6050AccInit;
-    acc->read = mpuAccRead;
-    acc->revisionCode = (mpuDetectionResult.resolution == MPU_HALF_RESOLUTION ? 'o' : 'n'); // es/non-es variance between MPU6050 sensors, half of the naze boards are mpu6000ES.
+    p_sensor_link->acc.hw_name = mpu6050_name;
+    p_sensor_link->acc.init = mpu6050AccInit;
+    p_sensor_link->acc.read = mpuAccRead;
+    p_sensor_link->acc.revisionCode = (mpuDetectionResult.resolution == MPU_HALF_RESOLUTION ? 'o' : 'n'); // es/non-es variance between MPU6050 sensors, half of the naze boards are mpu6000ES.
 
     return true;
 }
 
-bool mpu6050GyroDetect(gyro_t *gyro)
+bool mpu6050GyroDetect(sensor_link_t* p_sensor_link, void* p_param)
 {
+    (void)p_param;
+
     if (mpuDetectionResult.sensor != MPU_60x0) {
         return false;
     }
-    gyro->init = mpu6050GyroInit;
-    gyro->read = mpuGyroRead;
-    gyro->isDataReady = mpuIsDataReady;
+    p_sensor_link->gyro.hw_name = mpu6050_name;
+    p_sensor_link->gyro.init = mpu6050GyroInit;
+    p_sensor_link->gyro.read = mpuGyroRead;
 
     // 16.4 dps/lsb scalefactor
-    gyro->scale = 1.0f / 16.4f;
+    p_sensor_link->gyro.scale = 1.0f / 16.4f;
 
     return true;
 }
 
-static void mpu6050AccInit(void)
+static void mpu6050AccInit(sensor_link_t* p_sensor_link, void* p_param)
 {
-    mpuIntExtiInit();
+    (void)p_param;
+
+    mpuIntExtiInit(NULL);
 
     switch (mpuDetectionResult.resolution) {
         case MPU_HALF_RESOLUTION:
-            acc_1G = 256 * 8;
+            p_sensor_link->acc.acc_1G = 256 * 8;
             break;
         case MPU_FULL_RESOLUTION:
-            acc_1G = 512 * 8;
+            p_sensor_link->acc.acc_1G = 512 * 8;
             break;
     }
 }
 
-static void mpu6050GyroInit(uint8_t lpf)
+static void mpu6050GyroInit(sensor_link_t* p_sensor_link, void* p_param)
 {
     bool ack;
+    uint8_t lpf = 1;        // default
 
-    mpuIntExtiInit();
+    if (mpuIntExtiInit(p_sensor_link)) p_sensor_link->gyro.can_sync = true;
 
+    if (p_param) lpf = ((gyro_param_t*)p_param)->lpf;
     ack = mpuConfiguration.write(MPU_RA_PWR_MGMT_1, 0x80);      //PWR_MGMT_1    -- DEVICE_RESET 1
     delay(100);
     ack = mpuConfiguration.write(MPU_RA_PWR_MGMT_1, 0x03); //PWR_MGMT_1    -- SLEEP 0; CYCLE 0; TEMP_DIS 0; CLKSEL 3 (PLL with Z Gyro reference)

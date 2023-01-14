@@ -17,8 +17,9 @@
 
 #define INTERRUPT_WAIT_TIME 10
 
+#include "sensors/sensors.h"
+
 extern uint32_t targetLooptime;
 
-bool gyroSyncCheckUpdate(void);
 uint8_t gyroMPU6xxxCalculateDivider(void);
-void gyroUpdateSampleRate(uint32_t looptime, uint8_t lpf, uint8_t gyroSync, uint8_t gyroSyncDenominator);
+void gyroUpdateSampleRate(gyro_param_t* p_gyro_param);

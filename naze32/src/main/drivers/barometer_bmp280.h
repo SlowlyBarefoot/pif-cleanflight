@@ -17,5 +17,5 @@
 
 #pragma once
 
-bool bmp280Detect(baro_t *baro);
+bool bmp280Detect(sensor_link_t* p_sensor_link, void* p_param);
 

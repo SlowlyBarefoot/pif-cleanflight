@@ -28,8 +28,6 @@
 #include "common/maths.h"
 
 #include "drivers/system.h"
-#include "drivers/sensor.h"
-#include "drivers/accgyro.h"
 
 #include "sensors/sensors.h"
 #include "sensors/gyro.h"
@@ -45,7 +43,8 @@
 
 #include "config/runtime_config.h"
 
-extern uint16_t cycleTime;
+#include "mw.h"
+
 extern uint8_t motorCount;
 
 /*

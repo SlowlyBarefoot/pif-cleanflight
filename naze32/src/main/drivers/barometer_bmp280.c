@@ -22,7 +22,9 @@
 
 #include "build_config.h"
 
-#include "barometer.h"
+#include "core/pif_i2c.h"
+
+#include "sensors/sensors.h"
 
 #include "system.h"
 #include "bus_i2c.h"
@@ -88,6 +90,8 @@ typedef struct bmp280_calib_param_s {
     int32_t t_fine; /* calibration t_fine data */
 } bmp280_calib_param_t;
 
+const char* bmp280_name = "BMP280";
+
 static uint8_t bmp280_chip_id = 0;
 static bool bmp280InitDone = false;
 STATIC_UNIT_TESTED bmp280_calib_param_t bmp280_cal;
@@ -101,8 +105,10 @@ static void bmp280_start_up(void);
 static void bmp280_get_up(void);
 STATIC_UNIT_TESTED void bmp280_calculate(int32_t *pressure, int32_t *temperature);
 
-bool bmp280Detect(baro_t *baro)
+bool bmp280Detect(sensor_link_t* p_sensor_link, void* p_param)
 {
+    (void)p_param;
+
     if (bmp280InitDone)
         return true;
 
@@ -119,16 +125,18 @@ bool bmp280Detect(baro_t *baro)
 
     bmp280InitDone = true;
 
-    // these are dummy as temperature is measured as part of pressure
-    baro->ut_delay = 0;
-    baro->get_ut = bmp280_get_ut;
-    baro->start_ut = bmp280_start_ut;
-
     // only _up part is executed, and gets both temperature and pressure
-    baro->up_delay = ((T_INIT_MAX + T_MEASURE_PER_OSRS_MAX * (((1 << BMP280_TEMPERATURE_OSR) >> 1) + ((1 << BMP280_PRESSURE_OSR) >> 1)) + (BMP280_PRESSURE_OSR ? T_SETUP_PRESSURE_MAX : 0) + 15) / 16) * 1000;
-    baro->start_up = bmp280_start_up;
-    baro->get_up = bmp280_get_up;
-    baro->calculate = bmp280_calculate;
+    p_sensor_link->baro.up_delay = ((T_INIT_MAX + T_MEASURE_PER_OSRS_MAX * (((1 << BMP280_TEMPERATURE_OSR) >> 1) + ((1 << BMP280_PRESSURE_OSR) >> 1)) + (BMP280_PRESSURE_OSR ? T_SETUP_PRESSURE_MAX : 0) + 15) / 16) * 1000;
+    p_sensor_link->baro.start_up = bmp280_start_up;
+    p_sensor_link->baro.get_up = bmp280_get_up;
+    p_sensor_link->baro.calculate = bmp280_calculate;
+
+    // these are dummy as temperature is measured as part of pressure
+    p_sensor_link->baro.ut_delay = 50000 - p_sensor_link->baro.up_delay;
+    p_sensor_link->baro.get_ut = bmp280_get_ut;
+    p_sensor_link->baro.start_ut = bmp280_start_ut;
+
+    p_sensor_link->baro.hw_name = bmp280_name;
 
     return true;
 }

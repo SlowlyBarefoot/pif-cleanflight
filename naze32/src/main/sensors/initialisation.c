@@ -20,488 +20,195 @@
 
 #include <platform.h>
 
-#include "build_config.h"
+#include "sensors/sensors.h"
 
-#include "common/axis.h"
-
-#include "drivers/gpio.h"
-#include "drivers/system.h"
-#include "drivers/exti.h"
-
-#include "drivers/sensor.h"
-
-#include "drivers/accgyro.h"
-#include "drivers/accgyro_adxl345.h"
-#include "drivers/accgyro_bma280.h"
-#include "drivers/accgyro_mma845x.h"
-#include "drivers/accgyro_mpu.h"
-#include "drivers/accgyro_mpu3050.h"
-#include "drivers/accgyro_mpu6050.h"
-#include "drivers/accgyro_mpu6500.h"
-
-#include "drivers/bus_spi.h"
-#include "drivers/accgyro_spi_mpu6500.h"
 #include "drivers/gyro_sync.h"
-
-#include "drivers/barometer.h"
-#include "drivers/barometer_bmp085.h"
-#include "drivers/barometer_bmp280.h"
-#include "drivers/barometer_ms5611.h"
-
-#include "drivers/compass.h"
-#include "drivers/compass_hmc5883l.h"
-
-#include "drivers/sonar_hcsr04.h"
 
 #include "config/runtime_config.h"
 
-#include "sensors/sensors.h"
-#include "sensors/acceleration.h"
-#include "sensors/barometer.h"
-#include "sensors/gyro.h"
-#include "sensors/compass.h"
-#include "sensors/sonar.h"
-#include "sensors/initialisation.h"
 
-#ifdef NAZE
-#include "hardware_revision.h"
-#endif
-
-extern float magneticDeclination;
-
-extern gyro_t gyro;
-extern baro_t baro;
-extern acc_t acc;
-
-uint8_t detectedSensors[MAX_SENSORS_TO_DETECT] = { GYRO_NONE, ACC_NONE, BARO_NONE, MAG_NONE };
-
-
-const extiConfig_t *selectMPUIntExtiConfig(void)
+bool detectGyro(sensor_link_t* p_sensor_link)
 {
-#ifdef NAZE
-    // MPU_INT output on rev4 PB13
-    static const extiConfig_t nazeRev4MPUIntExtiConfig = {
-            .gpioAPB2Peripherals = RCC_APB2Periph_GPIOB,
-            .gpioPin = Pin_13,
-            .gpioPort = GPIOB,
-            .exti_port_source = GPIO_PortSourceGPIOB,
-            .exti_line = EXTI_Line13,
-            .exti_pin_source = GPIO_PinSource13,
-            .exti_irqn = EXTI15_10_IRQn
-    };
-    // MPU_INT output on rev5 hardware PC13
-    static const extiConfig_t nazeRev5MPUIntExtiConfig = {
-            .gpioAPB2Peripherals = RCC_APB2Periph_GPIOC,
-            .gpioPin = Pin_13,
-            .gpioPort = GPIOC,
-            .exti_port_source = GPIO_PortSourceGPIOC,
-            .exti_line = EXTI_Line13,
-            .exti_pin_source = GPIO_PinSource13,
-            .exti_irqn = EXTI15_10_IRQn
-    };
+    extern const sensorDetect_t gyro_detect[];
+    const sensorDetect_t* p_detect = gyro_detect;
+    p_sensor_link->gyro.align = IMUS_ALIGN_DEFAULT;
 
-    if (hardwareRevision < NAZE32_REV5) {
-        return &nazeRev4MPUIntExtiConfig;
-    } else {
-        return &nazeRev5MPUIntExtiConfig;
+    while (p_detect->p_func) {
+    	if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) {
+            p_sensor_link->gyro.align = p_detect->align;
+    		break;
+    	}
+    	p_detect++;
     }
-#endif
+    if (!p_sensor_link->gyro.hw_name) return false;
 
-    return NULL;
-}
-
-bool detectGyro(void)
-{
-    gyroSensor_e gyroHardware = GYRO_DEFAULT;
-    gyroAlign = ALIGN_DEFAULT;
-
-
-    switch(gyroHardware) {
-        case GYRO_DEFAULT:
-            ; // fallthrough
-        case GYRO_MPU6050:
-#ifdef USE_GYRO_MPU6050
-            if (mpu6050GyroDetect(&gyro)) {
-#ifdef GYRO_MPU6050_ALIGN
-                gyroHardware = GYRO_MPU6050;
-                gyroAlign = GYRO_MPU6050_ALIGN;
-#endif
-                break;
-            }
-#endif
-            ; // fallthrough
-
-        case GYRO_MPU3050:
-#ifdef USE_GYRO_MPU3050
-            if (mpu3050Detect(&gyro)) {
-#ifdef GYRO_MPU3050_ALIGN
-                gyroHardware = GYRO_MPU3050;
-                gyroAlign = GYRO_MPU3050_ALIGN;
-#endif
-                break;
-            }
-#endif
-            ; // fallthrough
-
-        case GYRO_MPU6500:
-#ifdef USE_GYRO_MPU6500
-            if (mpu6500GyroDetect(&gyro)) {
-                gyroHardware = GYRO_MPU6500;
-#ifdef GYRO_MPU6500_ALIGN
-                gyroAlign = GYRO_MPU6500_ALIGN;
-#endif
-
-                break;
-            }
-#endif
-
-#ifdef USE_GYRO_SPI_MPU6500
-            if (mpu6500SpiGyroDetect(&gyro)) {
-                gyroHardware = GYRO_MPU6500;
-#ifdef GYRO_MPU6500_ALIGN
-                gyroAlign = GYRO_MPU6500_ALIGN;
-#endif
-                break;
-            }
-#endif
-            ; // fallthrough
-
-        case GYRO_NONE:
-            gyroHardware = GYRO_NONE;
-    }
-
-    if (gyroHardware == GYRO_NONE) {
-        return false;
-    }
-
-    detectedSensors[SENSOR_INDEX_GYRO] = gyroHardware;
     sensorsSet(SENSOR_GYRO);
 
     return true;
 }
 
-static void detectAcc(accelerationSensor_e accHardwareToUse)
+static void detectAcc(sensor_link_t* p_sensor_link, int accHardwareToUse)
 {
-    bool sensorDetected;
-    UNUSED(sensorDetected); // avoid unused-variable warning on some targets.
+    extern const sensorDetect_t acc_detect[];
+    const sensorDetect_t* p_detect;
 
-    accelerationSensor_e accHardware;
+    p_sensor_link->acc.align = IMUS_ALIGN_DEFAULT;
 
-#ifdef USE_ACC_ADXL345
-    drv_adxl345_config_t acc_params;
-#endif
-
-retry:
-    accAlign = ALIGN_DEFAULT;
-
-    switch (accHardwareToUse) {
-        case ACC_DEFAULT:
-            ; // fallthrough
-        case ACC_ADXL345: // ADXL345
-#ifdef USE_ACC_ADXL345
-            acc_params.useFifo = false;
-            acc_params.dataRate = 800; // unused currently
-#ifdef NAZE
-            sensorDetected = (hardwareRevision < NAZE32_REV5) && adxl345Detect(&acc_params, &acc);
-#else
-            sensorDetected = adxl345Detect(&acc_params, &acc);
-#endif
-            if (sensorDetected) {
-#ifdef ACC_ADXL345_ALIGN
-                accAlign = ACC_ADXL345_ALIGN;
-#endif
-                accHardware = ACC_ADXL345;
-                break;
+    if (accHardwareToUse > SENSOR_DEFAULT) {
+        p_detect = acc_detect;
+        while (p_detect->p_func) {
+            if (p_detect->sensor_no >= accHardwareToUse) {
+                if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) {
+                    p_sensor_link->acc.align = p_detect->align;
+                    break;
+                }
             }
-#endif
-            ; // fallthrough
-        case ACC_MPU6050: // MPU6050
-#ifdef USE_ACC_MPU6050
-            if (mpu6050AccDetect(&acc)) {
-#ifdef ACC_MPU6050_ALIGN
-                accAlign = ACC_MPU6050_ALIGN;
-#endif
-                accHardware = ACC_MPU6050;
-                break;
-            }
-#endif
-            ; // fallthrough
-        case ACC_MMA8452: // MMA8452
-#ifdef USE_ACC_MMA8452
-#ifdef NAZE
-            sensorDetected = (hardwareRevision < NAZE32_REV5) && mma8452Detect(&acc);
-#else
-            sensorDetected = mma8452Detect(&acc);
-#endif
-            if (sensorDetected) {
-#ifdef ACC_MMA8452_ALIGN
-                accAlign = ACC_MMA8452_ALIGN;
-#endif
-                accHardware = ACC_MMA8452;
-                break;
-            }
-#endif
-            ; // fallthrough
-        case ACC_BMA280: // BMA280
-#ifdef USE_ACC_BMA280
-            if (bma280Detect(&acc)) {
-#ifdef ACC_BMA280_ALIGN
-                accAlign = ACC_BMA280_ALIGN;
-#endif
-                accHardware = ACC_BMA280;
-                break;
-            }
-#endif
-            ; // fallthrough
-        case ACC_MPU6500:
-#ifdef USE_ACC_MPU6500
-            if (mpu6500AccDetect(&acc)) {
-#ifdef ACC_MPU6500_ALIGN
-                accAlign = ACC_MPU6500_ALIGN;
-#endif
-                accHardware = ACC_MPU6500;
-                break;
-            }
-#endif
-
-#ifdef USE_ACC_SPI_MPU6500
-            if (mpu6500SpiAccDetect(&acc)) {
-#ifdef ACC_MPU6500_ALIGN
-                accAlign = ACC_MPU6500_ALIGN;
-#endif
-                accHardware = ACC_MPU6500;
-                break;
-            }
-#endif
-            ; // fallthrough
-        case ACC_NONE: // disable ACC
-            accHardware = ACC_NONE;
-            break;
-
+            p_detect++;
+        }
     }
 
     // Found anything? Check if error or ACC is really missing.
-    if (accHardware == ACC_NONE && accHardwareToUse != ACC_DEFAULT && accHardwareToUse != ACC_NONE) {
+    if (!p_sensor_link->acc.hw_name) {
         // Nothing was found and we have a forced sensor that isn't present.
-        accHardwareToUse = ACC_DEFAULT;
-        goto retry;
+        p_detect = acc_detect;
+        while (p_detect->p_func) {
+            if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) {
+                p_sensor_link->acc.align = p_detect->align;
+                break;
+            }
+            p_detect++;
+        }
     }
+    if (!p_sensor_link->acc.hw_name) return;
 
-
-    if (accHardware == ACC_NONE) {
-        return;
-    }
-
-    detectedSensors[SENSOR_INDEX_ACC] = accHardware;
     sensorsSet(SENSOR_ACC);
 }
 
-static void detectBaro(baroSensor_e baroHardwareToUse)
+static void detectBaro(sensor_link_t* p_sensor_link, int baroHardwareToUse)
 {
 #ifndef BARO
     UNUSED(baroHardwareToUse);
 #else
     // Detect what pressure sensors are available. baro->update() is set to sensor-specific update function
 
-    baroSensor_e baroHardware = baroHardwareToUse;
+    extern const sensorDisable_t baro_disable[];
+    const sensorDisable_t* p_disable = baro_disable;
 
-#ifdef USE_BARO_BMP085
+    extern const sensorDetect_t baro_detect[];
+    const sensorDetect_t* p_detect;
 
-    const bmp085Config_t *bmp085Config = NULL;
-
-#if defined(BARO_XCLR_GPIO) && defined(BARO_EOC_GPIO)
-    static const bmp085Config_t defaultBMP085Config = {
-            .gpioAPB2Peripherals = BARO_APB2_PERIPHERALS,
-            .xclrGpioPin = BARO_XCLR_PIN,
-            .xclrGpioPort = BARO_XCLR_GPIO,
-            .eocGpioPin = BARO_EOC_PIN,
-            .eocGpioPort = BARO_EOC_GPIO
-    };
-    bmp085Config = &defaultBMP085Config;
-#endif
-
-#ifdef NAZE
-    if (hardwareRevision == NAZE32) {
-        bmp085Disable(bmp085Config);
-    }
-#endif
-
-#endif
-
-    switch (baroHardware) {
-        case BARO_DEFAULT:
-            ; // fallthough
-
-        case BARO_MS5611:
-#ifdef USE_BARO_MS5611
-            if (ms5611Detect(&baro)) {
-                baroHardware = BARO_MS5611;
-                break;
-            }
-#endif
-            ; // fallthough
-        case BARO_BMP085:
-#ifdef USE_BARO_BMP085
-            if (bmp085Detect(bmp085Config, &baro)) {
-                baroHardware = BARO_BMP085;
-                break;
-            }
-#endif
-	    ; // fallthough
-        case BARO_BMP280:
-#ifdef USE_BARO_BMP280
-            if (bmp280Detect(&baro)) {
-                baroHardware = BARO_BMP280;
-                break;
-            }
-#endif
-        case BARO_NONE:
-            baroHardware = BARO_NONE;
-            break;
+    while (p_disable->p_func) {
+        (*p_disable->p_func)(p_sensor_link, p_disable->p_param);
+        p_disable++;
     }
 
-    if (baroHardware == BARO_NONE) {
-        return;
+    if (baroHardwareToUse > SENSOR_DEFAULT) {
+        p_detect = baro_detect;
+        while (p_detect->p_func) {
+            if (p_detect->sensor_no >= baroHardwareToUse) {
+                if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) break;
+            }
+            p_detect++;
+        }
     }
 
-    detectedSensors[SENSOR_INDEX_BARO] = baroHardware;
+    // Found anything? Check if error or ACC is really missing.
+    if (!p_sensor_link->baro.hw_name) {
+        // Nothing was found and we have a forced sensor that isn't present.
+        p_detect = baro_detect;
+        while (p_detect->p_func) {
+            if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) break;
+            p_detect++;
+        }
+    }
+    if (!p_sensor_link->baro.hw_name) return;
+
     sensorsSet(SENSOR_BARO);
 #endif
 }
 
 #ifdef MAG
-static void detectMag(magSensor_e magHardwareToUse)
+static void detectMag(sensor_link_t* p_sensor_link, int magHardwareToUse)
 {
-    magSensor_e magHardware;
+    extern const sensorDetect_t mag_detect[];
+    const sensorDetect_t* p_detect;
 
-#ifdef USE_MAG_HMC5883
-    const hmc5883Config_t *hmc5883Config = 0;
+    p_sensor_link->mag.align = IMUS_ALIGN_DEFAULT;
 
-#ifdef NAZE
-    static const hmc5883Config_t nazeHmc5883Config_v1_v4 = {
-            .gpioAPB2Peripherals = RCC_APB2Periph_GPIOB,
-            .gpioPin = Pin_12,
-            .gpioPort = GPIOB,
-
-            /* Disabled for v4 needs more work.
-            .exti_port_source = GPIO_PortSourceGPIOB,
-            .exti_pin_source = GPIO_PinSource12,
-            .exti_line = EXTI_Line12,
-            .exti_irqn = EXTI15_10_IRQn
-            */
-    };
-    static const hmc5883Config_t nazeHmc5883Config_v5 = {
-            .gpioAPB2Peripherals = RCC_APB2Periph_GPIOC,
-            .gpioPin = Pin_14,
-            .gpioPort = GPIOC,
-            .exti_port_source = GPIO_PortSourceGPIOC,
-            .exti_line = EXTI_Line14,
-            .exti_pin_source = GPIO_PinSource14,
-            .exti_irqn = EXTI15_10_IRQn
-    };
-    if (hardwareRevision < NAZE32_REV5) {
-        hmc5883Config = &nazeHmc5883Config_v1_v4;
-    } else {
-        hmc5883Config = &nazeHmc5883Config_v5;
+    if (magHardwareToUse > SENSOR_DEFAULT) {
+        p_detect = mag_detect;
+		while (p_detect->p_func) {
+            if (p_detect->sensor_no >= magHardwareToUse) {
+                if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) {
+                    p_sensor_link->mag.align = p_detect->align;
+                    break;
+                }
+            }
+			p_detect++;
+		}
     }
-#endif
 
-#endif
-
-retry:
-
-    magAlign = ALIGN_DEFAULT;
-
-    switch(magHardwareToUse) {
-        case MAG_DEFAULT:
-            ; // fallthrough
-
-        case MAG_HMC5883:
-#ifdef USE_MAG_HMC5883
-            if (hmc5883lDetect(&mag, hmc5883Config)) {
-#ifdef MAG_HMC5883_ALIGN
-                magAlign = MAG_HMC5883_ALIGN;
-#endif
-                magHardware = MAG_HMC5883;
+    if (!p_sensor_link->mag.hw_name) {
+        // Nothing was found and we have a forced sensor that isn't present.
+        p_detect = mag_detect;
+		while (p_detect->p_func) {
+            if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) {
+                p_sensor_link->mag.align = p_detect->align;
                 break;
             }
-#endif
-            ; // fallthrough
-
-        case MAG_NONE:
-            magHardware = MAG_NONE;
-            break;
+			p_detect++;
+		}
     }
+    if (!p_sensor_link->mag.hw_name) return;
 
-    if (magHardware == MAG_NONE && magHardwareToUse != MAG_DEFAULT && magHardwareToUse != MAG_NONE) {
-        // Nothing was found and we have a forced sensor that isn't present.
-        magHardwareToUse = MAG_DEFAULT;
-        goto retry;
-    }
-
-    if (magHardware == MAG_NONE) {
-        return;
-    }
-
-    detectedSensors[SENSOR_INDEX_MAG] = magHardware;
     sensorsSet(SENSOR_MAG);
 }
 #endif
 
-void reconfigureAlignment(sensorAlignmentConfig_t *sensorAlignmentConfig)
+void reconfigureAlignment(sensor_link_t* p_sensor_link, sensorAlignmentConfig_t *sensorAlignmentConfig)
 {
-    if (sensorAlignmentConfig->gyro_align != ALIGN_DEFAULT) {
-        gyroAlign = sensorAlignmentConfig->gyro_align;
+    if (sensorAlignmentConfig->gyro_align != IMUS_ALIGN_DEFAULT) {
+        p_sensor_link->gyro.align = sensorAlignmentConfig->gyro_align;
     }
-    if (sensorAlignmentConfig->acc_align != ALIGN_DEFAULT) {
-        accAlign = sensorAlignmentConfig->acc_align;
+    if (sensorAlignmentConfig->acc_align != IMUS_ALIGN_DEFAULT) {
+        p_sensor_link->acc.align = sensorAlignmentConfig->acc_align;
     }
 #ifdef MAG
-    if (sensorAlignmentConfig->mag_align != ALIGN_DEFAULT) {
-        magAlign = sensorAlignmentConfig->mag_align;
+    if (sensorAlignmentConfig->mag_align != IMUS_ALIGN_DEFAULT) {
+        p_sensor_link->mag.align = sensorAlignmentConfig->mag_align;
     }
 #endif
 }
 
-bool sensorsAutodetect(sensorAlignmentConfig_t *sensorAlignmentConfig, uint8_t gyroLpf, uint8_t accHardwareToUse, uint8_t magHardwareToUse, uint8_t baroHardwareToUse,
-        int16_t magDeclinationFromConfig,
-        uint32_t looptime, uint8_t gyroSync, uint8_t gyroSyncDenominator) {
+bool sensorsAutodetect(sensor_link_t* p_sensor_link, sensorAlignmentConfig_t *sensorAlignmentConfig, gyro_param_t* p_gyro_param, 
+        uint8_t accHardwareToUse, uint8_t magHardwareToUse, uint8_t baroHardwareToUse,
+        int16_t magDeclinationFromConfig) {
 
     int16_t deg, min;
 
 #ifndef MAG
     UNUSED(magHardwareToUse);
 #endif
-    memset(&acc, 0, sizeof(acc));
-    memset(&gyro, 0, sizeof(gyro));
 
-#if defined(USE_GYRO_MPU6050) || defined(USE_GYRO_MPU3050) || defined(USE_GYRO_MPU6500) || defined(USE_GYRO_SPI_MPU6500) || defined(USE_ACC_MPU6050)
-
-    const extiConfig_t *extiConfig = selectMPUIntExtiConfig();
-
-    mpuDetectionResult_t *mpuDetectionResult = detectMpu(extiConfig);
-    UNUSED(mpuDetectionResult);
-#endif
-
-    if (!detectGyro()) {
+    if (!detectGyro(p_sensor_link)) {
         return false;
     }
-    detectAcc(accHardwareToUse);
-    detectBaro(baroHardwareToUse);
+    detectAcc(p_sensor_link, accHardwareToUse);
+    detectBaro(p_sensor_link, baroHardwareToUse);
 
 
     // Now time to init things, acc first
     if (sensors(SENSOR_ACC))
-        acc.init();
+        p_sensor_link->acc.init(p_sensor_link, NULL);
     // this is safe because either mpu6050 or mpu3050 or lg3d20 sets it, and in case of fail, we never get here.
-    gyroUpdateSampleRate(looptime, gyroLpf, gyroSync, gyroSyncDenominator);   // Set gyro sampling rate divider before initialization
-    gyro.init(gyroLpf);
+    gyroUpdateSampleRate(p_gyro_param);   // Set gyro sampling rate divider before initialization
+    p_sensor_link->gyro.init(p_sensor_link, p_gyro_param);
 
 #ifdef MAG
-    detectMag(magHardwareToUse);
+    detectMag(p_sensor_link, magHardwareToUse);
 #endif
 
-    reconfigureAlignment(sensorAlignmentConfig);
+    reconfigureAlignment(p_sensor_link, sensorAlignmentConfig);
 
     // FIXME extract to a method to reduce dependencies, maybe move to sensors_compass.c
     if (sensors(SENSOR_MAG)) {
@@ -509,9 +216,9 @@ bool sensorsAutodetect(sensorAlignmentConfig_t *sensorAlignmentConfig, uint8_t g
         deg = magDeclinationFromConfig / 100;
         min = magDeclinationFromConfig % 100;
 
-        magneticDeclination = (deg + ((float)min * (1.0f / 60.0f))) * 10; // heading is in 0.1deg units
+        p_sensor_link->mag.declination = (deg + ((float)min * (1.0f / 60.0f))) * 10; // heading is in 0.1deg units
     } else {
-        magneticDeclination = 0.0f; // TODO investigate if this is actually needed if there is no mag sensor or if the value stored in the config should be used.
+        p_sensor_link->mag.declination = 0.0f; // TODO investigate if this is actually needed if there is no mag sensor or if the value stored in the config should be used.
     }
 
     return true;

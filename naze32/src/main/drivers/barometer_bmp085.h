@@ -25,8 +25,8 @@ typedef struct bmp085Config_s {
     GPIO_TypeDef *eocGpioPort;
 } bmp085Config_t;
 
-bool bmp085Detect(const bmp085Config_t *config, baro_t *baro);
-void bmp085Disable(const bmp085Config_t *config);
+bool bmp085Detect(sensor_link_t* p_sensor_link, void* p_param);
+void bmp085Disable(sensor_link_t* p_sensor_link, void* p_param);
 
 #if defined(BARO_EOC_GPIO)
 bool bmp085TestEOCConnected(const bmp085Config_t *config);

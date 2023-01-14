@@ -30,20 +30,16 @@
 #include "common/encoding.h"
 
 #include "drivers/gpio.h"
-#include "drivers/sensor.h"
 #include "drivers/system.h"
 #include "drivers/serial.h"
-#include "drivers/compass.h"
 #include "drivers/timer.h"
 #include "drivers/pwm_rx.h"
-#include "drivers/accgyro.h"
 #include "drivers/light_led.h"
 #include "drivers/sound_beeper.h"
 #include "drivers/gyro_sync.h"
 
 #include "io/rc_controls.h"
 
-#include "sensors/sensors.h"
 #include "sensors/boardalignment.h"
 #include "sensors/acceleration.h"
 #include "sensors/barometer.h"

@@ -23,14 +23,18 @@
 #include <platform.h>
 #include "scheduler.h"
 
+#include "core/pif_i2c.h"
+
 #include "common/axis.h"
 #include "common/color.h"
 #include "common/atomic.h"
 #include "common/maths.h"
 
+#include "sensors/sensors.h"
+
 #include "drivers/nvic.h"
 
-#include "drivers/sensor.h"
+#include "drivers/accgyro_mpu.h"
 #include "drivers/system.h"
 #include "drivers/dma.h"
 #include "drivers/gpio.h"
@@ -40,8 +44,6 @@
 #include "drivers/serial.h"
 #include "drivers/serial_softserial.h"
 #include "drivers/serial_uart.h"
-#include "drivers/accgyro.h"
-#include "drivers/compass.h"
 #include "drivers/pwm_mapping.h"
 #include "drivers/pwm_rx.h"
 #include "drivers/adc.h"
@@ -66,7 +68,6 @@
 #include "io/asyncfatfs/asyncfatfs.h"
 #include "io/transponder_ir.h"
 
-#include "sensors/sensors.h"
 #include "sensors/sonar.h"
 #include "sensors/barometer.h"
 #include "sensors/compass.h"
@@ -125,7 +126,7 @@ void displayInit(rxConfig_t *intialRxConfig);
 void ledStripInit(ledConfig_t *ledConfigsToUse, hsvColor_t *colorsToUse);
 void spektrumBind(rxConfig_t *rxConfig);
 const sonarHardware_t *sonarGetHardwareConfiguration(batteryConfig_t *batteryConfig);
-void sonarInit(const sonarHardware_t *sonarHardware);
+void sonarInit(const sonarHardware_t *sonarHardware, PifTask* p_task);
 void transponderInit(uint8_t* transponderCode);
 
 #ifdef STM32F10X
@@ -221,6 +222,7 @@ void buttonsHandleColdBootButtonPresses(void)
 void init(void)
 {
     drv_pwm_config_t pwm_params;
+    gyro_param_t gyro_param;
 
     printfSupportInit();
 
@@ -405,14 +407,14 @@ void init(void)
 #ifdef USE_I2C
 #if defined(NAZE)
     if (hardwareRevision != NAZE32_SP) {
-        i2cInit(I2C_DEVICE);
+        initI2cDevice(I2C_DEVICE);
     } else {
         if (!doesConfigurationUsePort(SERIAL_PORT_USART3)) {
-            i2cInit(I2C_DEVICE);
+        initI2cDevice(I2C_DEVICE);
         }
     }
 #else
-    i2cInit(I2C_DEVICE);
+    initI2cDevice(I2C_DEVICE);
 #endif
 #endif
 
@@ -440,9 +442,19 @@ void init(void)
     }
 #endif
 
-    if (!sensorsAutodetect(&masterConfig.sensorAlignmentConfig, masterConfig.gyro_lpf,
-        masterConfig.acc_hardware, masterConfig.mag_hardware, masterConfig.baro_hardware, currentProfile->mag_declination,
-        masterConfig.looptime, masterConfig.gyroSync, masterConfig.gyroSyncDenominator)) {
+#if defined(USE_GYRO_MPU6050) || defined(USE_GYRO_MPU3050) || defined(USE_GYRO_MPU6500) || defined(USE_GYRO_SPI_MPU6500) || defined(USE_ACC_MPU6050)
+    detectMpu();
+#endif
+
+    initSensorLink();
+    sensor_link.gyro.p_task = masterConfig.gyroSync ? cfTasks[TASK_GYROPID].p_task : NULL;
+    gyro_param.lpf = masterConfig.gyro_lpf;
+    gyro_param.sync = masterConfig.gyroSync;
+    gyro_param.sync_denominator = masterConfig.gyroSyncDenominator;
+    gyro_param.looptime = masterConfig.looptime;
+    if (!sensorsAutodetect(&sensor_link, &masterConfig.sensorAlignmentConfig, &gyro_param,
+        masterConfig.acc_hardware, masterConfig.mag_hardware, masterConfig.baro_hardware, 
+        currentProfile->mag_declination)) {
 
         // if gyro was not detected due to whatever reason, we give up now.
         failureMode(FAILURE_MISSING_ACC);
@@ -488,7 +500,7 @@ void init(void)
 
 #ifdef SONAR
     if (feature(FEATURE_SONAR)) {
-        sonarInit(sonarHardware);
+        sonarInit(sonarHardware, cfTasks[TASK_ALTITUDE].p_task);
     }
 #endif
 
@@ -626,17 +638,16 @@ int main(void) {
 
     if (!createTask(TASK_SYSTEM, TRUE)) goto bootloader;
 
+    if (!createTask(TASK_GYROPID, FALSE)) goto bootloader;
+
     init();
 
     /* Setup scheduler */
-    if (masterConfig.gyroSync) {
-        rescheduleTask(TASK_GYROPID, targetLooptime - INTERRUPT_WAIT_TIME);
-    }
-    else {
-        rescheduleTask(TASK_GYROPID, targetLooptime);
+    if (!masterConfig.gyroSync || !sensor_link.gyro.can_sync) {
+        changeTask(TASK_GYROPID, TM_PERIOD_US, targetLooptime);
+        cfTasks[TASK_GYROPID].p_task->pause = FALSE;
     }
 
-    if (!createTask(TASK_GYROPID, TRUE)) goto bootloader;
     if (!createTask(TASK_ACCEL, sensors(SENSOR_ACC) != 0)) goto bootloader;
     if (!createTask(TASK_SERIAL, TRUE)) goto bootloader;
 #ifdef BEEPER
@@ -654,10 +665,13 @@ int main(void) {
     if (!createTask(TASK_BARO, sensors(SENSOR_BARO) != 0)) goto bootloader;
 #endif
 #ifdef SONAR
+    #ifdef BARO
+    pif_Delay1ms(10);       // give a delay so that the cycles of baro and sonar do not overlap
+    #endif
     if (!createTask(TASK_SONAR, sensors(SENSOR_SONAR) != 0)) goto bootloader;
 #endif
 #if defined(BARO) || defined(SONAR)
-    if (!createTask(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR))) goto bootloader;
+    if (!createTask(TASK_ALTITUDE, FALSE)) goto bootloader;
 #endif
 #ifdef DISPLAY
     if (!createTask(TASK_DISPLAY, feature(FEATURE_DISPLAY) != 0)) goto bootloader;

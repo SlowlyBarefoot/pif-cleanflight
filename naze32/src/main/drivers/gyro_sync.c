@@ -24,38 +24,30 @@
 #include "common/axis.h"
 #include "common/maths.h"
 
-#include "drivers/sensor.h"
-#include "drivers/accgyro.h"
 #include "drivers/gyro_sync.h"
 
 #include "config/runtime_config.h"
 #include "config/config.h"
 
-extern gyro_t gyro;
-
 uint32_t targetLooptime;
-uint8_t mpuDividerDrops;
+static uint8_t mpuDividerDrops = 0;
 
-bool gyroSyncCheckUpdate(void) {
-    return gyro.isDataReady && gyro.isDataReady();
-}
-
-void gyroUpdateSampleRate(uint32_t looptime, uint8_t lpf, uint8_t gyroSync, uint8_t gyroSyncDenominator) {
+void gyroUpdateSampleRate(gyro_param_t* p_gyro_param) {
     int gyroSamplePeriod;
 
-    if (gyroSync) {
-        if (!lpf) {
+    if (p_gyro_param->sync) {
+        if (!p_gyro_param->lpf) {
             gyroSamplePeriod = 125;
 
         } else {
             gyroSamplePeriod = 1000;
         }
 
-        mpuDividerDrops  = gyroSyncDenominator - 1;
+        mpuDividerDrops  = p_gyro_param->sync_denominator - 1;
         targetLooptime = (mpuDividerDrops + 1) * gyroSamplePeriod;
     } else {
     	mpuDividerDrops = 0;
-    	targetLooptime = looptime;
+    	targetLooptime = p_gyro_param->looptime;
     }
 }
 

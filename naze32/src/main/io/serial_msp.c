@@ -26,15 +26,13 @@
 #include <platform.h>
 #include "scheduler.h"
 
+#include "core/pif_i2c.h"
+
 #include "common/axis.h"
 #include "common/color.h"
 #include "common/maths.h"
 
 #include "drivers/system.h"
-
-#include "drivers/sensor.h"
-#include "drivers/accgyro.h"
-#include "drivers/compass.h"
 
 #include "drivers/serial.h"
 #include "drivers/bus_i2c.h"
@@ -94,7 +92,6 @@
 #endif
 static serialPort_t *mspSerialPort;
 
-extern uint16_t cycleTime; // FIXME dependency on mw.c
 extern uint16_t rssi; // FIXME dependency on mw.c
 extern void resetPidProfile(pidProfile_t *pidProfile);
 
@@ -696,7 +693,7 @@ static bool processOutCommand(uint8_t cmdMSP)
         headSerialReply(18);
 
         // Hack scale due to choice of units for sensor data in multiwii
-        uint8_t scale = (acc_1G > 1024) ? 8 : 1;
+        uint8_t scale = (sensor_link.acc.acc_1G > 1024) ? 8 : 1;
 
         for (i = 0; i < 3; i++)
             serialize16(accSmooth[i] / scale);

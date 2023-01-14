@@ -29,16 +29,14 @@
 
 #include "build_config.h"
 
+#include "core/pif_i2c.h"
+
 #include "common/axis.h"
 #include "common/maths.h"
 #include "common/color.h"
 #include "common/typeconversion.h"
 
 #include "drivers/system.h"
-
-#include "drivers/sensor.h"
-#include "drivers/accgyro.h"
-#include "drivers/compass.h"
 
 #include "drivers/serial.h"
 #include "drivers/bus_i2c.h"
@@ -85,6 +83,7 @@
 
 #include "common/printf.h"
 
+#include "mw.h"
 #include "serial_cli.h"
 
 // FIXME remove this for targets that don't need a CLI.  Perhaps use a no-op macro when USE_CLI is not enabled
@@ -92,8 +91,6 @@
 uint8_t cliMode = 0;
 
 #ifdef USE_CLI
-
-extern uint16_t cycleTime; // FIXME dependency on mw.c
 
 void gpsEnablePassthrough(serialPort_t *gpsPassthroughPort);
 
@@ -199,13 +196,6 @@ static const char * const sensorTypeNames[] = {
 };
 
 #define SENSOR_NAMES_MASK (SENSOR_GYRO | SENSOR_ACC | SENSOR_BARO | SENSOR_MAG)
-
-static const char * const sensorHardwareNames[4][11] = {
-    { "", "None", "MPU6050", "L3G4200D", "MPU3050", "L3GD20", "MPU6000", "MPU6500", "FAKE", NULL },
-    { "", "None", "ADXL345", "MPU6050", "MMA845x", "BMA280", "LSM303DLHC", "MPU6000", "MPU6500", "FAKE", NULL },
-    { "", "None", "BMP085", "MS5611", "BMP280", NULL },
-    { "", "None", "HMC5883", "AK8975", "AK8963", NULL }
-};
 
 typedef struct {
     const char *name;
@@ -2430,13 +2420,28 @@ static void cliStatus(char *cmdline)
         if ((detectedSensorsMask & mask)) {
             if (mask & SENSOR_NAMES_MASK) {
                 const char *sensorHardware;
-                uint8_t sensorHardwareIndex = detectedSensors[i];
-                sensorHardware = sensorHardwareNames[i][sensorHardwareIndex];
+                switch (mask) {
+                case SENSOR_GYRO:
+                    sensorHardware = sensor_link.gyro.hw_name;
+                    break;
+
+                case SENSOR_ACC:
+                    sensorHardware = sensor_link.acc.hw_name;
+                    break;
+
+                case SENSOR_MAG:
+                    sensorHardware = sensor_link.mag.hw_name;
+                    break;
+
+                case SENSOR_BARO:
+                    sensorHardware = sensor_link.baro.hw_name;
+                    break;
+                }
 
                 cliPrintf(", %s=%s", sensorTypeNames[i], sensorHardware);
 
-                if (mask == SENSOR_ACC && acc.revisionCode) {
-                    cliPrintf(".%c", acc.revisionCode);
+                if (mask == SENSOR_ACC && sensor_link.acc.revisionCode) {
+                    cliPrintf(".%c", sensor_link.acc.revisionCode);
                 }
             }
             else {
@@ -2454,6 +2459,7 @@ static void cliStatus(char *cmdline)
 
     cliPrintf("Cycle Time: %d, I2C Errors: %d, config size: %d\r\n", cycleTime, i2cErrorCounter, sizeof(master_t));
     cliPrintf("Task Count=%d, Timer Count=%d\r\n", pifTaskManager_Count(), pifTimerManager_Count(&g_timer_1ms));
+    cliPrintf("IMU gyro_sync=%d\r\n", sensor_link.gyro.can_sync);
 }
 
 #ifndef SKIP_TASK_STATISTICS
@@ -2467,11 +2473,18 @@ static void cliTasks(char *cmdline)
     cliPrintf("Task list:\r\n");
     for (taskId = 0; taskId < TASK_COUNT; taskId++) {
         getTaskInfo(taskId, &taskInfo);
-        if (taskInfo.isEnabled) {
-            cliPrintf("%d - %s, max = %d us, avg = %d us, total = %d ms\r\n", taskId, taskInfo.taskName, taskInfo.maxExecutionTime, taskInfo.averageExecutionTime, taskInfo.totalExecutionTime / 1000);
+        if (taskInfo.totalExecutionTime) {
+            if (taskInfo.averagePeriodTime) {
+                cliPrintf("%d - %s, mode = %d, max = %d us, avg = %d us, total = %d ms, period = %d us\r\n", taskId, taskInfo.taskName, taskInfo.mode, 
+                        taskInfo.maxExecutionTime, taskInfo.averageExecutionTime, taskInfo.totalExecutionTime / 1000, taskInfo.averagePeriodTime);
+            }
+            else {
+                cliPrintf("%d - %s, mode = %d, max = %d us, avg = %d us, total = %d ms\r\n", taskId, taskInfo.taskName, taskInfo.mode, 
+                        taskInfo.maxExecutionTime, taskInfo.averageExecutionTime, taskInfo.totalExecutionTime / 1000);
+            }
         }
         else {
-            cliPrintf("%d - %s, disable\r\n", taskId, taskInfo.taskName);
+            cliPrintf("%d - %s, mode = %d\r\n", taskId, taskInfo.taskName, taskInfo.mode);
         }
     }
 }

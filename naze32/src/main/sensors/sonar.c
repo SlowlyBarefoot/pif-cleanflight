@@ -87,11 +87,11 @@ const sonarHardware_t *sonarGetHardwareConfiguration(batteryConfig_t *batteryCon
 #endif
 }
 
-void sonarInit(const sonarHardware_t *sonarHardware)
+void sonarInit(const sonarHardware_t *sonarHardware, PifTask* p_task)
 {
     sonarRange_t sonarRange;
 
-    hcsr04_init(sonarHardware, &sonarRange);
+    hcsr04_init(sonarHardware, &sonarRange, p_task);
     sensorsSet(SENSOR_SONAR);
     sonarMaxRangeCm = sonarRange.maxRangeCm;
     sonarCfAltCm = sonarMaxRangeCm / 2;

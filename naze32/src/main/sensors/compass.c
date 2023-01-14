@@ -22,8 +22,8 @@
 
 #include "common/axis.h"
 
-#include "drivers/sensor.h"
-#include "drivers/compass.h"
+#include "sensors/sensors.h"
+
 #include "drivers/compass_hmc5883l.h"
 #include "drivers/gpio.h"
 #include "drivers/light_led.h"
@@ -32,18 +32,14 @@
 #include "config/runtime_config.h"
 #include "config/config.h"
 
-#include "sensors/sensors.h"
 #include "sensors/compass.h"
 
 #ifdef NAZE
 #include "hardware_revision.h"
 #endif
 
-mag_t mag;                   // mag access functions
-
 int16_t magADCRaw[XYZ_AXIS_COUNT];
 int32_t magADC[XYZ_AXIS_COUNT];
-sensor_align_e magAlign = 0;
 #ifdef MAG
 static uint8_t magInit = 0;
 
@@ -51,7 +47,7 @@ void compassInit(void)
 {
     // initialize and calibration. turn on led during mag calibration (calibration routine blinks it)
     LED1_ON;
-    mag.init();
+    sensor_link.mag.init(&sensor_link, NULL);
     LED1_OFF;
     magInit = 1;
 }
@@ -63,9 +59,9 @@ void updateCompass(flightDynamicsTrims_t *magZero)
     static flightDynamicsTrims_t magZeroTempMax;
     uint32_t axis;
 
-    mag.read(magADCRaw);
+    sensor_link.mag.read(magADCRaw);
     for (axis = 0; axis < XYZ_AXIS_COUNT; axis++) magADC[axis] = magADCRaw[axis];  // int32_t copy to work with
-    alignSensors(magADC, magADC, magAlign);
+    alignSensors(magADC, magADC, sensor_link.mag.align);
 
     if (STATE(CALIBRATE_MAG)) {
         tCal = pif_timer1us;

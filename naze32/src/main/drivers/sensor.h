@@ -17,7 +17,28 @@
 
 #pragma once
 
-typedef void (*sensorInitFuncPtr)(void);                    // sensor init prototype
-typedef bool (*sensorReadFuncPtr)(int16_t *data);           // sensor read prototype
-typedef void (*sensorGyroInitFuncPtr)(uint8_t lpf);         // gyro sensor init prototype
-typedef bool (*sensorIsDataReadyFuncPtr)(void);             // sensor data ready prototype
+#define GYRO_NONE       0
+#define GYRO_DEFAULT    SENSOR_DEFAULT
+#define GYRO_MPU6050    2
+#define GYRO_MPU3050    3
+#define GYRO_MPU6500    4
+
+// Type of accelerometer used/detected
+#define ACC_NONE        0
+#define ACC_DEFAULT     SENSOR_DEFAULT
+#define ACC_ADXL345     2
+#define ACC_MPU6050     3
+#define ACC_MMA8452     4
+#define ACC_BMA280      5
+#define ACC_MPU6500     6
+
+// Type of magnetometer used/detected
+#define MAG_NONE        0
+#define MAG_DEFAULT     SENSOR_DEFAULT
+#define MAG_HMC5883     2
+
+#define BARO_NONE       0
+#define BARO_DEFAULT    SENSOR_DEFAULT
+#define BARO_BMP085     2
+#define BARO_MS5611     3
+#define BARO_BMP280     4

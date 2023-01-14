@@ -23,10 +23,12 @@
 
 typedef struct {
     const char * taskName;
+    uint8_t      mode;
     bool         isEnabled;
     uint32_t     maxExecutionTime;
     uint32_t     totalExecutionTime;
     uint32_t     averageExecutionTime;
+    uint32_t     averagePeriodTime;
 } cfTaskInfo_t;
 
 typedef enum {
@@ -77,10 +79,11 @@ typedef enum {
 
 typedef struct {
     /* Configuration */
-    const char * taskName;
+    const char* taskName;
     PifEvtTaskLoop taskFunc;
     uint16_t desiredPeriod;     // target period of execution
     PifTaskMode taskMode;
+    uint8_t disallow_yield_id;
 
     /* PIF */
     PifTask* p_task;
@@ -89,7 +92,7 @@ typedef struct {
 extern cfTask_t cfTasks[TASK_COUNT];
 
 void getTaskInfo(cfTaskId_e taskId, cfTaskInfo_t * taskInfo);
-void rescheduleTask(cfTaskId_e taskId, uint16_t newPeriod);
+BOOL changeTask(cfTaskId_e taskId, PifTaskMode newMode, uint16_t newPeriod);
 BOOL createTask(cfTaskId_e taskId, BOOL newEnabledState);
 
 #define LOAD_PERCENTAGE_ONE 100

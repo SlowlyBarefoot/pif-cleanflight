@@ -62,24 +62,32 @@ uint16_t taskSystem(PifTask *p_task)
 void getTaskInfo(cfTaskId_e taskId, cfTaskInfo_t * taskInfo)
 {
     taskInfo->taskName = cfTasks[taskId].taskName;
+    taskInfo->mode = cfTasks[taskId].p_task->_mode;
     taskInfo->isEnabled= !cfTasks[taskId].p_task->pause;
     taskInfo->maxExecutionTime = cfTasks[taskId].p_task->_max_execution_time;
     taskInfo->totalExecutionTime = cfTasks[taskId].p_task->_total_execution_time;
     taskInfo->averageExecutionTime = cfTasks[taskId].p_task->_total_execution_time / cfTasks[taskId].p_task->_execution_count;
+    taskInfo->averagePeriodTime = cfTasks[taskId].p_task->_total_period_time / cfTasks[taskId].p_task->_execution_count;
 }
 #endif
 
-void rescheduleTask(cfTaskId_e taskId, uint16_t newPeriod)
+BOOL changeTask(cfTaskId_e taskId, PifTaskMode newMode, uint16_t newPeriod)
 {
     if (taskId < TASK_COUNT) {
-        cfTasks[taskId].desiredPeriod = newPeriod;
+        if (pifTask_ChangeMode(cfTasks[taskId].p_task, newMode, newPeriod)) {
+            cfTasks[taskId].taskMode = newMode;
+            cfTasks[taskId].desiredPeriod = newPeriod;
+            return TRUE;
+        }
     }
+    return FALSE;
 }
 
 BOOL createTask(cfTaskId_e taskId, BOOL newEnabledState)
 {
     if (taskId < TASK_COUNT) {
 		cfTasks[taskId].p_task = pifTaskManager_Add(cfTasks[taskId].taskMode, cfTasks[taskId].desiredPeriod, cfTasks[taskId].taskFunc, NULL, newEnabledState);
+        cfTasks[taskId].p_task->disallow_yield_id = cfTasks[taskId].disallow_yield_id;
 	    return cfTasks[taskId].p_task != 0;
 	}
 	return FALSE;

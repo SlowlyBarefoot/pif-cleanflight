@@ -17,4 +17,4 @@
 
 #pragma once
 
-bool bma280Detect(acc_t *acc);
+bool bma280Detect(sensor_link_t* p_sensor_link, void* p_param);

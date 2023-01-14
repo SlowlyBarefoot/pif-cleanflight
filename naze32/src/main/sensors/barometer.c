@@ -24,17 +24,15 @@
 
 #include "common/maths.h"
 
-#include "drivers/barometer.h"
+#include "sensors/sensors.h"
+
 #include "drivers/system.h"
 #include "config/config.h"
 
 #include "sensors/barometer.h"
 
-baro_t baro;                        // barometer access functions
-uint16_t calibratingB = 0;      // baro calibration = get new ground pressure value
-int32_t baroPressure = 0;
-int32_t baroTemperature = 0;
-int32_t BaroAlt = 0;
+static uint16_t calibratingB = 0;      // baro calibration = get new ground pressure value
+static int32_t baroPressure = 0;
 
 #ifdef BARO
 
@@ -117,30 +115,27 @@ typedef enum {
 } barometerState_e;
 
 
-bool isBaroReady(void) {
-	return baroReady;
-}
-
-uint32_t baroUpdate(void)
+uint32_t baroUpdate(PifTask *p_task)
 {
     static barometerState_e state = BAROMETER_NEEDS_SAMPLES;
 
     switch (state) {
         default:
         case BAROMETER_NEEDS_SAMPLES:
-            baro.get_ut();
-            baro.start_up();
+            sensor_link.baro.get_ut();
+            sensor_link.baro.start_up();
             state = BAROMETER_NEEDS_CALCULATION;
-            return baro.up_delay;
+            return sensor_link.baro.up_delay;
         break;
 
         case BAROMETER_NEEDS_CALCULATION:
-            baro.get_up();
-            baro.start_ut();
-            baro.calculate(&baroPressure, &baroTemperature);
+            sensor_link.baro.get_up();
+            sensor_link.baro.start_ut();
+            sensor_link.baro.calculate(&baroPressure, &sensor_link.baro.temperature);
             baroPressureSum = recalculateBarometerTotal(barometerConfig->baro_sample_count, baroPressureSum, baroPressure);
+            if (baroReady && !p_task->_running) p_task->immediate = true;
             state = BAROMETER_NEEDS_SAMPLES;
-            return baro.ut_delay;
+            return sensor_link.baro.ut_delay;
         break;
     }
 }
@@ -153,9 +148,9 @@ int32_t baroCalculateAltitude(void)
     // see: https://github.com/diydrones/ardupilot/blob/master/libraries/AP_Baro/AP_Baro.cpp#L140
     BaroAlt_tmp = lrintf((1.0f - powf((float)(baroPressureSum / PRESSURE_SAMPLE_COUNT) / 101325.0f, 0.190295f)) * 4433000.0f); // in cm
     BaroAlt_tmp -= baroGroundAltitude;
-    BaroAlt = lrintf((float)BaroAlt * barometerConfig->baro_noise_lpf + (float)BaroAlt_tmp * (1.0f - barometerConfig->baro_noise_lpf)); // additional LPF to reduce baro noise
+    sensor_link.baro.BaroAlt = lrintf((float)sensor_link.baro.BaroAlt * barometerConfig->baro_noise_lpf + (float)BaroAlt_tmp * (1.0f - barometerConfig->baro_noise_lpf)); // additional LPF to reduce baro noise
 
-    return BaroAlt;
+    return sensor_link.baro.BaroAlt;
 }
 
 void performBaroCalibrationCycle(void)

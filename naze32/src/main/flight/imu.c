@@ -31,9 +31,6 @@
 #include "common/filter.h"
 
 #include "drivers/system.h"
-#include "drivers/sensor.h"
-#include "drivers/accgyro.h"
-#include "drivers/compass.h"
 
 #include "sensors/sensors.h"
 #include "sensors/gyro.h"
@@ -67,7 +64,6 @@ float throttleAngleScale;
 float fc_acc;
 float smallAngleCosZ = 0;
 
-float magneticDeclination = 0.0f;       // calculated at startup from config
 static bool isAccelUpdatedAtLeastOnce = false;
 
 static imuRuntimeConfig_t *imuRuntimeConfig;
@@ -125,8 +121,8 @@ void imuConfigure(
 void imuInit(void)
 {
     smallAngleCosZ = cos_approx(degreesToRadians(imuRuntimeConfig->small_angle));
-    gyroScale = gyro.scale * (M_PIf / 180.0f);  // gyro output scaled to rad per second
-    accVelScale = 9.80665f / acc_1G / 10000.0f;
+    gyroScale = sensor_link.gyro.scale * (M_PIf / 180.0f);  // gyro output scaled to rad per second
+    accVelScale = 9.80665f / sensor_link.acc.acc_1G / 10000.0f;
 
     imuComputeRotationMatrix();
 }
@@ -191,7 +187,7 @@ void imuCalculateAcceleration(uint32_t deltaT)
         }
         accel_ned.V.Z -= accZoffset / 64;  // compensate for gravitation on z-axis
     } else
-        accel_ned.V.Z -= acc_1G;
+        accel_ned.V.Z -= sensor_link.acc.acc_1G;
 
     accz_smooth = accz_smooth + (dT / (fc_acc + dT)) * (accel_ned.V.Z - accz_smooth); // low pass filter
 
@@ -342,7 +338,7 @@ STATIC_UNIT_TESTED void imuUpdateEulerAngles(void)
     /* Compute pitch/roll angles */
     attitude.values.roll = lrintf(atan2_approx(rMat[2][1], rMat[2][2]) * (1800.0f / M_PIf));
     attitude.values.pitch = lrintf(((0.5f * M_PIf) - acos_approx(-rMat[2][0])) * (1800.0f / M_PIf));
-    attitude.values.yaw = lrintf((-atan2_approx(rMat[1][0], rMat[0][0]) * (1800.0f / M_PIf) + magneticDeclination));
+    attitude.values.yaw = lrintf((-atan2_approx(rMat[1][0], rMat[0][0]) * (1800.0f / M_PIf) + sensor_link.mag.declination));
 
     if (attitude.values.yaw < 0)
         attitude.values.yaw += 3600;
@@ -364,7 +360,7 @@ static bool imuIsAccelerometerHealthy(void)
         accMagnitude += (int32_t)accSmooth[axis] * accSmooth[axis];
     }
 
-    accMagnitude = accMagnitude * 100 / (sq((int32_t)acc_1G));
+    accMagnitude = accMagnitude * 100 / (sq((int32_t)sensor_link.acc.acc_1G));
 
     // Accept accel readings only in range 0.90g - 1.10g
     return (81 < accMagnitude) && (accMagnitude < 121);

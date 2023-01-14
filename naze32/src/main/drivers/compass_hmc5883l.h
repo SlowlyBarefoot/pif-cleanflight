@@ -30,6 +30,6 @@ typedef struct hmc5883Config_s {
     IRQn_Type exti_irqn;
 } hmc5883Config_t;
 
-bool hmc5883lDetect(mag_t* mag, const hmc5883Config_t *hmc5883ConfigToUse);
-void hmc5883lInit(void);
+bool hmc5883lDetect(sensor_link_t* p_sensor_link, void* p_param);
+void hmc5883lInit(sensor_link_t* p_sensor_link, void* p_param);
 bool hmc5883lRead(int16_t *magData);

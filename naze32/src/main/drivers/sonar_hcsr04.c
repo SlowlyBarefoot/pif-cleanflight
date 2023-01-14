@@ -40,6 +40,7 @@
 STATIC_UNIT_TESTED volatile int32_t measurement = -1;
 static uint32_t lastMeasurementAt;
 static sonarHardware_t const *sonarHardware;
+static PifTask* p_task_altitude = NULL;
 
 #if !defined(UNIT_TEST)
 static void ECHO_EXTI_IRQHandler(void)
@@ -53,6 +54,7 @@ static void ECHO_EXTI_IRQHandler(void)
         timing_stop = micros();
         if (timing_stop > timing_start) {
             measurement = timing_stop - timing_start;
+            if (p_task_altitude && !p_task_altitude->_running) p_task_altitude->immediate = true;
         }
     }
 
@@ -75,12 +77,13 @@ void EXTI9_5_IRQHandler(void)
 }
 #endif
 
-void hcsr04_init(const sonarHardware_t *initialSonarHardware, sonarRange_t *sonarRange)
+void hcsr04_init(const sonarHardware_t *initialSonarHardware, sonarRange_t *sonarRange, PifTask* p_task)
 {
     sonarHardware = initialSonarHardware;
     sonarRange->maxRangeCm = HCSR04_MAX_RANGE_CM;
     sonarRange->detectionConeDeciDegrees = HCSR04_DETECTION_CONE_DECIDEGREES;
     sonarRange->detectionConeExtendedDeciDegrees = HCSR04_DETECTION_CONE_EXTENDED_DECIDEGREES;
+    p_task_altitude = p_task;
 
 #if !defined(UNIT_TEST)
     gpio_config_t gpio;

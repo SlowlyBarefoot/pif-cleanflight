@@ -30,13 +30,10 @@
 #include "common/utils.h"
 
 #include "drivers/gpio.h"
-#include "drivers/sensor.h"
 #include "drivers/system.h"
 #include "drivers/serial.h"
-#include "drivers/compass.h"
 #include "drivers/timer.h"
 #include "drivers/pwm_rx.h"
-#include "drivers/accgyro.h"
 #include "drivers/light_led.h"
 
 #include "io/rc_controls.h"
@@ -965,7 +962,7 @@ static void loadMainState(void)
 #endif
 
 #ifdef BARO
-    blackboxCurrent->BaroAlt = BaroAlt;
+    blackboxCurrent->BaroAlt = sensor_link.baro.BaroAlt;
 #endif
 
 #ifdef SONAR
@@ -1134,10 +1131,10 @@ static bool blackboxWriteSysinfo()
             blackboxPrintfHeaderLine("maxthrottle:%d", masterConfig.escAndServoConfig.maxthrottle);
         break;
         case 8:
-            blackboxPrintfHeaderLine("gyro.scale:0x%x", castFloatBytesToInt(gyro.scale));
+            blackboxPrintfHeaderLine("gyro.scale:0x%x", castFloatBytesToInt(sensor_link.gyro.scale));
         break;
         case 9:
-            blackboxPrintfHeaderLine("acc_1G:%u", acc_1G);
+            blackboxPrintfHeaderLine("acc_1G:%u", sensor_link.acc.acc_1G);
         break;
         case 10:
             if (testBlackboxCondition(FLIGHT_LOG_FIELD_CONDITION_VBAT)) {
