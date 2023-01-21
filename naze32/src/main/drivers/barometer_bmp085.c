@@ -158,9 +158,8 @@ void bmp085InitXCLRGpio(const bmp085Config_t *config) {
     gpioInit(config->xclrGpioPort, &gpio);
 }
 
-void bmp085Disable(sensor_link_t* p_sensor_link, void* p_param)
+void bmp085Disable(void* p_param)
 {
-    UNUSED(p_sensor_link);
     UNUSED(p_param);
 #if defined(BARO_XCLR_GPIO) && defined(BARO_EOC_GPIO) && defined(NAZE)
     if (hardwareRevision == NAZE32) {
@@ -170,7 +169,7 @@ void bmp085Disable(sensor_link_t* p_sensor_link, void* p_param)
 #endif
 }
 
-bool bmp085Detect(sensor_link_t* p_sensor_link, void* p_param)
+bool bmp085Detect(void* p_param)
 {
     uint8_t data;
     bool ack;
@@ -228,17 +227,17 @@ bool bmp085Detect(sensor_link_t* p_sensor_link, void* p_param)
             bmp085.ml_version = BMP085_GET_BITSLICE(data, BMP085_ML_VERSION); /* get ML Version */
             bmp085.al_version = BMP085_GET_BITSLICE(data, BMP085_AL_VERSION); /* get AL Version */
             bmp085_get_cal_param(); /* readout bmp085 calibparam structure */
-            p_sensor_link->baro.ut_delay = UT_DELAY;
-            p_sensor_link->baro.up_delay = UP_DELAY;
-            p_sensor_link->baro.start_ut = bmp085_start_ut;
-            p_sensor_link->baro.get_ut = bmp085_get_ut;
-            p_sensor_link->baro.start_up = bmp085_start_up;
-            p_sensor_link->baro.get_up = bmp085_get_up;
-            p_sensor_link->baro.calculate = bmp085_calculate;
+            sensor_link.baro.ut_delay = UT_DELAY;
+            sensor_link.baro.up_delay = UP_DELAY;
+            sensor_link.baro.start_ut = bmp085_start_ut;
+            sensor_link.baro.get_ut = bmp085_get_ut;
+            sensor_link.baro.start_up = bmp085_start_up;
+            sensor_link.baro.get_up = bmp085_get_up;
+            sensor_link.baro.calculate = bmp085_calculate;
 #if defined(BARO_EOC_GPIO)
             isEOCConnected = bmp085TestEOCConnected(config);
 #endif
-            p_sensor_link->baro.hw_name = bmp085_name;
+            sensor_link.baro.hw_name = bmp085_name;
             bmp085InitDone = true;
             return true;
         }

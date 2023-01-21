@@ -55,7 +55,6 @@
 
 #include "telemetry/telemetry.h"
 
-#include "sensors/boardalignment.h"
 #include "sensors/sensors.h"
 #include "sensors/battery.h"
 #include "sensors/sonar.h"

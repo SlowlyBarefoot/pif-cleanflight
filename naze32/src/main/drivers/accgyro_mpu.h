@@ -183,7 +183,7 @@ typedef struct mpuDetectionResult_s {
 
 extern mpuDetectionResult_t mpuDetectionResult;
 
-bool mpuIntExtiInit(sensor_link_t* p_sensor_link);
-bool mpuAccRead(int16_t *accData);
-bool mpuGyroRead(int16_t *gyroADC);
+bool mpuIntExtiInit();
+bool mpuAccRead(int32_t *accel);
+bool mpuGyroRead(int32_t *gyro);
 mpuDetectionResult_t *detectMpu();

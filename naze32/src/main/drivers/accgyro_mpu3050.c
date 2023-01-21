@@ -49,33 +49,31 @@
 
 const char* mpu3050_name = "MPU3050";
 
-static void mpu3050Init(sensor_link_t* p_sensor_link, void* p_param);
-static bool mpu3050ReadTemp(int16_t *tempData);
+static void mpu3050Init(void* p_param);
+static bool mpu3050ReadTemp(int32_t *tempData);
 
-bool mpu3050Detect(sensor_link_t* p_sensor_link, void* p_param)
+bool mpu3050Detect(void* p_param)
 {
     (void)p_param;
 
     if (mpuDetectionResult.sensor != MPU_3050) {
         return false;
     }
-    p_sensor_link->gyro.hw_name = mpu3050_name;
-    p_sensor_link->gyro.init = mpu3050Init;
-    p_sensor_link->gyro.read = mpuGyroRead;
-    p_sensor_link->gyro.temperature = mpu3050ReadTemp;
+    sensor_link.gyro.hw_name = mpu3050_name;
+    sensor_link.gyro.init = mpu3050Init;
+    sensor_link.gyro.read = mpuGyroRead;
+    sensor_link.gyro.temperature = mpu3050ReadTemp;
 
     // 16.4 dps/lsb scalefactor
-    p_sensor_link->gyro.scale = 1.0f / 16.4f;
+    sensor_link.gyro.scale = 1.0f / 16.4f;
 
     return true;
 }
 
-static void mpu3050Init(sensor_link_t* p_sensor_link, void* p_param)
+static void mpu3050Init(void* p_param)
 {
     bool ack;
     uint8_t lpf = 1;        // default
-
-    (void)p_sensor_link;
 
     delay(25); // datasheet page 13 says 20ms. other stuff could have been running meanwhile. but we'll be safe
 
@@ -90,9 +88,10 @@ static void mpu3050Init(sensor_link_t* p_sensor_link, void* p_param)
     mpuConfiguration.write(MPU3050_PWR_MGM, MPU3050_CLK_SEL_PLL_GX);
 }
 
-static bool mpu3050ReadTemp(int16_t *tempData)
+static bool mpu3050ReadTemp(int32_t *tempData)
 {
     uint8_t buf[2];
+
     if (!mpuConfiguration.read(MPU3050_TEMP_OUT, 2, buf)) {
         return false;
     }

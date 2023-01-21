@@ -19,8 +19,6 @@
 
 #include <platform.h>
 
-#include "core/pif_task.h"
-
 typedef struct sonarHardware_s {
     uint16_t trigger_pin;
 	GPIO_TypeDef* trigger_gpio;
@@ -31,19 +29,10 @@ typedef struct sonarHardware_s {
     IRQn_Type exti_irqn;
 } sonarHardware_t;
 
-typedef struct sonarRange_s {
-    int16_t maxRangeCm;
-    // these are full detection cone angles, maximum tilt is half of this
-    int16_t detectionConeDeciDegrees; // detection cone angle as in HC-SR04 device spec
-    int16_t detectionConeExtendedDeciDegrees; // device spec is conservative, in practice have slightly larger detection cone
-} sonarRange_t;
-
 #define SONAR_GPIO GPIOB
 
 #define HCSR04_MAX_RANGE_CM 400 // 4m, from HC-SR04 spec sheet
 #define HCSR04_DETECTION_CONE_DECIDEGREES 300 // recommended cone angle30 degrees, from HC-SR04 spec sheet
 #define HCSR04_DETECTION_CONE_EXTENDED_DECIDEGREES 450 // in practice 45 degrees seems to work well
 
-void hcsr04_init(const sonarHardware_t *sonarHardware, sonarRange_t *sonarRange, PifTask* p_task);
-void hcsr04_start_reading(void);
-int32_t hcsr04_get_distance(void);
+void hcsr04_init(void* p_param);

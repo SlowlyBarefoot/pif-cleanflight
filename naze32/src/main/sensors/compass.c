@@ -28,7 +28,6 @@
 #include "drivers/gpio.h"
 #include "drivers/light_led.h"
 
-#include "sensors/boardalignment.h"
 #include "config/runtime_config.h"
 #include "config/config.h"
 
@@ -38,7 +37,6 @@
 #include "hardware_revision.h"
 #endif
 
-int16_t magADCRaw[XYZ_AXIS_COUNT];
 int32_t magADC[XYZ_AXIS_COUNT];
 #ifdef MAG
 static uint8_t magInit = 0;
@@ -47,7 +45,7 @@ void compassInit(void)
 {
     // initialize and calibration. turn on led during mag calibration (calibration routine blinks it)
     LED1_ON;
-    sensor_link.mag.init(&sensor_link, NULL);
+    sensor_link.mag.init(NULL);
     LED1_OFF;
     magInit = 1;
 }
@@ -59,9 +57,7 @@ void updateCompass(flightDynamicsTrims_t *magZero)
     static flightDynamicsTrims_t magZeroTempMax;
     uint32_t axis;
 
-    sensor_link.mag.read(magADCRaw);
-    for (axis = 0; axis < XYZ_AXIS_COUNT; axis++) magADC[axis] = magADCRaw[axis];  // int32_t copy to work with
-    alignSensors(magADC, magADC, sensor_link.mag.align);
+    sensor_link.mag.read(magADC);
 
     if (STATE(CALIBRATE_MAG)) {
         tCal = pif_timer1us;

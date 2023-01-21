@@ -74,7 +74,6 @@
 #include "sensors/acceleration.h"
 #include "sensors/gyro.h"
 #include "sensors/battery.h"
-#include "sensors/boardalignment.h"
 #include "sensors/initialisation.h"
 
 #include "telemetry/telemetry.h"
@@ -125,8 +124,6 @@ void imuInit(void);
 void displayInit(rxConfig_t *intialRxConfig);
 void ledStripInit(ledConfig_t *ledConfigsToUse, hsvColor_t *colorsToUse);
 void spektrumBind(rxConfig_t *rxConfig);
-const sonarHardware_t *sonarGetHardwareConfiguration(batteryConfig_t *batteryConfig);
-void sonarInit(const sonarHardware_t *sonarHardware, PifTask* p_task);
 void transponderInit(uint8_t* transponderCode);
 
 #ifdef STM32F10X
@@ -144,6 +141,43 @@ typedef enum {
 } systemState_e;
 
 static uint8_t systemState = SYSTEM_STATE_INITIALISING;
+
+const sonarHardware_t *sonarGetHardwareConfiguration(batteryConfig_t *batteryConfig)
+{
+#if defined(NAZE)
+    static const sonarHardware_t const sonarPWM56 = {
+        .trigger_pin = Pin_8,   // PWM5 (PB8) - 5v tolerant
+        .trigger_gpio = GPIOB,
+        .echo_pin = Pin_9,      // PWM6 (PB9) - 5v tolerant
+        .echo_gpio = GPIOB,
+        .exti_line = EXTI_Line9,
+        .exti_pin_source = GPIO_PinSource9,
+        .exti_irqn = EXTI9_5_IRQn
+    };
+    static const sonarHardware_t sonarRC78 = {
+        .trigger_pin = Pin_0,   // RX7 (PB0) - only 3.3v ( add a 1K Ohms resistor )
+        .trigger_gpio = GPIOB,
+        .echo_pin = Pin_1,      // RX8 (PB1) - only 3.3v ( add a 1K Ohms resistor )
+        .echo_gpio = GPIOB,
+        .exti_line = EXTI_Line1,
+        .exti_pin_source = GPIO_PinSource1,
+        .exti_irqn = EXTI1_IRQn
+    };
+    // If we are using softserial, parallel PWM or ADC current sensor, then use motor pins 5 and 6 for sonar, otherwise use rc pins 7 and 8
+    if (feature(FEATURE_SOFTSERIAL)
+            || feature(FEATURE_RX_PARALLEL_PWM )
+            || (feature(FEATURE_CURRENT_METER) && batteryConfig->currentMeterType == CURRENT_SENSOR_ADC)) {
+        return &sonarPWM56;
+    } else {
+        return &sonarRC78;
+    }
+#elif defined(UNIT_TEST)
+    UNUSED(batteryConfig);
+    return 0;
+#else
+#error Sonar not defined for target
+#endif
+}
 
 void flashLedsAndBeep(void)
 {
@@ -446,13 +480,14 @@ void init(void)
     detectMpu();
 #endif
 
-    initSensorLink();
+    initSensorLink(&masterConfig.boardAlignment);
     sensor_link.gyro.p_task = masterConfig.gyroSync ? cfTasks[TASK_GYROPID].p_task : NULL;
+    sensor_link.baro.evt_read = &evtBaroRead;
     gyro_param.lpf = masterConfig.gyro_lpf;
     gyro_param.sync = masterConfig.gyroSync;
     gyro_param.sync_denominator = masterConfig.gyroSyncDenominator;
     gyro_param.looptime = masterConfig.looptime;
-    if (!sensorsAutodetect(&sensor_link, &masterConfig.sensorAlignmentConfig, &gyro_param,
+    if (!sensorsAutodetect(&masterConfig.sensorAlignmentConfig, &gyro_param,
         masterConfig.acc_hardware, masterConfig.mag_hardware, masterConfig.baro_hardware, 
         currentProfile->mag_declination)) {
 
@@ -500,7 +535,8 @@ void init(void)
 
 #ifdef SONAR
     if (feature(FEATURE_SONAR)) {
-        sonarInit(sonarHardware, cfTasks[TASK_ALTITUDE].p_task);
+        sensor_link.sonar.period = cfTasks[TASK_SONAR].desiredPeriod;
+        sonarInit(hcsr04_init, (void*)sonarHardware);
     }
 #endif
 
@@ -661,17 +697,26 @@ int main(void) {
 #ifdef MAG
     if (!createTask(TASK_COMPASS, sensors(SENSOR_MAG) != 0)) goto bootloader;
 #endif
-#ifdef BARO
-    if (!createTask(TASK_BARO, sensors(SENSOR_BARO) != 0)) goto bootloader;
-#endif
-#ifdef SONAR
-    #ifdef BARO
-    pif_Delay1ms(10);       // give a delay so that the cycles of baro and sonar do not overlap
-    #endif
-    if (!createTask(TASK_SONAR, sensors(SENSOR_SONAR) != 0)) goto bootloader;
-#endif
 #if defined(BARO) || defined(SONAR)
     if (!createTask(TASK_ALTITUDE, FALSE)) goto bootloader;
+#endif
+#ifdef BARO
+    if (!sensor_link.baro.p_task) {
+        if (!createTask(TASK_BARO, sensors(SENSOR_BARO) != 0)) goto bootloader;
+    }
+    else {
+        cfTasks[TASK_BARO].p_task = sensor_link.baro.p_task;
+        cfTasks[TASK_BARO].taskMode = sensor_link.baro.p_task->_mode;
+        cfTasks[TASK_BARO].isCreate = true;
+    }
+#endif
+#ifdef SONAR
+    if (sensor_link.sonar.p_task) {
+        sensor_link.p_task_altitude = cfTasks[TASK_ALTITUDE].p_task;
+        cfTasks[TASK_SONAR].p_task = sensor_link.sonar.p_task;
+        cfTasks[TASK_SONAR].taskMode = sensor_link.sonar.p_task->_mode;
+        cfTasks[TASK_SONAR].isCreate = true;
+    }
 #endif
 #ifdef DISPLAY
     if (!createTask(TASK_DISPLAY, feature(FEATURE_DISPLAY) != 0)) goto bootloader;

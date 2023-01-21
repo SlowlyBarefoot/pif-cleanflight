@@ -117,6 +117,7 @@ typedef enum {
 
 uint32_t baroUpdate(PifTask *p_task)
 {
+    int32_t temp;
     static barometerState_e state = BAROMETER_NEEDS_SAMPLES;
 
     switch (state) {
@@ -131,7 +132,8 @@ uint32_t baroUpdate(PifTask *p_task)
         case BAROMETER_NEEDS_CALCULATION:
             sensor_link.baro.get_up();
             sensor_link.baro.start_ut();
-            sensor_link.baro.calculate(&baroPressure, &sensor_link.baro.temperature);
+            sensor_link.baro.calculate(&baroPressure, &temp);
+            sensor_link.baro.temperature = temp / 100.0f;
             baroPressureSum = recalculateBarometerTotal(barometerConfig->baro_sample_count, baroPressureSum, baroPressure);
             if (baroReady && !p_task->_running) p_task->immediate = true;
             state = BAROMETER_NEEDS_SAMPLES;
@@ -160,6 +162,15 @@ void performBaroCalibrationCycle(void)
     baroGroundAltitude = (1.0f - powf((baroGroundPressure / 8) / 101325.0f, 0.190295f)) * 4433000.0f;
 
     calibratingB--;
+}
+
+void evtBaroRead(float pressure, float temperature)
+{
+    pifTask_GetDeltaTime(cfTasks[TASK_BARO].p_task, TRUE);
+    baroPressure = pressure * 100;
+    sensor_link.baro.temperature = temperature;
+    baroPressureSum = recalculateBarometerTotal(barometerConfig->baro_sample_count, baroPressureSum, baroPressure);
+    if (baroReady && !cfTasks[TASK_ALTITUDE].p_task->_running) cfTasks[TASK_ALTITUDE].p_task->immediate = true;
 }
 
 #endif /* BARO */

@@ -33,7 +33,6 @@ uint16_t taskUpdateRxMain(PifTask *p_task);
 uint16_t taskProcessGPS(PifTask *p_task);
 uint16_t taskUpdateCompass(PifTask *p_task);
 uint16_t taskUpdateBaro(PifTask *p_task);
-uint16_t taskUpdateSonar(PifTask *p_task);
 uint16_t taskCalculateAltitude(PifTask *p_task);
 uint16_t taskUpdateDisplay(PifTask *p_task);
 uint16_t taskTelemetry(PifTask *p_task);
@@ -46,7 +45,9 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "SYSTEM",
         .taskFunc = taskSystem,
         .desiredPeriod = 100,       // run every 100 ms
-        .taskMode = TM_PERIOD_MS
+        .taskMode = TM_PERIOD_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
+        .isCreate = false
     },
 
     [TASK_GYROPID] = {
@@ -54,7 +55,8 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskFunc = taskMainPidLoopChecker,
         .desiredPeriod = 0,
         .taskMode = TM_NEED,
-        .disallow_yield_id = DISALLOW_YIELD_ID_I2C
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
+        .isCreate = false
     },
 
     [TASK_ACCEL] = {
@@ -62,14 +64,17 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskFunc = taskUpdateAccelerometer,
         .desiredPeriod = 10,        // every 10ms
         .taskMode = TM_PERIOD_MS,
-        .disallow_yield_id = DISALLOW_YIELD_ID_I2C
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
+        .isCreate = false
     },
 
     [TASK_SERIAL] = {
         .taskName = "SERIAL",
         .taskFunc = taskHandleSerial,
         .desiredPeriod = 10,        // 100 Hz should be enough to flush up to 115 bytes @ 115200 baud
-        .taskMode = TM_PERIOD_MS
+        .taskMode = TM_PERIOD_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
+        .isCreate = false
     },
 
 #ifdef BEEPER
@@ -77,7 +82,9 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "BEEPER",
         .taskFunc = taskUpdateBeeper,
         .desiredPeriod = 10,        // 100 Hz
-        .taskMode = TM_PERIOD_MS
+        .taskMode = TM_PERIOD_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
+        .isCreate = false
     },
 #endif
 
@@ -85,14 +92,18 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "BATTERY",
         .taskFunc = taskUpdateBattery,
         .desiredPeriod = 20,        // 50 Hz
-        .taskMode = TM_PERIOD_MS
+        .taskMode = TM_PERIOD_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
+        .isCreate = false
     },
 
     [TASK_RX] = {
         .taskName = "RX",
         .taskFunc = taskUpdateRxMain,
         .desiredPeriod = 20,        // If event-based scheduling doesn't work, fallback to periodic scheduling
-        .taskMode = TM_CHANGE_MS
+        .taskMode = TM_CHANGE_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
+        .isCreate = false
     },
 
 #ifdef GPS
@@ -100,7 +111,9 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "GPS",
         .taskFunc = taskProcessGPS,
         .desiredPeriod = 100, 		// GPS usually don't go raster than 10Hz
-        .taskMode = TM_PERIOD_MS
+        .taskMode = TM_PERIOD_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
+        .isCreate = false
     },
 #endif
 
@@ -110,7 +123,8 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskFunc = taskUpdateCompass,
         .desiredPeriod = 100, 		// Compass is updated at 10 Hz
         .taskMode = TM_PERIOD_MS,
-        .disallow_yield_id = DISALLOW_YIELD_ID_I2C
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
+        .isCreate = false
     },
 #endif
 
@@ -120,16 +134,19 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskFunc = taskUpdateBaro,
         .desiredPeriod = 50, 		// 20 Hz
         .taskMode = TM_CHANGE_MS,
-        .disallow_yield_id = DISALLOW_YIELD_ID_I2C
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
+        .isCreate = false
     },
 #endif
 
 #ifdef SONAR
     [TASK_SONAR] = {
         .taskName = "SONAR",
-        .taskFunc = taskUpdateSonar,
+        .taskFunc = NULL,
         .desiredPeriod = 50, 		// 20 Hz
-        .taskMode = TM_PERIOD_MS
+        .taskMode = TM_PERIOD_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
+        .isCreate = false
     },
 #endif
 
@@ -138,7 +155,9 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "ALTITUDE",
         .taskFunc = taskCalculateAltitude,
         .desiredPeriod = 0,
-        .taskMode = TM_NEED
+        .taskMode = TM_NEED,
+        .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
+        .isCreate = false
     },
 #endif
 
@@ -147,7 +166,9 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "TRANSPONDER",
         .taskFunc = taskTransponder,
         .desiredPeriod = 4, 		// 250 Hz
-        .taskMode = TM_PERIOD_MS
+        .taskMode = TM_PERIOD_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
+        .isCreate = false
     },
 #endif
 
@@ -156,7 +177,9 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "DISPLAY",
         .taskFunc = taskUpdateDisplay,
         .desiredPeriod = 100, 		// 10 Hz
-        .taskMode = TM_PERIOD_MS
+        .taskMode = TM_PERIOD_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
+        .isCreate = false
     },
 #endif
 
@@ -165,7 +188,9 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "TELEMETRY",
         .taskFunc = taskTelemetry,
         .desiredPeriod = 4, 		// 250 Hz
-        .taskMode = TM_IDLE_MS
+        .taskMode = TM_IDLE_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
+        .isCreate = false
     },
 #endif
 
@@ -174,7 +199,9 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "LEDSTRIP",
         .taskFunc = taskLedStrip,
         .desiredPeriod = 10, 		// 100 Hz
-        .taskMode = TM_IDLE_MS
+        .taskMode = TM_IDLE_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
+        .isCreate = false
     },
 #endif
 };

@@ -63,7 +63,7 @@ STATIC_UNIT_TESTED uint32_t ms5611_up;  // static result of pressure measurement
 STATIC_UNIT_TESTED uint16_t ms5611_c[PROM_NB];  // on-chip ROM
 static uint8_t ms5611_osr = CMD_ADC_4096;
 
-bool ms5611Detect(sensor_link_t* p_sensor_link, void* p_param)
+bool ms5611Detect(void* p_param)
 {
     bool ack = false;
     uint8_t sig;
@@ -86,15 +86,15 @@ bool ms5611Detect(sensor_link_t* p_sensor_link, void* p_param)
         return false;
 
     // TODO prom + CRC
-    p_sensor_link->baro.ut_delay = 10000;
-    p_sensor_link->baro.up_delay = 10000;
-    p_sensor_link->baro.start_ut = ms5611_start_ut;
-    p_sensor_link->baro.get_ut = ms5611_get_ut;
-    p_sensor_link->baro.start_up = ms5611_start_up;
-    p_sensor_link->baro.get_up = ms5611_get_up;
-    p_sensor_link->baro.calculate = ms5611_calculate;
+    sensor_link.baro.ut_delay = 10000;
+    sensor_link.baro.up_delay = 10000;
+    sensor_link.baro.start_ut = ms5611_start_ut;
+    sensor_link.baro.get_ut = ms5611_get_ut;
+    sensor_link.baro.start_up = ms5611_start_up;
+    sensor_link.baro.get_up = ms5611_get_up;
+    sensor_link.baro.calculate = ms5611_calculate;
 
-    p_sensor_link->baro.hw_name = ms5611_name;
+    sensor_link.baro.hw_name = ms5611_name;
 
     return true;
 }

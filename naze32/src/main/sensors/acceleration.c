@@ -27,7 +27,6 @@
 
 #include "sensors/battery.h"
 #include "sensors/sensors.h"
-#include "sensors/boardalignment.h"
 
 #include "config/runtime_config.h"
 #include "config/config.h"
@@ -165,26 +164,11 @@ void applyAccelerationTrims(flightDynamicsTrims_t *accelerationTrims)
     accADC[Z] -= accelerationTrims->raw[Z];
 }
 
-static void convertRawACCADCReadingsToInternalType(int16_t *accADCRaw)
-{
-    int axis;
-
-    for (axis = 0; axis < XYZ_AXIS_COUNT; axis++) {
-        accADC[axis] = accADCRaw[axis];
-    }
-}
-
 void updateAccelerationReadings(rollAndPitchTrims_t *rollAndPitchTrims)
 {
-    int16_t accADCRaw[XYZ_AXIS_COUNT];
-
-    if (!sensor_link.acc.read(accADCRaw)) {
+    if (!sensor_link.acc.read(accADC)) {
         return;
     }
-
-    convertRawACCADCReadingsToInternalType(accADCRaw);
-
-    alignSensors(accADC, accADC, sensor_link.acc.align);
 
     if (!isAccelerationCalibrationComplete()) {
         performAcclerationCalibration(rollAndPitchTrims);

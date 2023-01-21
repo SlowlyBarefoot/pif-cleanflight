@@ -25,8 +25,6 @@
 
 #include "sensors.h"
 
-#include "boardalignment.h"
-
 static bool standardBoardAlignment = true;     // board orientation correction
 static float boardRotation[3][3];              // matrix
 

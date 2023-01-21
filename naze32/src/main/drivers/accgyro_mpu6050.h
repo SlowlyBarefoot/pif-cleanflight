@@ -17,5 +17,5 @@
 
 #pragma once
 
-bool mpu6050AccDetect(sensor_link_t* p_sensor_link, void* p_param);
-bool mpu6050GyroDetect(sensor_link_t* p_sensor_link, void* p_param);
+bool mpu6050AccDetect(void* p_param);
+bool mpu6050GyroDetect(void* p_param);

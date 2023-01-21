@@ -151,6 +151,22 @@ static const hmc5883Config_t nazeHmc5883Config_v5 = {
 
 static const hmc5883Config_t *hmc5883Config = NULL;
 
+void hmc5883lInit(void* p_param);
+bool hmc5883lRead2(int16_t *magData);
+
+static bool hmc5883lRead(int32_t *mag)
+{
+    int16_t magData[AXIS_COUNT];
+    int axis;
+
+    if (!hmc5883lRead2(magData)) return false;
+
+    for (axis = 0; axis < AXIS_COUNT; axis++) mag[axis] = magData[axis];  // int32_t copy to work with
+    alignSensors(mag, mag, sensor_link.mag.align);
+
+    return true;
+}
+
 void MAG_DATA_READY_EXTI_Handler(void)
 {
     if (EXTI_GetITStatus(hmc5883Config->exti_line) == RESET) {
@@ -219,7 +235,7 @@ static void hmc5883lConfigureDataReadyInterruptHandling(void)
 #endif
 }
 
-bool hmc5883lDetect(sensor_link_t* p_sensor_link, void* p_param)
+bool hmc5883lDetect(void* p_param)
 {
     bool ack = false;
     uint8_t sig = 0;
@@ -238,21 +254,20 @@ bool hmc5883lDetect(sensor_link_t* p_sensor_link, void* p_param)
     if (!ack || sig != 'H')
         return false;
 
-    p_sensor_link->mag.hw_name = hmc5883_name;
-    p_sensor_link->mag.init = hmc5883lInit;
-    p_sensor_link->mag.read = hmc5883lRead;
+    sensor_link.mag.hw_name = hmc5883_name;
+    sensor_link.mag.init = hmc5883lInit;
+    sensor_link.mag.read = hmc5883lRead;
 
     return true;
 }
 
-void hmc5883lInit(sensor_link_t* p_sensor_link, void* p_param)
+void hmc5883lInit(void* p_param)
 {
     int16_t magADC[3];
     int i;
     int32_t xyz_total[3] = { 0, 0, 0 }; // 32 bit totals so they won't overflow.
     bool bret = true;           // Error indicator
 
-    (void)p_sensor_link;
     (void)p_param;
 
     gpio_config_t gpio;
@@ -275,12 +290,12 @@ void hmc5883lInit(sensor_link_t* p_sensor_link, void* p_param)
     // The new gain setting is effective from the second measurement and on.
     i2cWrite(MAG_ADDRESS, HMC58X3_R_CONFB, 0x60); // Set the Gain to 2.5Ga (7:5->011)
     delay(100);
-    hmc5883lRead(magADC);
+    hmc5883lRead2(magADC);
 
     for (i = 0; i < 10; i++) {  // Collect 10 samples
         i2cWrite(MAG_ADDRESS, HMC58X3_R_MODE, 1);
         delay(50);
-        hmc5883lRead(magADC);       // Get the raw values in case the scales have already been changed.
+        hmc5883lRead2(magADC);       // Get the raw values in case the scales have already been changed.
 
         // Since the measurements are noisy, they should be averaged rather than taking the max.
         xyz_total[X] += magADC[X];
@@ -300,7 +315,7 @@ void hmc5883lInit(sensor_link_t* p_sensor_link, void* p_param)
     for (i = 0; i < 10; i++) {
         i2cWrite(MAG_ADDRESS, HMC58X3_R_MODE, 1);
         delay(50);
-        hmc5883lRead(magADC);               // Get the raw values in case the scales have already been changed.
+        hmc5883lRead2(magADC);               // Get the raw values in case the scales have already been changed.
 
         // Since the measurements are noisy, they should be averaged.
         xyz_total[X] -= magADC[X];
@@ -334,7 +349,7 @@ void hmc5883lInit(sensor_link_t* p_sensor_link, void* p_param)
     hmc5883lConfigureDataReadyInterruptHandling();
 }
 
-bool hmc5883lRead(int16_t *magData)
+bool hmc5883lRead2(int16_t *magData)
 {
     uint8_t buf[6];
 

@@ -17,4 +17,4 @@
 
 #pragma once
 
-bool mma8452Detect(sensor_link_t* p_sensor_link, void* p_param);
+bool mma8452Detect(void* p_param);

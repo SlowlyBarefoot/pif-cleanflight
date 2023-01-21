@@ -62,12 +62,12 @@ uint16_t taskSystem(PifTask *p_task)
 void getTaskInfo(cfTaskId_e taskId, cfTaskInfo_t * taskInfo)
 {
     taskInfo->taskName = cfTasks[taskId].taskName;
-    taskInfo->mode = cfTasks[taskId].p_task->_mode;
-    taskInfo->isEnabled= !cfTasks[taskId].p_task->pause;
+    taskInfo->mode = cfTasks[taskId].taskMode;
+    taskInfo->isCreate= cfTasks[taskId].isCreate;
     taskInfo->maxExecutionTime = cfTasks[taskId].p_task->_max_execution_time;
     taskInfo->totalExecutionTime = cfTasks[taskId].p_task->_total_execution_time;
     taskInfo->averageExecutionTime = cfTasks[taskId].p_task->_total_execution_time / cfTasks[taskId].p_task->_execution_count;
-    taskInfo->averagePeriodTime = cfTasks[taskId].p_task->_total_period_time / cfTasks[taskId].p_task->_execution_count;
+    taskInfo->averagePeriodTime = cfTasks[taskId].p_task->_total_period_time / cfTasks[taskId].p_task->_period_count;
 }
 #endif
 
@@ -88,6 +88,7 @@ BOOL createTask(cfTaskId_e taskId, BOOL newEnabledState)
     if (taskId < TASK_COUNT) {
 		cfTasks[taskId].p_task = pifTaskManager_Add(cfTasks[taskId].taskMode, cfTasks[taskId].desiredPeriod, cfTasks[taskId].taskFunc, NULL, newEnabledState);
         cfTasks[taskId].p_task->disallow_yield_id = cfTasks[taskId].disallow_yield_id;
+        cfTasks[taskId].isCreate = true;
 	    return cfTasks[taskId].p_task != 0;
 	}
 	return FALSE;

@@ -36,68 +36,23 @@
 #include "sensors/battery.h"
 #include "sensors/sonar.h"
 
-// Sonar measurements are in cm, a value of SONAR_OUT_OF_RANGE indicates sonar is not in range.
-// Inclination is adjusted by imu
-    float baro_cf_vel;                      // apply Complimentary Filter to keep the calculated velocity based on baro velocity (i.e. near real velocity)
-    float baro_cf_alt;                      // apply CF to use ACC for height estimation
-
 #ifdef SONAR
-int16_t sonarMaxRangeCm;
 int16_t sonarMaxAltWithTiltCm;
 int16_t sonarCfAltCm; // Complimentary Filter altitude
-STATIC_UNIT_TESTED int16_t sonarMaxTiltDeciDegrees;
-float sonarMaxTiltCos;
 
+static float sonarMaxTiltCos;
 static int32_t calculatedAltitude;
 
-const sonarHardware_t *sonarGetHardwareConfiguration(batteryConfig_t *batteryConfig)
+void sonarInit(sonarInitFuncPtr f_init, void* p_param)
 {
-#if defined(NAZE)
-    static const sonarHardware_t const sonarPWM56 = {
-        .trigger_pin = Pin_8,   // PWM5 (PB8) - 5v tolerant
-        .trigger_gpio = GPIOB,
-        .echo_pin = Pin_9,      // PWM6 (PB9) - 5v tolerant
-        .echo_gpio = GPIOB,
-        .exti_line = EXTI_Line9,
-        .exti_pin_source = GPIO_PinSource9,
-        .exti_irqn = EXTI9_5_IRQn
-    };
-    static const sonarHardware_t sonarRC78 = {
-        .trigger_pin = Pin_0,   // RX7 (PB0) - only 3.3v ( add a 1K Ohms resistor )
-        .trigger_gpio = GPIOB,
-        .echo_pin = Pin_1,      // RX8 (PB1) - only 3.3v ( add a 1K Ohms resistor )
-        .echo_gpio = GPIOB,
-        .exti_line = EXTI_Line1,
-        .exti_pin_source = GPIO_PinSource1,
-        .exti_irqn = EXTI1_IRQn
-    };
-    // If we are using softserial, parallel PWM or ADC current sensor, then use motor pins 5 and 6 for sonar, otherwise use rc pins 7 and 8
-    if (feature(FEATURE_SOFTSERIAL)
-            || feature(FEATURE_RX_PARALLEL_PWM )
-            || (feature(FEATURE_CURRENT_METER) && batteryConfig->currentMeterType == CURRENT_SENSOR_ADC)) {
-        return &sonarPWM56;
-    } else {
-        return &sonarRC78;
-    }
-#elif defined(UNIT_TEST)
-    UNUSED(batteryConfig);
-    return 0;
-#else
-#error Sonar not defined for target
-#endif
-}
+    int16_t sonarMaxTiltDeciDegrees;
 
-void sonarInit(const sonarHardware_t *sonarHardware, PifTask* p_task)
-{
-    sonarRange_t sonarRange;
-
-    hcsr04_init(sonarHardware, &sonarRange, p_task);
+    (*f_init)(p_param);
     sensorsSet(SENSOR_SONAR);
-    sonarMaxRangeCm = sonarRange.maxRangeCm;
-    sonarCfAltCm = sonarMaxRangeCm / 2;
-    sonarMaxTiltDeciDegrees =  sonarRange.detectionConeExtendedDeciDegrees / 2;
+    sonarCfAltCm = sensor_link.sonar.maxRangeCm / 2;
+    sonarMaxTiltDeciDegrees =  sensor_link.sonar.detectionConeExtendedDeciDegrees / 2;
     sonarMaxTiltCos = cos_approx(sonarMaxTiltDeciDegrees / 10.0f * RAD);
-    sonarMaxAltWithTiltCm = sonarMaxRangeCm * sonarMaxTiltCos;
+    sonarMaxAltWithTiltCm = sensor_link.sonar.maxRangeCm * sonarMaxTiltCos;
     calculatedAltitude = SONAR_OUT_OF_RANGE;
 }
 
@@ -127,17 +82,12 @@ static int32_t applySonarMedianFilter(int32_t newSonarReading)
         return newSonarReading;
 }
 
-void sonarUpdate(void)
-{
-    hcsr04_start_reading();
-}
-
 /**
  * Get the last distance measured by the sonar in centimeters. When the ground is too far away, SONAR_OUT_OF_RANGE is returned.
  */
 int32_t sonarRead(void)
 {
-    int32_t distance = hcsr04_get_distance();
+    int32_t distance = sensor_link.sonar.distance;
     if (distance > HCSR04_MAX_RANGE_CM)
         distance = SONAR_OUT_OF_RANGE;
 

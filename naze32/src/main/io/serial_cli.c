@@ -60,7 +60,6 @@
 #include "rx/spektrum.h"
 
 #include "sensors/battery.h"
-#include "sensors/boardalignment.h"
 #include "sensors/sensors.h"
 #include "sensors/acceleration.h"
 #include "sensors/gyro.h"
@@ -2459,7 +2458,7 @@ static void cliStatus(char *cmdline)
 
     cliPrintf("Cycle Time: %d, I2C Errors: %d, config size: %d\r\n", cycleTime, i2cErrorCounter, sizeof(master_t));
     cliPrintf("Task Count=%d, Timer Count=%d\r\n", pifTaskManager_Count(), pifTimerManager_Count(&g_timer_1ms));
-    cliPrintf("IMU gyro_sync=%d\r\n", sensor_link.gyro.can_sync);
+    cliPrintf("gyro_sync=%d temp=%d.%2d DegC\r\n", sensor_link.gyro.can_sync, (int)sensor_link.baro.temperature, (int)((sensor_link.baro.temperature - (int)sensor_link.baro.temperature) * 100));
 }
 
 #ifndef SKIP_TASK_STATISTICS
@@ -2473,7 +2472,7 @@ static void cliTasks(char *cmdline)
     cliPrintf("Task list:\r\n");
     for (taskId = 0; taskId < TASK_COUNT; taskId++) {
         getTaskInfo(taskId, &taskInfo);
-        if (taskInfo.totalExecutionTime) {
+        if (taskInfo.isCreate && taskInfo.totalExecutionTime) {
             if (taskInfo.averagePeriodTime) {
                 cliPrintf("%d - %s, mode = %d, max = %d us, avg = %d us, total = %d ms, period = %d us\r\n", taskId, taskInfo.taskName, taskInfo.mode, 
                         taskInfo.maxExecutionTime, taskInfo.averageExecutionTime, taskInfo.totalExecutionTime / 1000, taskInfo.averagePeriodTime);
@@ -2484,7 +2483,7 @@ static void cliTasks(char *cmdline)
             }
         }
         else {
-            cliPrintf("%d - %s, mode = %d\r\n", taskId, taskInfo.taskName, taskInfo.mode);
+            cliPrintf("%d - %s, mode = %d create = %d\r\n", taskId, taskInfo.taskName, taskInfo.mode, taskInfo.isCreate);
         }
     }
 }

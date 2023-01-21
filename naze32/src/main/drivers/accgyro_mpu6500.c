@@ -29,13 +29,18 @@
 #include "exti.h"
 #include "gpio.h"
 #include "gyro_sync.h"
+#include "bus_i2c.h"
 
 #include "accgyro_mpu.h"
 #include "accgyro_mpu6500.h"
 
+#include "sensor/pif_mpu6500.h"
+
 const char* mpu6500_name = "MPU6500";
 
-bool mpu6500AccDetect(sensor_link_t* p_sensor_link, void* p_param)
+static PifMpu6500 mpu6500;
+
+bool mpu6500AccDetect(void* p_param)
 {
     (void)p_param;
 
@@ -43,14 +48,14 @@ bool mpu6500AccDetect(sensor_link_t* p_sensor_link, void* p_param)
         return false;
     }
 
-    p_sensor_link->acc.hw_name = mpu6500_name;
-    p_sensor_link->acc.init = mpu6500AccInit;
-    p_sensor_link->acc.read = mpuAccRead;
+    sensor_link.acc.hw_name = mpu6500_name;
+    sensor_link.acc.init = mpu6500AccInit;
+    sensor_link.acc.read = mpuAccRead;
 
     return true;
 }
 
-bool mpu6500GyroDetect(sensor_link_t* p_sensor_link, void* p_param)
+bool mpu6500GyroDetect(void* p_param)
 {
     (void)p_param;
 
@@ -58,52 +63,73 @@ bool mpu6500GyroDetect(sensor_link_t* p_sensor_link, void* p_param)
         return false;
     }
 
-    p_sensor_link->gyro.hw_name = mpu6500_name;
-    p_sensor_link->gyro.init = mpu6500GyroInit;
-    p_sensor_link->gyro.read = mpuGyroRead;
+    if (!pifMpu6500_Init(&mpu6500, PIF_ID_AUTO, &g_i2c_port, MPU6500_I2C_ADDR(0), &sensor_link.imu_sensor)) return false;
+
+    sensor_link.gyro.hw_name = mpu6500_name;
+    sensor_link.gyro.init = mpu6500GyroInit;
+    sensor_link.gyro.read = mpuGyroRead;
 
     // 16.4 dps/lsb scalefactor
-    p_sensor_link->gyro.scale = 1.0f / 16.4f;
+    sensor_link.gyro.scale = 1.0f / 16.4f;
 
     return true;
 }
 
-void mpu6500AccInit(sensor_link_t* p_sensor_link, void* p_param)
+void mpu6500AccInit(void* p_param)
 {
     (void)p_param;
 
     mpuIntExtiInit(NULL);
 
-    p_sensor_link->acc.acc_1G = 512 * 8;
+    sensor_link.acc.acc_1G = 512 * 8;
 }
 
-void mpu6500GyroInit(sensor_link_t* p_sensor_link, void* p_param)
+void mpu6500GyroInit(void* p_param)
 {
     uint8_t lpf = 1;        // default
+    PifMpu6500PwrMgmt1 pwr_mgmt_1;
+    PifMpu6500GyroConfig gyro_config;
+    PifMpu6500Config config;
+    PifMpu6500AccelConfig accel_config;
 
-
-    if (mpuIntExtiInit(p_sensor_link)) p_sensor_link->gyro.can_sync = true;
+    if (mpuIntExtiInit()) sensor_link.gyro.can_sync = true;
 
     if (p_param) lpf = ((gyro_param_t*)p_param)->lpf;
-    mpuConfiguration.write(MPU_RA_PWR_MGMT_1, MPU6500_BIT_RESET);
-    delay(100);
-    mpuConfiguration.write(MPU_RA_SIGNAL_PATH_RESET, 0x07);
-    delay(100);
-    mpuConfiguration.write(MPU_RA_PWR_MGMT_1, 0);
-    delay(100);
-    mpuConfiguration.write(MPU_RA_PWR_MGMT_1, INV_CLK_PLL);
-    mpuConfiguration.write(MPU_RA_GYRO_CONFIG, INV_FSR_2000DPS << 3);
-    mpuConfiguration.write(MPU_RA_ACCEL_CONFIG, INV_FSR_8G << 3);
-    mpuConfiguration.write(MPU_RA_CONFIG, lpf);
-    mpuConfiguration.write(MPU_RA_SMPLRT_DIV, gyroMPU6xxxCalculateDivider()); // Get Divider
+
+    pifI2cDevice_WriteRegByte(mpu6500._p_i2c, MPU6500_REG_PWR_MGMT_1, MPU6500_BIT_RESET); // Device reset
+    pif_Delay1ms(100);
+
+    pifI2cDevice_WriteRegByte(mpu6500._p_i2c, MPU6500_REG_SIGNAL_PATH_RESET, 0x07); // Signal path reset
+    pif_Delay1ms(100);
+
+    pifI2cDevice_WriteRegByte(mpu6500._p_i2c, MPU6500_REG_PWR_MGMT_1, 0);
+    pif_Delay1ms(100);
+
+    pwr_mgmt_1.byte = 0;
+    pwr_mgmt_1.bit.clksel = INV_CLK_PLL;
+    pifI2cDevice_WriteRegByte(mpu6500._p_i2c, MPU6500_REG_PWR_MGMT_1, pwr_mgmt_1.byte);
+
+    gyro_config.byte = 0;
+    gyro_config.bit.gyro_fs_sel = MPU6500_GYRO_FS_SEL_2000DPS;
+    pifMpu6500_SetGyroConfig(&mpu6500, gyro_config);
+
+    accel_config.byte = 0;
+    accel_config.bit.accel_fs_sel = MPU6500_ACCEL_FS_SEL_8G;
+    pifMpu6500_SetAccelConfig(&mpu6500, accel_config);
+
+    config.byte = 0;
+    config.bit.dlpf_cfg = lpf;
+    pifI2cDevice_WriteRegByte(mpu6500._p_i2c, MPU6500_REG_CONFIG, config.byte);
+
+    pifI2cDevice_WriteRegByte(mpu6500._p_i2c, MPU6500_REG_SMPLRT_DIV, gyroMPU6xxxCalculateDivider());   // Get Divider
 
     // Data ready interrupt configuration
 #ifdef USE_MPU9250_MAG
-    mpuConfiguration.write(MPU_RA_INT_PIN_CFG, 0 << 7 | 0 << 6 | 0 << 5 | 1 << 4 | 0 << 3 | 0 << 2 | 1 << 1 | 0 << 0);  // INT_ANYRD_2CLEAR, BYPASS_EN
+    pifI2cDevice_WriteRegByte(mpu6500._p_i2c, MPU6500_REG_INT_PIN_CFG, 0 << 7 | 0 << 6 | 0 << 5 | 1 << 4 | 0 << 3 | 0 << 2 | 1 << 1 | 0 << 0);  // INT_ANYRD_2CLEAR, BYPASS_EN
 #else
-    mpuConfiguration.write(MPU_RA_INT_PIN_CFG, 0 << 7 | 0 << 6 | 0 << 5 | 1 << 4 | 0 << 3 | 0 << 2 | 0 << 1 | 0 << 0);  // INT_ANYRD_2CLEAR, BYPASS_EN
+    pifI2cDevice_WriteRegByte(mpu6500._p_i2c, MPU6500_REG_INT_PIN_CFG, 0 << 7 | 0 << 6 | 0 << 5 | 1 << 4 | 0 << 3 | 0 << 2 | 0 << 1 | 0 << 0);  // INT_ANYRD_2CLEAR, BYPASS_EN
 #endif
 #ifdef USE_MPU_DATA_READY_SIGNAL
-    mpuConfiguration.write(MPU_RA_INT_ENABLE, 0x01); // RAW_RDY_EN interrupt enable
+    pifI2cDevice_WriteRegByte(mpu6500._p_i2c, MPU6500_REG_INT_ENABLE, 0x01); // RAW_RDY_EN interrupt enable
 #endif
 }

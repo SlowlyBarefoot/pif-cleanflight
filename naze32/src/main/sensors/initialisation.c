@@ -27,39 +27,39 @@
 #include "config/runtime_config.h"
 
 
-bool detectGyro(sensor_link_t* p_sensor_link)
+static bool detectGyro()
 {
     extern const sensorDetect_t gyro_detect[];
     const sensorDetect_t* p_detect = gyro_detect;
-    p_sensor_link->gyro.align = IMUS_ALIGN_DEFAULT;
+    sensor_link.gyro.align = IMUS_ALIGN_DEFAULT;
 
     while (p_detect->p_func) {
-    	if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) {
-            p_sensor_link->gyro.align = p_detect->align;
+    	if ((*p_detect->p_func)(p_detect->p_param)) {
+            sensor_link.gyro.align = p_detect->align;
     		break;
     	}
     	p_detect++;
     }
-    if (!p_sensor_link->gyro.hw_name) return false;
+    if (!sensor_link.gyro.hw_name) return false;
 
     sensorsSet(SENSOR_GYRO);
 
     return true;
 }
 
-static void detectAcc(sensor_link_t* p_sensor_link, int accHardwareToUse)
+static void detectAcc(int accHardwareToUse)
 {
     extern const sensorDetect_t acc_detect[];
     const sensorDetect_t* p_detect;
 
-    p_sensor_link->acc.align = IMUS_ALIGN_DEFAULT;
+    sensor_link.acc.align = IMUS_ALIGN_DEFAULT;
 
     if (accHardwareToUse > SENSOR_DEFAULT) {
         p_detect = acc_detect;
         while (p_detect->p_func) {
             if (p_detect->sensor_no >= accHardwareToUse) {
-                if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) {
-                    p_sensor_link->acc.align = p_detect->align;
+                if ((*p_detect->p_func)(p_detect->p_param)) {
+                    sensor_link.acc.align = p_detect->align;
                     break;
                 }
             }
@@ -68,23 +68,23 @@ static void detectAcc(sensor_link_t* p_sensor_link, int accHardwareToUse)
     }
 
     // Found anything? Check if error or ACC is really missing.
-    if (!p_sensor_link->acc.hw_name) {
+    if (!sensor_link.acc.hw_name) {
         // Nothing was found and we have a forced sensor that isn't present.
         p_detect = acc_detect;
         while (p_detect->p_func) {
-            if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) {
-                p_sensor_link->acc.align = p_detect->align;
+            if ((*p_detect->p_func)(p_detect->p_param)) {
+                sensor_link.acc.align = p_detect->align;
                 break;
             }
             p_detect++;
         }
     }
-    if (!p_sensor_link->acc.hw_name) return;
+    if (!sensor_link.acc.hw_name) return;
 
     sensorsSet(SENSOR_ACC);
 }
 
-static void detectBaro(sensor_link_t* p_sensor_link, int baroHardwareToUse)
+static void detectBaro(int baroHardwareToUse)
 {
 #ifndef BARO
     UNUSED(baroHardwareToUse);
@@ -98,7 +98,7 @@ static void detectBaro(sensor_link_t* p_sensor_link, int baroHardwareToUse)
     const sensorDetect_t* p_detect;
 
     while (p_disable->p_func) {
-        (*p_disable->p_func)(p_sensor_link, p_disable->p_param);
+        (*p_disable->p_func)(p_disable->p_param);
         p_disable++;
     }
 
@@ -106,41 +106,41 @@ static void detectBaro(sensor_link_t* p_sensor_link, int baroHardwareToUse)
         p_detect = baro_detect;
         while (p_detect->p_func) {
             if (p_detect->sensor_no >= baroHardwareToUse) {
-                if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) break;
+                if ((*p_detect->p_func)(p_detect->p_param)) break;
             }
             p_detect++;
         }
     }
 
     // Found anything? Check if error or ACC is really missing.
-    if (!p_sensor_link->baro.hw_name) {
+    if (!sensor_link.baro.hw_name) {
         // Nothing was found and we have a forced sensor that isn't present.
         p_detect = baro_detect;
         while (p_detect->p_func) {
-            if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) break;
+            if ((*p_detect->p_func)(p_detect->p_param)) break;
             p_detect++;
         }
     }
-    if (!p_sensor_link->baro.hw_name) return;
+    if (!sensor_link.baro.hw_name) return;
 
     sensorsSet(SENSOR_BARO);
 #endif
 }
 
 #ifdef MAG
-static void detectMag(sensor_link_t* p_sensor_link, int magHardwareToUse)
+static void detectMag(int magHardwareToUse)
 {
     extern const sensorDetect_t mag_detect[];
     const sensorDetect_t* p_detect;
 
-    p_sensor_link->mag.align = IMUS_ALIGN_DEFAULT;
+    sensor_link.mag.align = IMUS_ALIGN_DEFAULT;
 
     if (magHardwareToUse > SENSOR_DEFAULT) {
         p_detect = mag_detect;
 		while (p_detect->p_func) {
             if (p_detect->sensor_no >= magHardwareToUse) {
-                if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) {
-                    p_sensor_link->mag.align = p_detect->align;
+                if ((*p_detect->p_func)(p_detect->p_param)) {
+                    sensor_link.mag.align = p_detect->align;
                     break;
                 }
             }
@@ -148,39 +148,39 @@ static void detectMag(sensor_link_t* p_sensor_link, int magHardwareToUse)
 		}
     }
 
-    if (!p_sensor_link->mag.hw_name) {
+    if (!sensor_link.mag.hw_name) {
         // Nothing was found and we have a forced sensor that isn't present.
         p_detect = mag_detect;
 		while (p_detect->p_func) {
-            if ((*p_detect->p_func)(p_sensor_link, p_detect->p_param)) {
-                p_sensor_link->mag.align = p_detect->align;
+            if ((*p_detect->p_func)(p_detect->p_param)) {
+                sensor_link.mag.align = p_detect->align;
                 break;
             }
 			p_detect++;
 		}
     }
-    if (!p_sensor_link->mag.hw_name) return;
+    if (!sensor_link.mag.hw_name) return;
 
     sensorsSet(SENSOR_MAG);
 }
 #endif
 
-void reconfigureAlignment(sensor_link_t* p_sensor_link, sensorAlignmentConfig_t *sensorAlignmentConfig)
+static void reconfigureAlignment(sensorAlignmentConfig_t *sensorAlignmentConfig)
 {
     if (sensorAlignmentConfig->gyro_align != IMUS_ALIGN_DEFAULT) {
-        p_sensor_link->gyro.align = sensorAlignmentConfig->gyro_align;
+        sensor_link.gyro.align = sensorAlignmentConfig->gyro_align;
     }
     if (sensorAlignmentConfig->acc_align != IMUS_ALIGN_DEFAULT) {
-        p_sensor_link->acc.align = sensorAlignmentConfig->acc_align;
+        sensor_link.acc.align = sensorAlignmentConfig->acc_align;
     }
 #ifdef MAG
     if (sensorAlignmentConfig->mag_align != IMUS_ALIGN_DEFAULT) {
-        p_sensor_link->mag.align = sensorAlignmentConfig->mag_align;
+        sensor_link.mag.align = sensorAlignmentConfig->mag_align;
     }
 #endif
 }
 
-bool sensorsAutodetect(sensor_link_t* p_sensor_link, sensorAlignmentConfig_t *sensorAlignmentConfig, gyro_param_t* p_gyro_param, 
+bool sensorsAutodetect(sensorAlignmentConfig_t *sensorAlignmentConfig, gyro_param_t* p_gyro_param, 
         uint8_t accHardwareToUse, uint8_t magHardwareToUse, uint8_t baroHardwareToUse,
         int16_t magDeclinationFromConfig) {
 
@@ -190,25 +190,25 @@ bool sensorsAutodetect(sensor_link_t* p_sensor_link, sensorAlignmentConfig_t *se
     UNUSED(magHardwareToUse);
 #endif
 
-    if (!detectGyro(p_sensor_link)) {
+    if (!detectGyro()) {
         return false;
     }
-    detectAcc(p_sensor_link, accHardwareToUse);
-    detectBaro(p_sensor_link, baroHardwareToUse);
+    detectAcc(accHardwareToUse);
+    detectBaro(baroHardwareToUse);
 
 
     // Now time to init things, acc first
     if (sensors(SENSOR_ACC))
-        p_sensor_link->acc.init(p_sensor_link, NULL);
+        sensor_link.acc.init(NULL);
     // this is safe because either mpu6050 or mpu3050 or lg3d20 sets it, and in case of fail, we never get here.
     gyroUpdateSampleRate(p_gyro_param);   // Set gyro sampling rate divider before initialization
-    p_sensor_link->gyro.init(p_sensor_link, p_gyro_param);
+    sensor_link.gyro.init(p_gyro_param);
 
 #ifdef MAG
-    detectMag(p_sensor_link, magHardwareToUse);
+    detectMag(magHardwareToUse);
 #endif
 
-    reconfigureAlignment(p_sensor_link, sensorAlignmentConfig);
+    reconfigureAlignment(sensorAlignmentConfig);
 
     // FIXME extract to a method to reduce dependencies, maybe move to sensors_compass.c
     if (sensors(SENSOR_MAG)) {
@@ -216,9 +216,9 @@ bool sensorsAutodetect(sensor_link_t* p_sensor_link, sensorAlignmentConfig_t *se
         deg = magDeclinationFromConfig / 100;
         min = magDeclinationFromConfig % 100;
 
-        p_sensor_link->mag.declination = (deg + ((float)min * (1.0f / 60.0f))) * 10; // heading is in 0.1deg units
+        sensor_link.mag.declination = (deg + ((float)min * (1.0f / 60.0f))) * 10; // heading is in 0.1deg units
     } else {
-        p_sensor_link->mag.declination = 0.0f; // TODO investigate if this is actually needed if there is no mag sensor or if the value stored in the config should be used.
+        sensor_link.mag.declination = 0.0f; // TODO investigate if this is actually needed if there is no mag sensor or if the value stored in the config should be used.
     }
 
     return true;

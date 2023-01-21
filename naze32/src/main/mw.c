@@ -106,7 +106,7 @@ int16_t headFreeModeHold;
 
 uint8_t motorControlEnable = false;
 
-int16_t telemTemperature1;      // gyro sensor temperature
+int32_t telemTemperature1;      // gyro sensor temperature
 static uint32_t disarmAt;     // Time of automatic disarm when "Don't spin the motors when armed" is enabled and auto_disarm_delay is nonzero
 
 extern uint8_t dynP8[3], dynI8[3], dynD8[3], PIDweight[3];
@@ -834,17 +834,6 @@ uint16_t taskUpdateBaro(PifTask *p_task)
         pifTask_GetDeltaTime(p_task, TRUE);
         uint32_t newDeadline = baroUpdate(cfTasks[TASK_ALTITUDE].p_task);
         return newDeadline / 1000;   // 1000 : us -> ms
-    }
-    return 0;
-}
-#endif
-
-#ifdef SONAR
-uint16_t taskUpdateSonar(PifTask *p_task)
-{
-    UNUSED(p_task);
-    if (sensors(SENSOR_SONAR)) {
-        sonarUpdate();
     }
     return 0;
 }

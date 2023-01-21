@@ -27,6 +27,10 @@
 
 #include "sonar_hcsr04.h"
 
+#include "sensor/pif_hc_sr04.h"
+
+#include "sensors/sensors.h"
+
 /* HC-SR04 consists of ultrasonic transmitter, receiver, and control circuits.
  * When triggered it sends out a series of 40KHz ultrasonic pulses and receives
  * echo from an object. The distance between the unit and the object is calculated
@@ -37,25 +41,18 @@
  */
 
 #if defined(SONAR)
-STATIC_UNIT_TESTED volatile int32_t measurement = -1;
-static uint32_t lastMeasurementAt;
+const char* hcsr04_name = "HC_SR04";
+
 static sonarHardware_t const *sonarHardware;
-static PifTask* p_task_altitude = NULL;
+static PifHcSr04 s_hcsr04;
 
 #if !defined(UNIT_TEST)
 static void ECHO_EXTI_IRQHandler(void)
 {
-    static uint32_t timing_start;
-    uint32_t timing_stop;
-
     if (digitalIn(sonarHardware->echo_gpio, sonarHardware->echo_pin) != 0) {
-        timing_start = micros();
+    	pifHcSr04_sigReceiveEcho(&s_hcsr04, 1);
     } else {
-        timing_stop = micros();
-        if (timing_stop > timing_start) {
-            measurement = timing_stop - timing_start;
-            if (p_task_altitude && !p_task_altitude->_running) p_task_altitude->immediate = true;
-        }
+    	pifHcSr04_sigReceiveEcho(&s_hcsr04, 0);
     }
 
     EXTI_ClearITPendingBit(sonarHardware->exti_line);
@@ -77,13 +74,51 @@ void EXTI9_5_IRQHandler(void)
 }
 #endif
 
-void hcsr04_init(const sonarHardware_t *initialSonarHardware, sonarRange_t *sonarRange, PifTask* p_task)
+static void _actHcSr04Trigger(SWITCH state)
 {
+    if (state) {
+        digitalHi(sonarHardware->trigger_gpio, sonarHardware->trigger_pin);
+    }
+    else {
+        digitalLo(sonarHardware->trigger_gpio, sonarHardware->trigger_pin);
+    }
+}
+
+static void _evtHcSr04Distance(int32_t distance)
+{
+    sensor_link.sonar.distance = distance;
+
+    float temp = sensor_link.baro.temperature;
+    static float pretemp = 0;
+
+    if ((int)temp != (int)pretemp) {
+        pifHcSr04_SetTemperature(&s_hcsr04, temp);
+#ifdef __PIF_DEBUG__
+        pifLog_Printf(LT_INFO, "Temp=%f", temp);
+#endif
+        pretemp = temp;
+    }
+
+    if (sensor_link.p_task_altitude) {
+        if (!sensor_link.p_task_altitude->_running) sensor_link.p_task_altitude->immediate = true;
+    }
+}
+
+void hcsr04_init(void* p_param)
+{
+    const sonarHardware_t *initialSonarHardware = (const sonarHardware_t *)p_param;
+
+	if (!pifHcSr04_Init(&s_hcsr04, PIF_ID_AUTO)) return;
+	s_hcsr04.act_trigger = _actHcSr04Trigger;
+	s_hcsr04.evt_read = _evtHcSr04Distance;
+	if (!pifHcSr04_StartTrigger(&s_hcsr04, sensor_link.sonar.period)) return;
+    sensor_link.sonar.hw_name = hcsr04_name;
+    sensor_link.sonar.p_task = s_hcsr04._p_task;
+
     sonarHardware = initialSonarHardware;
-    sonarRange->maxRangeCm = HCSR04_MAX_RANGE_CM;
-    sonarRange->detectionConeDeciDegrees = HCSR04_DETECTION_CONE_DECIDEGREES;
-    sonarRange->detectionConeExtendedDeciDegrees = HCSR04_DETECTION_CONE_EXTENDED_DECIDEGREES;
-    p_task_altitude = p_task;
+    sensor_link.sonar.maxRangeCm = HCSR04_MAX_RANGE_CM;
+    sensor_link.sonar.detectionConeDeciDegrees = HCSR04_DETECTION_CONE_DECIDEGREES;
+    sensor_link.sonar.detectionConeExtendedDeciDegrees = HCSR04_DETECTION_CONE_EXTENDED_DECIDEGREES;
 
 #if !defined(UNIT_TEST)
     gpio_config_t gpio;
@@ -125,46 +160,7 @@ void hcsr04_init(const sonarHardware_t *initialSonarHardware, sonarRange_t *sona
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = NVIC_PRIORITY_SUB(NVIC_PRIO_SONAR_ECHO);
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
-
-    lastMeasurementAt = millis() - 60; // force 1st measurement in hcsr04_get_distance()
-#else
-    lastMeasurementAt = 0; // to avoid "unused" compiler warning
 #endif
 }
 
-// measurement reading is done asynchronously, using interrupt
-void hcsr04_start_reading(void)
-{
-#if !defined(UNIT_TEST)
-    uint32_t now = millis();
-
-    if (now < (lastMeasurementAt + 60)) {
-        // the repeat interval of trig signal should be greater than 60ms
-        // to avoid interference between connective measurements.
-        return;
-    }
-
-    lastMeasurementAt = now;
-
-    digitalHi(sonarHardware->trigger_gpio, sonarHardware->trigger_pin);
-    //  The width of trig signal must be greater than 10us
-    delayMicroseconds(11);
-    digitalLo(sonarHardware->trigger_gpio, sonarHardware->trigger_pin);
-#endif
-}
-
-/**
- * Get the distance that was measured by the last pulse, in centimeters.
- */
-int32_t hcsr04_get_distance(void)
-{
-    // The speed of sound is 340 m/s or approx. 29 microseconds per centimeter.
-    // The ping travels out and back, so to find the distance of the
-    // object we take half of the distance traveled.
-    //
-    // 340 m/s = 0.034 cm/microsecond = 29.41176471 *2 = 58.82352941 rounded to 59
-    int32_t distance = measurement / 59;
-
-    return distance;
-}
 #endif

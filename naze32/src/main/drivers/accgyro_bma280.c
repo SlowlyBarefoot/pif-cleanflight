@@ -36,10 +36,10 @@
 
 const char* bma280_name = "BMA280";
 
-static void bma280Init(sensor_link_t* p_sensor_link, void* p_param);
-static bool bma280Read(int16_t *accelData);
+static void bma280Init(void* p_param);
+static bool bma280Read(int32_t *accel);
 
-bool bma280Detect(sensor_link_t* p_sensor_link, void* p_param)
+bool bma280Detect(void* p_param)
 {
     bool ack = false;
     uint8_t sig = 0;
@@ -50,25 +50,27 @@ bool bma280Detect(sensor_link_t* p_sensor_link, void* p_param)
     if (!ack || sig != 0xFB)
         return false;
 
-    p_sensor_link->acc.hw_name = bma280_name;
-    p_sensor_link->acc.init = bma280Init;
-    p_sensor_link->acc.read = bma280Read;
+    sensor_link.acc.hw_name = bma280_name;
+    sensor_link.acc.init = bma280Init;
+    sensor_link.acc.read = bma280Read;
     return true;
 }
 
-static void bma280Init(sensor_link_t* p_sensor_link, void* p_param)
+static void bma280Init(void* p_param)
 {
     (void)p_param;
 
     i2cWrite(BMA280_ADDRESS, BMA280_PMU_RANGE, 0x08); // +-8g range
     i2cWrite(BMA280_ADDRESS, BMA280_PMU_BW, 0x0E); // 500Hz BW
 
-    p_sensor_link->acc.acc_1G = 512 * 8;
+    sensor_link.acc.acc_1G = 512 * 8;
 }
 
-static bool bma280Read(int16_t *accelData)
+static bool bma280Read(int32_t *accel)
 {
     uint8_t buf[6];
+    int16_t accelData[AXIS_COUNT];
+    int axis;
 
     if (!i2cRead(BMA280_ADDRESS, BMA280_ACC_X_LSB, 6, buf)) {
         return false;
@@ -78,6 +80,9 @@ static bool bma280Read(int16_t *accelData)
     accelData[0] = (int16_t)((buf[0] >> 2) + (buf[1] << 8));
     accelData[1] = (int16_t)((buf[2] >> 2) + (buf[3] << 8));
     accelData[2] = (int16_t)((buf[4] >> 2) + (buf[5] << 8));
+
+    for (axis = 0; axis < AXIS_COUNT; axis++) accel[axis] = accelData[axis];  // int32_t copy to work with
+    alignSensors(accel, accel, sensor_link.acc.align);
 
     return true;
 }

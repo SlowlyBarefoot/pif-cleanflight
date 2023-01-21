@@ -33,4 +33,5 @@ void baroSetCalibrationCycles(uint16_t calibrationCyclesRequired);
 uint32_t baroUpdate(PifTask *p_task);
 int32_t baroCalculateAltitude(void);
 void performBaroCalibrationCycle(void);
+void evtBaroRead(float pressure, float temperature);
 #endif

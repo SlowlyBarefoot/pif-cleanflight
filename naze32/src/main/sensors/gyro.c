@@ -33,7 +33,6 @@
 #include "sensors/gyro.h"
 
 static uint16_t calibratingG = 0;
-static int16_t gyroADCRaw[XYZ_AXIS_COUNT];
 int32_t gyroADC[XYZ_AXIS_COUNT];
 static int32_t gyroZero[FLIGHT_DYNAMICS_INDEX_COUNT] = { 0, 0, 0 };
 
@@ -127,14 +126,9 @@ static void applyGyroZero(void)
 void gyroUpdate(void)
 {
     // range: +/- 8192; +/- 2000 deg/sec
-    if (!sensor_link.gyro.read(gyroADCRaw)) {
+    if (!sensor_link.gyro.read(gyroADC)) {
         return;
     }
-
-    // Prepare a copy of int32_t gyroADC for mangling to prevent overflow
-    for (axis = 0; axis < XYZ_AXIS_COUNT; axis++) gyroADC[axis] = gyroADCRaw[axis];
-
-    alignSensors(gyroADC, gyroADC, sensor_link.gyro.align);
 
     if (gyroLpfCutFreq) {
         if (!gyroFilterStateIsSet) initGyroFilterCoefficients(); /* initialise filter coefficients */

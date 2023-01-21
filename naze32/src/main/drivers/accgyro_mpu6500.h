@@ -21,8 +21,8 @@
 
 #pragma once
 
-bool mpu6500AccDetect(sensor_link_t* p_sensor_link, void* p_param);
-bool mpu6500GyroDetect(sensor_link_t* p_sensor_link, void* p_param);
+bool mpu6500AccDetect(void* p_param);
+bool mpu6500GyroDetect(void* p_param);
 
-void mpu6500AccInit(sensor_link_t* p_sensor_link, void* p_param);
-void mpu6500GyroInit(sensor_link_t* p_sensor_link, void* p_param);
+void mpu6500AccInit(void* p_param);
+void mpu6500GyroInit(void* p_param);

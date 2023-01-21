@@ -60,11 +60,10 @@ bool mpu6500ReadRegister(uint8_t reg, uint8_t length, uint8_t *data)
     return true;
 }
 
-static void mpu6500SpiInit(sensor_link_t* p_sensor_link, void* p_param)
+static void mpu6500SpiInit(void* p_param)
 {
     static bool hardwareInitialised = false;
 
-    (void)p_sensor_link;
     (void)p_param;
 
     if (hardwareInitialised) {
@@ -89,11 +88,11 @@ static void mpu6500SpiInit(sensor_link_t* p_sensor_link, void* p_param)
     hardwareInitialised = true;
 }
 
-bool mpu6500SpiDetect(sensor_link_t* p_sensor_link)
+bool mpu6500SpiDetect()
 {
     uint8_t sig;
 
-    mpu6500SpiInit(p_sensor_link, NULL);
+    mpu6500SpiInit(NULL);
 
     mpu6500ReadRegister(MPU_RA_WHO_AM_I, 1, &sig);
 
@@ -104,7 +103,7 @@ bool mpu6500SpiDetect(sensor_link_t* p_sensor_link)
     return true;
 }
 
-bool mpu6500SpiAccDetect(sensor_link_t* p_sensor_link, void* p_param)
+bool mpu6500SpiAccDetect(void* p_param)
 {
     (void)p_param;
 
@@ -112,14 +111,14 @@ bool mpu6500SpiAccDetect(sensor_link_t* p_sensor_link, void* p_param)
         return false;
     }
 
-    p_sensor_link->acc.hw_name = mpu6500_spi_name;
-    p_sensor_link->acc.init = mpu6500AccInit;
-    p_sensor_link->acc.read = mpuAccRead;
+    sensor_link.acc.hw_name = mpu6500_spi_name;
+    sensor_link.acc.init = mpu6500AccInit;
+    sensor_link.acc.read = mpuAccRead;
 
     return true;
 }
 
-bool mpu6500SpiGyroDetect(sensor_link_t* p_sensor_link, void* p_param)
+bool mpu6500SpiGyroDetect(void* p_param)
 {
     (void)p_param;
 
@@ -127,12 +126,12 @@ bool mpu6500SpiGyroDetect(sensor_link_t* p_sensor_link, void* p_param)
         return false;
     }
 
-    p_sensor_link->gyro.hw_name = mpu6500_spi_name;
-    p_sensor_link->gyro.init = mpu6500GyroInit;
-    p_sensor_link->gyro.read = mpuGyroRead;
+    sensor_link.gyro.hw_name = mpu6500_spi_name;
+    sensor_link.gyro.init = mpu6500GyroInit;
+    sensor_link.gyro.read = mpuGyroRead;
 
     // 16.4 dps/lsb scalefactor
-    p_sensor_link->gyro.scale = 1.0f / 16.4f;
+    sensor_link.gyro.scale = 1.0f / 16.4f;
 
     return true;
 }

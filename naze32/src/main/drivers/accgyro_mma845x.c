@@ -85,10 +85,10 @@ const char* mma845x_name = "MMA845x";
 
 static uint8_t device_id;
 
-static void mma8452Init(sensor_link_t* p_sensor_link, void* p_param);
-static bool mma8452Read(int16_t *accelData);
+static void mma8452Init(void* p_param);
+static bool mma8452Read(int32_t *accel);
 
-bool mma8452Detect(sensor_link_t* p_sensor_link, void* p_param)
+bool mma8452Detect(void* p_param)
 {
     bool ack = false;
     uint8_t sig = 0;
@@ -103,9 +103,9 @@ bool mma8452Detect(sensor_link_t* p_sensor_link, void* p_param)
     if (!ack || (sig != MMA8452_DEVICE_SIGNATURE && sig != MMA8451_DEVICE_SIGNATURE))
         return false;
 
-    p_sensor_link->acc.hw_name = mma845x_name;
-    p_sensor_link->acc.init = mma8452Init;
-    p_sensor_link->acc.read = mma8452Read;
+    sensor_link.acc.hw_name = mma845x_name;
+    sensor_link.acc.init = mma8452Init;
+    sensor_link.acc.read = mma8452Read;
     device_id = sig;
     return true;
 }
@@ -131,7 +131,7 @@ static inline void mma8451ConfigureInterrupt(void)
     i2cWrite(MMA8452_ADDRESS, MMA8452_CTRL_REG5, 0); // DRDY routed to INT2
 }
 
-static void mma8452Init(sensor_link_t* p_sensor_link, void* p_param)
+static void mma8452Init(void* p_param)
 {
     (void)p_param;
 
@@ -144,12 +144,14 @@ static void mma8452Init(sensor_link_t* p_sensor_link, void* p_param)
 
     i2cWrite(MMA8452_ADDRESS, MMA8452_CTRL_REG1, MMA8452_CTRL_REG1_LNOISE | MMA8452_CTRL_REG1_ACTIVE); // Turn on measurements, low noise at max scale mode, Data Rate 800Hz. LNoise mode makes range +-4G.
 
-    p_sensor_link->acc.acc_1G = 256;
+    sensor_link.acc.acc_1G = 256;
 }
 
-static bool mma8452Read(int16_t *accelData)
+static bool mma8452Read(int32_t *accel)
 {
     uint8_t buf[6];
+    int16_t accelData[AXIS_COUNT];
+    int axis;
 
     if (!i2cRead(MMA8452_ADDRESS, MMA8452_OUT_X_MSB, 6, buf)) {
         return false;
@@ -158,6 +160,9 @@ static bool mma8452Read(int16_t *accelData)
     accelData[0] = ((int16_t)((buf[0] << 8) | buf[1]) >> 2) / 4;
     accelData[1] = ((int16_t)((buf[2] << 8) | buf[3]) >> 2) / 4;
     accelData[2] = ((int16_t)((buf[4] << 8) | buf[5]) >> 2) / 4;
+
+    for (axis = 0; axis < AXIS_COUNT; axis++) accel[axis] = accelData[axis];  // int32_t copy to work with
+    alignSensors(accel, accel, sensor_link.acc.align);
 
     return true;
 }

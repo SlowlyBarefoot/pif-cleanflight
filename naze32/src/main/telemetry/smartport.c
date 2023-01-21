@@ -36,7 +36,6 @@
 #include "io/serial.h"
 #include "io/ledstrip.h"
 
-#include "sensors/boardalignment.h"
 #include "sensors/sensors.h"
 #include "sensors/battery.h"
 #include "sensors/acceleration.h"

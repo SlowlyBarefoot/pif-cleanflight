@@ -35,7 +35,6 @@
 #include "drivers/light_led.h"
 
 #include "sensors/sensors.h"
-#include "sensors/boardalignment.h"
 #include "sensors/acceleration.h"
 
 #include "io/beeper.h"

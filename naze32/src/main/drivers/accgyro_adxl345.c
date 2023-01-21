@@ -64,12 +64,12 @@
 
 const char* adxl345_name = "ADXL345";
 
-static void adxl345Init(sensor_link_t* p_sensor_link, void* p_param);
-static bool adxl345Read(int16_t *accelData);
+static void adxl345Init(void* p_param);
+static bool adxl345Read(int32_t *accel);
 
 static bool useFifo = false;
 
-bool adxl345Detect(sensor_link_t* p_sensor_link, void* p_param)
+bool adxl345Detect(void* p_param)
 {
     bool ack = false;
     uint8_t sig = 0;
@@ -86,13 +86,13 @@ bool adxl345Detect(sensor_link_t* p_sensor_link, void* p_param)
     // use ADXL345's fifo to filter data or not
     useFifo = init->useFifo;
 
-    p_sensor_link->acc.hw_name = adxl345_name;
-    p_sensor_link->acc.init = adxl345Init;
-    p_sensor_link->acc.read = adxl345Read;
+    sensor_link.acc.hw_name = adxl345_name;
+    sensor_link.acc.init = adxl345Init;
+    sensor_link.acc.read = adxl345Read;
     return true;
 }
 
-static void adxl345Init(sensor_link_t* p_sensor_link, void* p_param)
+static void adxl345Init(void* p_param)
 {
     (void)p_param;
 
@@ -107,14 +107,16 @@ static void adxl345Init(sensor_link_t* p_sensor_link, void* p_param)
         i2cWrite(ADXL345_ADDRESS, ADXL345_DATA_FORMAT, ADXL345_FULL_RANGE | ADXL345_RANGE_8G);
         i2cWrite(ADXL345_ADDRESS, ADXL345_BW_RATE, ADXL345_RATE_100);
     }
-    p_sensor_link->acc.acc_1G = 265; // 3.3V operation // FIXME verify this is supposed to be 265, not 256. Typo?
+    sensor_link.acc.acc_1G = 265; // 3.3V operation // FIXME verify this is supposed to be 265, not 256. Typo?
 }
 
 uint8_t acc_samples = 0;
 
-static bool adxl345Read(int16_t *accelData)
+static bool adxl345Read(int32_t *accel)
 {
     uint8_t buf[8];
+    int16_t accelData[AXIS_COUNT];
+    int axis;
 
     if (useFifo) {
         int32_t x = 0;
@@ -149,6 +151,9 @@ static bool adxl345Read(int16_t *accelData)
         accelData[1] = buf[2] + (buf[3] << 8);
         accelData[2] = buf[4] + (buf[5] << 8);
     }
+
+    for (axis = 0; axis < AXIS_COUNT; axis++) accel[axis] = accelData[axis];  // int32_t copy to work with
+    alignSensors(accel, accel, sensor_link.acc.align);
 
     return true;
 }
