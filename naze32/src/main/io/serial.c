@@ -36,10 +36,6 @@
 #include "drivers/serial_uart.h"
 #endif
 
-#if defined(USE_VCP)
-#include "drivers/serial_usb_vcp.h"
-#endif
-
 #include "io/serial.h"
 #include "serial_cli.h"
 #include "serial_msp.h"
@@ -54,9 +50,6 @@ static serialConfig_t *serialConfig;
 static serialPortUsage_t serialPortUsageList[SERIAL_PORT_COUNT];
 
 const serialPortIdentifier_e serialPortIdentifiers[SERIAL_PORT_COUNT] = {
-#ifdef USE_VCP
-    SERIAL_PORT_USB_VCP,
-#endif
 #ifdef USE_USART1
     SERIAL_PORT_USART1,
 #endif
@@ -254,7 +247,7 @@ serialPort_t *openSerialPort(
     portMode_t mode,
     portOptions_t options)
 {
-#if (!defined(USE_VCP) && !defined(USE_USART1) && !defined(USE_USART2) && !defined(USE_USART3) && !defined(USE_SOFTSERIAL1) && !defined(USE_SOFTSERIAL1))
+#if (!defined(USE_USART1) && !defined(USE_USART2) && !defined(USE_USART3) && !defined(USE_SOFTSERIAL1) && !defined(USE_SOFTSERIAL1))
     UNUSED(callback);
     UNUSED(baudRate);
     UNUSED(mode);
@@ -270,11 +263,6 @@ serialPort_t *openSerialPort(
     serialPort_t *serialPort = NULL;
 
     switch(identifier) {
-#ifdef USE_VCP
-        case SERIAL_PORT_USB_VCP:
-            serialPort = usbVcpOpen();
-            break;
-#endif
 #ifdef USE_USART1
         case SERIAL_PORT_USART1:
             serialPort = uartOpen(USART1, callback, baudRate, mode, options);

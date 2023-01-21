@@ -273,11 +273,6 @@ void resetSerialConfig(serialConfig_t *serialConfig)
 
     serialConfig->portConfigs[0].functionMask = FUNCTION_MSP;
 
-#if defined(USE_VCP)
-    // This allows MSP connection via USART & VCP so the board can be reconfigured.
-    serialConfig->portConfigs[1].functionMask = FUNCTION_MSP;
-#endif
-
     serialConfig->reboot_character = 'R';
 }
 
@@ -675,11 +670,6 @@ void validateAndFixConfig(void)
     if ((WS2811_DMA_TC_FLAG == TRANSPONDER_DMA_TC_FLAG) && featureConfigured(FEATURE_TRANSPONDER) && featureConfigured(FEATURE_LED_STRIP)) {
         featureClear(FEATURE_LED_STRIP);
     }
-#endif
-
-
-#if defined(USE_VCP)
-    masterConfig.serialConfig.portConfigs[0].functionMask = FUNCTION_MSP;
 #endif
 
     useRxConfig(&masterConfig.rxConfig);
