@@ -3,12 +3,4 @@
 .metadata
 .vscode
 
-makefile
-
-*.bak
-*.d
-*.list
-*.mk
-*.o
-*.su
 *-workspace
