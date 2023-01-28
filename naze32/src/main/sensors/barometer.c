@@ -135,7 +135,7 @@ uint32_t baroUpdate(PifTask *p_task)
             sensor_link.baro.calculate(&baroPressure, &temp);
             sensor_link.baro.temperature = temp / 100.0f;
             baroPressureSum = recalculateBarometerTotal(barometerConfig->baro_sample_count, baroPressureSum, baroPressure);
-            if (baroReady && !p_task->_running) p_task->immediate = true;
+            if (baroReady) pifTask_SetTrigger(p_task);
             state = BAROMETER_NEEDS_SAMPLES;
             return sensor_link.baro.ut_delay;
         break;
@@ -170,7 +170,7 @@ void evtBaroRead(float pressure, float temperature)
     baroPressure = pressure * 100;
     sensor_link.baro.temperature = temperature;
     baroPressureSum = recalculateBarometerTotal(barometerConfig->baro_sample_count, baroPressureSum, baroPressure);
-    if (baroReady && !cfTasks[TASK_ALTITUDE].p_task->_running) cfTasks[TASK_ALTITUDE].p_task->immediate = true;
+    if (baroReady) pifTask_SetTrigger(cfTasks[TASK_ALTITUDE].p_task);
 }
 
 #endif /* BARO */

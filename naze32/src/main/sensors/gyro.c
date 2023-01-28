@@ -28,7 +28,6 @@
 #include "drivers/gyro_sync.h"
 #include "io/beeper.h"
 #include "io/statusindicator.h"
-#include "sensors/boardalignment.h"
 
 #include "sensors/gyro.h"
 

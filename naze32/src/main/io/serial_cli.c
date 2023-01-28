@@ -2467,23 +2467,24 @@ static void cliTasks(char *cmdline)
     UNUSED(cmdline);
 
     cfTaskId_e taskId;
-    cfTaskInfo_t taskInfo;
+    PifTask* p_task;
 
     cliPrintf("Task list:\r\n");
     for (taskId = 0; taskId < TASK_COUNT; taskId++) {
-        getTaskInfo(taskId, &taskInfo);
-        if (taskInfo.isCreate && taskInfo.totalExecutionTime) {
-            if (taskInfo.averagePeriodTime) {
-                cliPrintf("%d - %s, mode = %d, max = %d us, avg = %d us, total = %d ms, period = %d us\r\n", taskId, taskInfo.taskName, taskInfo.mode, 
-                        taskInfo.maxExecutionTime, taskInfo.averageExecutionTime, taskInfo.totalExecutionTime / 1000, taskInfo.averagePeriodTime);
+        p_task = cfTasks[taskId].p_task;
+        if (cfTasks[taskId].isCreate && p_task->_total_execution_time) {
+            cliPrintf("%d - %s, mode = %d, max = %d us, avg = %d us total = %d ms", taskId, cfTasks[taskId].taskName, p_task->_mode,
+                    p_task->_max_execution_time, p_task->_total_execution_time / p_task->_execution_count, p_task->_total_execution_time / 1000);
+            if (p_task->_total_period_time) {
+                cliPrintf(", period = %d us", p_task->_total_period_time / p_task->_period_count);
             }
-            else {
-                cliPrintf("%d - %s, mode = %d, max = %d us, avg = %d us, total = %d ms\r\n", taskId, taskInfo.taskName, taskInfo.mode, 
-                        taskInfo.maxExecutionTime, taskInfo.averageExecutionTime, taskInfo.totalExecutionTime / 1000);
+            if (p_task->_total_trigger_delay) {
+                cliPrintf(", delay: max = %d acg = %d us", p_task->_max_trigger_delay, p_task->_total_trigger_delay / p_task->_execution_count);
             }
+            cliPrintf("\r\n");
         }
         else {
-            cliPrintf("%d - %s, mode = %d create = %d\r\n", taskId, taskInfo.taskName, taskInfo.mode, taskInfo.isCreate);
+            cliPrintf("%d - %s, mode = %d, create = %d\r\n", taskId, cfTasks[taskId].taskName, p_task->_mode, cfTasks[taskId].isCreate);
         }
     }
 }

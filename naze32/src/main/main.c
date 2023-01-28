@@ -467,9 +467,6 @@ void init(void)
     adcInit(&adc_params);
 #endif
 
-
-    initBoardAlignment(&masterConfig.boardAlignment);
-
 #ifdef DISPLAY
     if (feature(FEATURE_DISPLAY)) {
         displayInit(&masterConfig.rxConfig);

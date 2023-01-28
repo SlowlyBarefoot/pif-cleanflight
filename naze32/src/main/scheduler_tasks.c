@@ -24,7 +24,7 @@
 
 #define DISALLOW_YIELD_ID_I2C           1
 
-uint16_t taskMainPidLoopChecker(PifTask *p_task);
+uint16_t taskMainPidLoop(PifTask *p_task);
 uint16_t taskUpdateAccelerometer(PifTask *p_task);
 uint16_t taskHandleSerial(PifTask *p_task);
 uint16_t taskUpdateBeeper(PifTask *p_task);
@@ -52,9 +52,9 @@ cfTask_t cfTasks[TASK_COUNT] = {
 
     [TASK_GYROPID] = {
         .taskName = "GYRO/PID",
-        .taskFunc = taskMainPidLoopChecker,
+        .taskFunc = taskMainPidLoop,
         .desiredPeriod = 0,
-        .taskMode = TM_NEED,
+        .taskMode = TM_EXTERNAL_CUTIN,
         .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
         .isCreate = false
     },
@@ -155,7 +155,7 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "ALTITUDE",
         .taskFunc = taskCalculateAltitude,
         .desiredPeriod = 0,
-        .taskMode = TM_NEED,
+        .taskMode = TM_EXTERNAL_ORDER,
         .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
         .isCreate = false
     },

@@ -100,7 +100,7 @@ static void _evtHcSr04Distance(int32_t distance)
     }
 
     if (sensor_link.p_task_altitude) {
-        if (!sensor_link.p_task_altitude->_running) sensor_link.p_task_altitude->immediate = true;
+        pifTask_SetTrigger(sensor_link.p_task_altitude);
     }
 }
 

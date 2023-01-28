@@ -22,19 +22,14 @@
 #include <platform.h>
 #include "build_config.h"
 
-#include "common/axis.h"
-#include "common/maths.h"
+#include "sensor/pif_mpu6500.h"
 
 #include "system.h"
-#include "exti.h"
-#include "gpio.h"
 #include "gyro_sync.h"
 #include "bus_i2c.h"
 
 #include "accgyro_mpu.h"
 #include "accgyro_mpu6500.h"
-
-#include "sensor/pif_mpu6500.h"
 
 const char* mpu6500_name = "MPU6500";
 
@@ -106,7 +101,7 @@ void mpu6500GyroInit(void* p_param)
     pif_Delay1ms(100);
 
     pwr_mgmt_1.byte = 0;
-    pwr_mgmt_1.bit.clksel = INV_CLK_PLL;
+    pwr_mgmt_1.bit.clksel = MPU6500_CLKSEL_PLL;
     pifI2cDevice_WriteRegByte(mpu6500._p_i2c, MPU6500_REG_PWR_MGMT_1, pwr_mgmt_1.byte);
 
     gyro_config.byte = 0;
