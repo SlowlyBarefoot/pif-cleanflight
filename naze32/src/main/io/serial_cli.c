@@ -45,6 +45,8 @@
 #include "drivers/timer.h"
 #include "drivers/pwm_rx.h"
 
+#include "drivers/buf_writer.h"
+
 #include "io/escservo.h"
 #include "io/gps.h"
 #include "io/gimbal.h"

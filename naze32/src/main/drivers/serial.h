@@ -82,3 +82,8 @@ void serialSetMode(serialPort_t *instance, portMode_t mode);
 bool isSerialTransmitBufferEmpty(serialPort_t *instance);
 void serialPrint(serialPort_t *instance, const char *str);
 uint32_t serialGetBaudRate(serialPort_t *instance);
+
+// A shim that adapts the bufWriter API to the serialWriteBuf() API.
+void serialWriteBufShim(void *instance, uint8_t *data, int count);
+void serialBeginWrite(serialPort_t *instance);
+void serialEndWrite(serialPort_t *instance);
