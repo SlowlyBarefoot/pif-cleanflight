@@ -33,7 +33,7 @@
 
 #include "sensors/acceleration.h"
 
-int32_t accADC[XYZ_AXIS_COUNT];
+float accADC[XYZ_AXIS_COUNT];
 
 static uint16_t calibratingA = 0;      // the calibration is done is the main loop. Calibrating decreases at each cycle down to 0, then we enter in a normal mode.
 

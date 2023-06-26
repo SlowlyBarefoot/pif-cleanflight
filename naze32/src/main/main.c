@@ -682,7 +682,6 @@ int main(void) {
     }
 
     if (!createTask(TASK_ACCEL, sensors(SENSOR_ACC) != 0)) goto bootloader;
-    if (!createTask(TASK_SERIAL, TRUE)) goto bootloader;
 #ifdef BEEPER
     if (!createTask(TASK_BEEPER, TRUE)) goto bootloader;
 #endif

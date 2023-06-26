@@ -32,7 +32,7 @@
 #include "sensors/gyro.h"
 
 static uint16_t calibratingG = 0;
-int32_t gyroADC[XYZ_AXIS_COUNT];
+float gyroADC[XYZ_AXIS_COUNT];
 static int32_t gyroZero[FLIGHT_DYNAMICS_INDEX_COUNT] = { 0, 0, 0 };
 
 static gyroConfig_t *gyroConfig;

@@ -258,12 +258,12 @@ bool mpuIntExtiInit()
     return true;
 }
 
-bool mpuAccRead(int32_t *accel)
+bool mpuAccRead(float* p_accel)
 {
-    return pifImuSensor_ReadAccel4(&sensor_link.imu_sensor, accel);
+    return pifImuSensor_ReadRawAccel(&sensor_link.imu_sensor, p_accel);
 }
 
-bool mpuGyroRead(int32_t *gyro)
+bool mpuGyroRead(float* p_gyro)
 {
-    return pifImuSensor_ReadGyro4(&sensor_link.imu_sensor, gyro);
+    return pifImuSensor_ReadRawGyro(&sensor_link.imu_sensor, p_gyro);
 }

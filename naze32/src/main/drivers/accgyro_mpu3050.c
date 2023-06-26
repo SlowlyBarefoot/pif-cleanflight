@@ -35,7 +35,7 @@ const char* mpu3050_name = "MPU3050";
 static PifMpu30x0 mpu30x0;
 
 static void mpu3050Init(void* p_param);
-static bool mpu3050ReadTemp(int32_t *tempData);
+static bool mpu3050ReadTemp(float* p_tempData);
 
 bool mpu3050Detect(void* p_param)
 {
@@ -44,6 +44,8 @@ bool mpu3050Detect(void* p_param)
     if (mpuDetectionResult.sensor != MPU_3050) {
         return false;
     }
+
+    if (!pifMpu30x0_Detect(&g_i2c_port, MPU30X0_I2C_ADDR)) return false;
 
     if (!pifMpu30x0_Init(&mpu30x0, PIF_ID_AUTO, &g_i2c_port, MPU30X0_I2C_ADDR, &sensor_link.imu_sensor)) return false;
 
@@ -87,15 +89,7 @@ static void mpu3050Init(void* p_param)
     pifI2cDevice_WriteRegByte(mpu30x0._p_i2c, MPU30X0_REG_PWR_MGMT, pwr_mgmt.byte);
 }
 
-static bool mpu3050ReadTemp(int32_t *tempData)
+static bool mpu3050ReadTemp(float* p_tempData)
 {
-    float temp;
-
-    if (!pifMpu30x0_ReadTemperature(&mpu30x0, &temp)) {
-        return false;
-    }
-
-    *tempData = temp;
-
-    return true;
+    return pifMpu30x0_ReadTemperature(&mpu30x0, p_tempData);
 }

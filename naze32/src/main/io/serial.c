@@ -245,8 +245,12 @@ serialPort_t *openSerialPort(
     serialReceiveCallbackPtr callback,
     uint32_t baudRate,
     portMode_t mode,
-    portOptions_t options)
+    portOptions_t options, 
+    uint16_t period)
 {
+    uint16_t tmp, size;
+	const char* names[] = { "C_MSP", "C_GPS", "C_FRSKY", "C_HOTT", "C_LIM", "C_STARTPORT", "C_RX", "C_BLACKBOX" };
+
 #if (!defined(USE_USART1) && !defined(USE_USART2) && !defined(USE_USART3) && !defined(USE_SOFTSERIAL1) && !defined(USE_SOFTSERIAL1))
     UNUSED(callback);
     UNUSED(baudRate);
@@ -300,6 +304,24 @@ serialPort_t *openSerialPort(
 
     serialPort->identifier = identifier;
 
+    if (function == FUNCTION_MSP) {
+        size = 256;
+    }
+    else {
+        size = 16;
+        tmp = (uint32_t)period * 115200UL / 10000;
+        while (tmp >= size) size <<= 1;
+    }
+
+    if (mode & MODE_RX) {
+        if (!pifComm_AllocRxBuffer(&serialPort->comm, size, size / 2)) return NULL;
+    }
+    if (mode & MODE_TX) {
+        if (!pifComm_AllocTxBuffer(&serialPort->comm, size)) return NULL;
+    }
+
+    if (!pifComm_AttachTask(&serialPort->comm, TM_PERIOD_MS, period, TRUE, names[function - 1])) return NULL;
+
     serialPortUsage->function = function;
     serialPortUsage->serialPort = serialPort;
 
@@ -314,8 +336,6 @@ void closeSerialPort(serialPort_t *serialPort) {
     }
 
     // TODO wait until data has been transmitted.
-
-    serialPort->callback = NULL;
 
     serialPortUsage->function = FUNCTION_NONE;
     serialPortUsage->serialPort = NULL;
@@ -374,35 +394,38 @@ bool serialIsPortAvailable(serialPortIdentifier_e identifier)
     return false;
 }
 
-void handleSerial(void)
-{
-#ifdef USE_CLI
-    // in cli mode, all serial stuff goes to here. enter cli mode by sending #
-    if (cliMode) {
-        cliProcess();
-        return;
-    }
-#endif
-
-    mspProcess();
-}
-
 void waitForSerialPortToFinishTransmitting(serialPort_t *serialPort)
 {
-    while (!isSerialTransmitBufferEmpty(serialPort)) {
-        delay(10);
-    };
+    while (pifComm_GetFillSizeOfTxBuffer(&serialPort->comm)) {
+        pifTaskManager_YieldMs(10);
+    }
 }
 
 void cliEnter(serialPort_t *serialPort);
 
-void evaluateOtherData(serialPort_t *serialPort, uint8_t receivedChar)
+static PifMsp* p_msp = NULL;
+static serialPort_t* p_serial = NULL;
+
+void checkCliMode()
+{
+    if (p_msp) {
+        pifMsp_DetachComm(p_msp);
+        cliEnter(p_serial);
+
+        p_msp = NULL;
+        p_serial = NULL;
+    }
+}
+
+void evtMspOtherPacket(PifMsp* p_owner, uint8_t receivedChar, PifIssuerP p_issuer)
 {
 #ifndef USE_CLI
-    UNUSED(serialPort);
+    UNUSED(p_owner);
+    UNUSED(p_issuer);
 #else
     if (receivedChar == '#') {
-        cliEnter(serialPort);
+        p_msp = p_owner;
+        p_serial = (serialPort_t*)p_issuer;
     }
 #endif
     if (receivedChar == serialConfig->reboot_character) {

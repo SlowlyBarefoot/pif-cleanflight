@@ -28,6 +28,7 @@
 
 #include "build_config.h"
 
+#include "common/link_driver.h"
 #include "common/utils.h"
 #include "gpio.h"
 #include "inverter.h"
@@ -35,6 +36,26 @@
 #include "serial.h"
 #include "serial_uart.h"
 #include "serial_uart_impl.h"
+
+static BOOL actCommSetBaudRate(PifComm* p_comm, uint32_t baudrate)
+{
+    uartPort_t *uartPort = getUartPort(p_comm->_id);
+    if (uartPort) {
+        uartSetBaudRate(&uartPort->port, baudrate);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static BOOL actUartStartTransfer(PifComm* p_comm)
+{
+    uartPort_t *uartPort = getUartPort(p_comm->_id);
+    if (uartPort) {
+        USART_ITConfig(uartPort->USARTx, USART_IT_TXE, ENABLE);
+        return TRUE;
+    }
+    return FALSE;
+}
 
 static void usartConfigurePinInversion(uartPort_t *uartPort) {
 #if !defined(INVERTER)
@@ -84,32 +105,36 @@ static void uartReconfigure(uartPort_t *uartPort)
 serialPort_t *uartOpen(USART_TypeDef *USARTx, serialReceiveCallbackPtr callback, uint32_t baudRate, portMode_t mode, portOptions_t options)
 {
     uartPort_t *s = NULL;
+    int id;
+
+    (void)callback;
 
     if (USARTx == USART1) {
         s = serialUSART1(baudRate, mode, options);
+        id = 0;
 #ifdef USE_USART2
     } else if (USARTx == USART2) {
         s = serialUSART2(baudRate, mode, options);
+        id = 1;
 #endif
 #ifdef USE_USART3
     } else if (USARTx == USART3) {
         s = serialUSART3(baudRate, mode, options);
+        id = 2;
 #endif
     } else {
         return (serialPort_t *)s;
     }
     s->txDMAEmpty = true;
 
-    // common serial initialisation code should move to serialPort::init()
-    s->port.rxBufferHead = s->port.rxBufferTail = 0;
-    s->port.txBufferHead = s->port.txBufferTail = 0;
-    // callback works for IRQ-based RX ONLY
-    s->port.callback = callback;
     s->port.mode = mode;
     s->port.baudRate = baudRate;
     s->port.options = options;
 
     uartReconfigure(s);
+
+    if (!pifComm_Init(&s->port.comm, PIF_ID_UART(id))) return NULL;
+    s->port.comm.act_set_baudrate = actCommSetBaudRate;
 
     // Receive DMA or IRQ
     DMA_InitTypeDef DMA_InitStructure;
@@ -124,10 +149,10 @@ serialPort_t *uartOpen(USART_TypeDef *USARTx, serialReceiveCallbackPtr callback,
             DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
             DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
 
-            DMA_InitStructure.DMA_BufferSize = s->port.rxBufferSize;
+            DMA_InitStructure.DMA_BufferSize = s->port.comm._p_rx_buffer->_size;
             DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
             DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
-            DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)s->port.rxBuffer;
+            DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)pifRingBuffer_GetTailPointer(s->port.comm._p_rx_buffer, 0);
             DMA_DeInit(s->rxDMAChannel);
             DMA_Init(s->rxDMAChannel, &DMA_InitStructure);
             DMA_Cmd(s->rxDMAChannel, ENABLE);
@@ -141,6 +166,8 @@ serialPort_t *uartOpen(USART_TypeDef *USARTx, serialReceiveCallbackPtr callback,
 
     // Transmit DMA or IRQ
     if (mode & MODE_TX) {
+        s->port.comm.act_start_transfer = actUartStartTransfer;
+
         if (s->txDMAChannel) {
             DMA_StructInit(&DMA_InitStructure);
             DMA_InitStructure.DMA_PeripheralBaseAddr = s->txDMAPeripheralBaseAddr;
@@ -151,7 +178,7 @@ serialPort_t *uartOpen(USART_TypeDef *USARTx, serialReceiveCallbackPtr callback,
             DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
             DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
 
-            DMA_InitStructure.DMA_BufferSize = s->port.txBufferSize;
+            DMA_InitStructure.DMA_BufferSize = s->port.comm._p_tx_buffer->_size;
             DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
             DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
             DMA_DeInit(s->txDMAChannel);
@@ -186,131 +213,12 @@ void uartSetMode(serialPort_t *instance, portMode_t mode)
 
 void uartStartTxDMA(uartPort_t *s)
 {
-    s->txDMAChannel->CMAR = (uint32_t)&s->port.txBuffer[s->port.txBufferTail];
-    if (s->port.txBufferHead > s->port.txBufferTail) {
-        s->txDMAChannel->CNDTR = s->port.txBufferHead - s->port.txBufferTail;
-        s->port.txBufferTail = s->port.txBufferHead;
-    } else {
-        s->txDMAChannel->CNDTR = s->port.txBufferSize - s->port.txBufferTail;
-        s->port.txBufferTail = 0;
-    }
+    uint16_t size;
+
+    s->txDMAChannel->CMAR = (uint32_t)pifRingBuffer_GetTailPointer(s->port.comm._p_tx_buffer, 0);
+    size = pifRingBuffer_GetLinerSize(s->port.comm._p_tx_buffer, 0);
+    s->txDMAChannel->CNDTR = size;
+    pifRingBuffer_Remove(s->port.comm._p_tx_buffer, size);
     s->txDMAEmpty = false;
     DMA_Cmd(s->txDMAChannel, ENABLE);
 }
-
-uint8_t uartTotalRxBytesWaiting(serialPort_t *instance)
-{
-    uartPort_t *s = (uartPort_t*)instance;
-    if (s->rxDMAChannel) {
-        uint32_t rxDMAHead = s->rxDMAChannel->CNDTR;
-        if (rxDMAHead >= s->rxDMAPos) {
-            return rxDMAHead - s->rxDMAPos;
-        } else {
-            return s->port.rxBufferSize + rxDMAHead - s->rxDMAPos;
-        }
-    }
-
-    if (s->port.rxBufferHead >= s->port.rxBufferTail) {
-        return s->port.rxBufferHead - s->port.rxBufferTail;
-    } else {
-        return s->port.rxBufferSize + s->port.rxBufferHead - s->port.rxBufferTail;
-    }
-}
-
-uint8_t uartTotalTxBytesFree(serialPort_t *instance)
-{
-    uartPort_t *s = (uartPort_t*)instance;
-
-    uint32_t bytesUsed;
-
-    if (s->port.txBufferHead >= s->port.txBufferTail) {
-        bytesUsed = s->port.txBufferHead - s->port.txBufferTail;
-    } else {
-        bytesUsed = s->port.txBufferSize + s->port.txBufferHead - s->port.txBufferTail;
-    }
-
-    if (s->txDMAChannel) {
-        /*
-         * When we queue up a DMA request, we advance the Tx buffer tail before the transfer finishes, so we must add
-         * the remaining size of that in-progress transfer here instead:
-         */
-        bytesUsed += s->txDMAChannel->CNDTR;
-
-        /*
-         * If the Tx buffer is being written to very quickly, we might have advanced the head into the buffer
-         * space occupied by the current DMA transfer. In that case the "bytesUsed" total will actually end up larger
-         * than the total Tx buffer size, because we'll end up transmitting the same buffer region twice. (So we'll be
-         * transmitting a garbage mixture of old and new bytes).
-         *
-         * Be kind to callers and pretend like our buffer can only ever be 100% full.
-         */
-        if (bytesUsed >= s->port.txBufferSize - 1) {
-            return 0;
-        }
-    }
-
-    return (s->port.txBufferSize - 1) - bytesUsed;
-}
-
-bool isUartTransmitBufferEmpty(serialPort_t *instance)
-{
-    uartPort_t *s = (uartPort_t *)instance;
-    if (s->txDMAChannel)
-        return s->txDMAEmpty;
-    else
-        return s->port.txBufferTail == s->port.txBufferHead;
-}
-
-uint8_t uartRead(serialPort_t *instance)
-{
-    uint8_t ch;
-    uartPort_t *s = (uartPort_t *)instance;
-
-    if (s->rxDMAChannel) {
-        ch = s->port.rxBuffer[s->port.rxBufferSize - s->rxDMAPos];
-        if (--s->rxDMAPos == 0)
-            s->rxDMAPos = s->port.rxBufferSize;
-    } else {
-        ch = s->port.rxBuffer[s->port.rxBufferTail];
-        if (s->port.rxBufferTail + 1 >= s->port.rxBufferSize) {
-            s->port.rxBufferTail = 0;
-        } else {
-            s->port.rxBufferTail++;
-        }
-    }
-
-    return ch;
-}
-
-void uartWrite(serialPort_t *instance, uint8_t ch)
-{
-    uartPort_t *s = (uartPort_t *)instance;
-    s->port.txBuffer[s->port.txBufferHead] = ch;
-    if (s->port.txBufferHead + 1 >= s->port.txBufferSize) {
-        s->port.txBufferHead = 0;
-    } else {
-        s->port.txBufferHead++;
-    }
-
-    if (s->txDMAChannel) {
-        if (!(s->txDMAChannel->CCR & 1))
-            uartStartTxDMA(s);
-    } else {
-        USART_ITConfig(s->USARTx, USART_IT_TXE, ENABLE);
-    }
-}
-
-const struct serialPortVTable uartVTable[] = {
-    {
-        uartWrite,
-        uartTotalRxBytesWaiting,
-        uartTotalTxBytesFree,
-        uartRead,
-        uartSetBaudRate,
-        isUartTransmitBufferEmpty,
-        uartSetMode,
-        .writeBuf = NULL,
-        .beginWrite = NULL,
-        .endWrite = NULL,
-    }
-};

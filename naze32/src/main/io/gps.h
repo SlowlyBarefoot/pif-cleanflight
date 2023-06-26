@@ -92,6 +92,9 @@ typedef struct gpsData_s {
     uint32_t state_position;        // incremental variable for loops
     uint32_t state_ts;              // timestamp for last state_position increment
     gpsMessageState_e messageState;
+
+    BOOL receive;
+    int cfg_result;
 } gpsData_t;
 
 #define GPS_PACKET_LOG_ENTRY_COUNT 21 // To make this useful we should log as many packets as we can fit characters a single line of a OLED display.

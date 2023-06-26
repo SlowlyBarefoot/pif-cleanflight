@@ -135,6 +135,7 @@ LD_SCRIPT	 = $(LINKER_DIR)/stm32_flash_f103_$(FLASH_SIZE)k.ld
 ARCH_FLAGS	 = -mthumb -mcpu=cortex-m3
 TARGET_FLAGS = -D$(TARGET) -pedantic
 DEVICE_FLAGS = -DSTM32F10X_MD -DSTM32F10X
+PIF_FLAGS	 = -D__PIF_LOG_COMMAND__ -DPIF_LOG_LINE_SIZE=200 -DPIF_LOG_TX_BUFFER_SIZE=200
 
 endif
 
@@ -183,7 +184,6 @@ COMMON_SRC = build_config.c \
 		   io/rc_controls.c \
 		   io/rc_curves.c \
 		   io/serial.c \
-		   io/serial_1wire.c \
 		   io/serial_cli.c \
 		   io/serial_msp.c \
 		   io/statusindicator.c \
@@ -232,13 +232,15 @@ PIF_SRC = \
 			pif/source/core/pif_ring_buffer.c \
 			pif/source/core/pif_task.c \
 			pif/source/core/pif_timer.c \
+			pif/source/protocol/pif_msp.c \
+			pif/source/sensor/pif_bmp280.c \
 			pif/source/sensor/pif_hc_sr04.c \
 			pif/source/sensor/pif_hmc5883.c \
 			pif/source/sensor/pif_imu_sensor.c \
 			pif/source/sensor/pif_mpu30x0.c \
 			pif/source/sensor/pif_mpu60x0.c \
 			pif/source/sensor/pif_mpu6500.c \
-			pif/source/sensor/pif_bmp280.c
+			pif/source/sensor/pif_qmc5883.c
 
 NAZE_SRC = startup_stm32f10x_md_gcc.S \
 		   drivers/accgyro_mpu.c \
@@ -251,6 +253,7 @@ NAZE_SRC = startup_stm32f10x_md_gcc.S \
 		   drivers/bus_spi.c \
 		   drivers/bus_i2c_stm32f10x.c \
 		   drivers/compass_hmc5883l.c \
+		   drivers/compass_qmc5883l.c \
 		   drivers/display_ug2864hsweg01.c \
 		   drivers/flash_m25p16.c \
 		   drivers/gpio_stm32f10x.c \
@@ -313,6 +316,7 @@ CFLAGS		 = $(ARCH_FLAGS) \
 		   $(DEVICE_FLAGS) \
 		   -DUSE_STDPERIPH_DRIVER \
 		   $(TARGET_FLAGS) \
+		   $(PIF_FLAGS) \
 		   -D'__FORKNAME__="$(FORKNAME)"' \
 		   -D'__TARGET__="$(TARGET)"' \
 		   -D'__REVISION__="$(REVISION)"' \

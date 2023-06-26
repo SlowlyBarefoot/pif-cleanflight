@@ -26,7 +26,6 @@ typedef enum {
     TASK_GYROPID = 0,
     TASK_SYSTEM,
     TASK_ACCEL,
-    TASK_SERIAL,
 #ifdef BEEPER
     TASK_BEEPER,
 #endif
@@ -82,6 +81,7 @@ typedef struct {
 
 extern cfTask_t cfTasks[TASK_COUNT];
 
+void calcurateTaskTime();
 BOOL changeTask(cfTaskId_e taskId, PifTaskMode newMode, uint16_t newPeriod);
 BOOL createTask(cfTaskId_e taskId, BOOL newEnabledState);
 

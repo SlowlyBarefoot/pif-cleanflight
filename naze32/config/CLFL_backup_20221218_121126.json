@@ -1,0 +1,595 @@
+{
+	"generatedBy": "2.6.0",
+	"apiVersion": "1.16.0",
+	"profiles": [],
+	"RCMAP": [
+		0,
+		1,
+		3,
+		2,
+		4,
+		5,
+		6,
+		7
+	],
+	"SERIAL_CONFIG": {
+		"ports": [
+			{
+				"identifier": 0,
+				"functions": [
+					"MSP"
+				],
+				"msp_baudrate": "115200",
+				"gps_baudrate": "57600",
+				"telemetry_baudrate": "AUTO",
+				"blackbox_baudrate": "115200"
+			},
+			{
+				"identifier": 1,
+				"functions": [
+					"GPS"
+				],
+				"msp_baudrate": "115200",
+				"gps_baudrate": "57600",
+				"telemetry_baudrate": "AUTO",
+				"blackbox_baudrate": "115200"
+			}
+		],
+		"mspBaudRate": 0,
+		"gpsBaudRate": 0,
+		"gpsPassthroughBaudRate": 0,
+		"cliBaudRate": 0
+	},
+	"LED_STRIP": [
+		{
+			"directions": [
+				"e",
+				"s"
+			],
+			"functions": [
+				"i",
+				"a"
+			],
+			"x": 15,
+			"y": 15,
+			"color": 0
+		},
+		{
+			"directions": [
+				"e"
+			],
+			"functions": [
+				"w",
+				"f"
+			],
+			"x": 15,
+			"y": 8,
+			"color": 0
+		},
+		{
+			"directions": [
+				"e"
+			],
+			"functions": [
+				"w",
+				"f"
+			],
+			"x": 15,
+			"y": 7,
+			"color": 0
+		},
+		{
+			"directions": [
+				"n",
+				"e"
+			],
+			"functions": [
+				"i",
+				"a"
+			],
+			"x": 15,
+			"y": 0,
+			"color": 0
+		},
+		{
+			"directions": [
+				"n"
+			],
+			"functions": [
+				"f"
+			],
+			"x": 8,
+			"y": 0,
+			"color": 0
+		},
+		{
+			"directions": [
+				"n"
+			],
+			"functions": [
+				"f"
+			],
+			"x": 7,
+			"y": 0,
+			"color": 0
+		},
+		{
+			"directions": [
+				"n",
+				"w"
+			],
+			"functions": [
+				"i",
+				"a"
+			],
+			"x": 0,
+			"y": 0,
+			"color": 0
+		},
+		{
+			"directions": [
+				"w"
+			],
+			"functions": [
+				"w",
+				"f"
+			],
+			"x": 0,
+			"y": 7,
+			"color": 0
+		},
+		{
+			"directions": [
+				"w"
+			],
+			"functions": [
+				"w",
+				"f"
+			],
+			"x": 0,
+			"y": 8,
+			"color": 0
+		},
+		{
+			"directions": [
+				"s",
+				"w"
+			],
+			"functions": [
+				"i",
+				"a"
+			],
+			"x": 0,
+			"y": 15,
+			"color": 0
+		},
+		{
+			"directions": [
+				"s"
+			],
+			"functions": [
+				"w",
+				"f"
+			],
+			"x": 7,
+			"y": 15,
+			"color": 0
+		},
+		{
+			"directions": [
+				"s"
+			],
+			"functions": [
+				"w",
+				"f"
+			],
+			"x": 8,
+			"y": 15,
+			"color": 0
+		},
+		{
+			"directions": [
+				"u"
+			],
+			"functions": [
+				"w",
+				"f"
+			],
+			"x": 7,
+			"y": 7,
+			"color": 0
+		},
+		{
+			"directions": [
+				"u"
+			],
+			"functions": [
+				"w",
+				"f"
+			],
+			"x": 8,
+			"y": 7,
+			"color": 0
+		},
+		{
+			"directions": [
+				"d"
+			],
+			"functions": [
+				"w",
+				"f"
+			],
+			"x": 7,
+			"y": 8,
+			"color": 0
+		},
+		{
+			"directions": [
+				"d"
+			],
+			"functions": [
+				"w",
+				"f"
+			],
+			"x": 8,
+			"y": 8,
+			"color": 0
+		},
+		{
+			"directions": [],
+			"functions": [
+				"r"
+			],
+			"x": 8,
+			"y": 9,
+			"color": 3
+		},
+		{
+			"directions": [],
+			"functions": [
+				"r"
+			],
+			"x": 9,
+			"y": 10,
+			"color": 3
+		},
+		{
+			"directions": [],
+			"functions": [
+				"r"
+			],
+			"x": 10,
+			"y": 11,
+			"color": 3
+		},
+		{
+			"directions": [],
+			"functions": [
+				"r"
+			],
+			"x": 10,
+			"y": 12,
+			"color": 3
+		},
+		{
+			"directions": [],
+			"functions": [
+				"r"
+			],
+			"x": 9,
+			"y": 13,
+			"color": 3
+		},
+		{
+			"directions": [],
+			"functions": [
+				"r"
+			],
+			"x": 8,
+			"y": 14,
+			"color": 3
+		},
+		{
+			"directions": [],
+			"functions": [
+				"r"
+			],
+			"x": 7,
+			"y": 14,
+			"color": 3
+		},
+		{
+			"directions": [],
+			"functions": [
+				"r"
+			],
+			"x": 6,
+			"y": 13,
+			"color": 3
+		},
+		{
+			"directions": [],
+			"functions": [
+				"r"
+			],
+			"x": 5,
+			"y": 12,
+			"color": 3
+		},
+		{
+			"directions": [],
+			"functions": [
+				"r"
+			],
+			"x": 5,
+			"y": 11,
+			"color": 3
+		},
+		{
+			"directions": [],
+			"functions": [
+				"r"
+			],
+			"x": 6,
+			"y": 10,
+			"color": 3
+		},
+		{
+			"directions": [],
+			"functions": [
+				"r"
+			],
+			"x": 7,
+			"y": 9,
+			"color": 3
+		},
+		{
+			"directions": [],
+			"functions": [],
+			"x": 0,
+			"y": 0,
+			"color": 0
+		},
+		{
+			"directions": [],
+			"functions": [],
+			"x": 0,
+			"y": 0,
+			"color": 0
+		},
+		{
+			"directions": [],
+			"functions": [],
+			"x": 0,
+			"y": 0,
+			"color": 0
+		},
+		{
+			"directions": [],
+			"functions": [],
+			"x": 0,
+			"y": 0,
+			"color": 0
+		}
+	],
+	"LED_COLORS": [
+		{
+			"h": 0,
+			"s": 0,
+			"v": 0
+		},
+		{
+			"h": 0,
+			"s": 255,
+			"v": 255
+		},
+		{
+			"h": 0,
+			"s": 0,
+			"v": 255
+		},
+		{
+			"h": 30,
+			"s": 0,
+			"v": 255
+		},
+		{
+			"h": 60,
+			"s": 0,
+			"v": 255
+		},
+		{
+			"h": 90,
+			"s": 0,
+			"v": 255
+		},
+		{
+			"h": 120,
+			"s": 0,
+			"v": 255
+		},
+		{
+			"h": 150,
+			"s": 0,
+			"v": 255
+		},
+		{
+			"h": 180,
+			"s": 0,
+			"v": 255
+		},
+		{
+			"h": 210,
+			"s": 0,
+			"v": 255
+		},
+		{
+			"h": 240,
+			"s": 0,
+			"v": 255
+		},
+		{
+			"h": 270,
+			"s": 0,
+			"v": 255
+		},
+		{
+			"h": 300,
+			"s": 0,
+			"v": 255
+		},
+		{
+			"h": 330,
+			"s": 0,
+			"v": 255
+		},
+		{
+			"h": 0,
+			"s": 0,
+			"v": 0
+		},
+		{
+			"h": 0,
+			"s": 0,
+			"v": 0
+		}
+	],
+	"BOARD_ALIGNMENT_CONFIG": {
+		"roll": 0,
+		"pitch": 0,
+		"yaw": 0
+	},
+	"CRAFT_NAME": "",
+	"DISPLAY_NAME": "JOE PILOT",
+	"MIXER_CONFIG": {
+		"mixer": 3,
+		"reverseMotorDir": 0
+	},
+	"SENSOR_CONFIG": {
+		"acc_hardware": 0,
+		"baro_hardware": 0,
+		"mag_hardware": 0
+	},
+	"PID_ADVANCED_CONFIG": {
+		"gyro_sync_denom": null,
+		"pid_process_denom": null,
+		"use_unsyncedPwm": 0,
+		"fast_pwm_protocol": 0,
+		"motor_pwm_rate": 0,
+		"digitalIdlePercent": 0,
+		"gyroUse32kHz": 0,
+		"motorPwmInversion": 0,
+		"gyroHighFsr": 0,
+		"gyroMovementCalibThreshold": 0,
+		"gyroCalibDuration": 0,
+		"gyroOffsetYaw": 0,
+		"gyroCheckOverflow": 0,
+		"debugMode": 0,
+		"debugModeCount": 0
+	},
+	"FC_CONFIG": {
+		"loopTime": 2000
+	},
+	"ARMING_CONFIG": {
+		"auto_disarm_delay": 5,
+		"disarm_kill_switch": 1,
+		"small_angle": 0
+	},
+	"MOTOR_3D_CONFIG": {
+		"deadband3d_low": 1406,
+		"deadband3d_high": 1514,
+		"neutral": 1460
+	},
+	"SENSOR_ALIGNMENT": {
+		"align_gyro": 0,
+		"align_acc": 0,
+		"align_mag": 0,
+		"gyro_detection_flags": 0,
+		"gyro_to_use": 0,
+		"gyro_1_align": 0,
+		"gyro_2_align": 0
+	},
+	"RX_CONFIG": {
+		"serialrx_provider": 0,
+		"stick_max": 1900,
+		"stick_center": 1500,
+		"stick_min": 1100,
+		"spektrum_sat_bind": 0,
+		"rx_min_usec": 885,
+		"rx_max_usec": 2115,
+		"rcInterpolation": 0,
+		"rcInterpolationInterval": 0,
+		"rcInterpolationChannels": 0,
+		"airModeActivateThreshold": 0,
+		"rxSpiProtocol": 0,
+		"rxSpiId": 0,
+		"rxSpiRfChannelCount": 0,
+		"fpvCamAngleDegrees": 0,
+		"rcSmoothingType": 0,
+		"rcSmoothingInputCutoff": 0,
+		"rcSmoothingDerivativeCutoff": 0,
+		"rcSmoothingInputType": 0,
+		"rcSmoothingDerivativeType": 0,
+		"rcSmoothingAutoSmoothness": 0,
+		"usbCdcHidType": 0,
+		"midrc": 1500
+	},
+	"FAILSAFE_CONFIG": {
+		"failsafe_delay": 10,
+		"failsafe_off_delay": 200,
+		"failsafe_throttle": 1000,
+		"failsafe_switch_mode": 0,
+		"failsafe_throttle_low_delay": 100,
+		"failsafe_procedure": 0
+	},
+	"RXFAIL_CONFIG": [
+		{
+			"mode": 0,
+			"value": 1500
+		},
+		{
+			"mode": 0,
+			"value": 1500
+		},
+		{
+			"mode": 0,
+			"value": 1500
+		},
+		{
+			"mode": 0,
+			"value": 875
+		},
+		{
+			"mode": 1,
+			"value": 1500
+		},
+		{
+			"mode": 1,
+			"value": 1500
+		},
+		{
+			"mode": 1,
+			"value": 1500
+		},
+		{
+			"mode": 1,
+			"value": 1500
+		},
+		{
+			"mode": 1,
+			"value": 1500
+		},
+		{
+			"mode": 1,
+			"value": 1500
+		},
+		{
+			"mode": 1,
+			"value": 1500
+		},
+		{
+			"mode": 1,
+			"value": 1500
+		}
+	]
+}

@@ -39,11 +39,9 @@
 static uint32_t realtimeGuardInterval = REALTIME_GUARD_INTERVAL_MAX;
 
 
-uint16_t taskSystem(PifTask *p_task)
+void calcurateTaskTime()
 {
     uint8_t taskId;
-
-    UNUSED(p_task);
 
     /* Calculate guard interval */
     uint32_t maxNonRealtimeTaskTime = 0;
@@ -55,7 +53,6 @@ uint16_t taskSystem(PifTask *p_task)
 #if defined SCHEDULER_DEBUG
     debug[2] = realtimeGuardInterval;
 #endif
-    return 0;
 }
 
 BOOL changeTask(cfTaskId_e taskId, PifTaskMode newMode, uint16_t newPeriod)
@@ -74,6 +71,7 @@ BOOL createTask(cfTaskId_e taskId, BOOL newEnabledState)
 {
     if (taskId < TASK_COUNT) {
 		cfTasks[taskId].p_task = pifTaskManager_Add(cfTasks[taskId].taskMode, cfTasks[taskId].desiredPeriod, cfTasks[taskId].taskFunc, NULL, newEnabledState);
+        cfTasks[taskId].p_task->name = cfTasks[taskId].taskName;
         cfTasks[taskId].p_task->disallow_yield_id = cfTasks[taskId].disallow_yield_id;
         cfTasks[taskId].isCreate = true;
 	    return cfTasks[taskId].p_task != 0;

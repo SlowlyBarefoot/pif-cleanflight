@@ -14,6 +14,7 @@
 #include "drivers/barometer_bmp280.h"
 
 #include "drivers/compass_hmc5883l.h"
+#include "drivers/compass_qmc5883l.h"
 
 
 const sensorDetect_t gyro_detect[] = {
@@ -86,6 +87,13 @@ const sensorDetect_t mag_detect[] = {
     { MAG_HMC5883, MAG_HMC5883_ALIGN, (sensorDetectFuncPtr)hmc5883lDetect, NULL },
     #else
     { MAG_HMC5883, IMUS_ALIGN_DEFAULT, (sensorDetectFuncPtr)hmc5883lDetect, NULL },
+    #endif
+#endif
+#ifdef USE_MAG_QMC5883
+    #ifdef MAG_QMC5883_ALIGN
+    { MAG_QMC5883, MAG_QMC5883_ALIGN, (sensorDetectFuncPtr)qmc5883lDetect, NULL },
+    #else
+    { MAG_QMC5883, IMUS_ALIGN_DEFAULT, (sensorDetectFuncPtr)qmc5883lDetect, NULL },
     #endif
 #endif
 

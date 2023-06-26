@@ -26,7 +26,6 @@
 
 uint16_t taskMainPidLoop(PifTask *p_task);
 uint16_t taskUpdateAccelerometer(PifTask *p_task);
-uint16_t taskHandleSerial(PifTask *p_task);
 uint16_t taskUpdateBeeper(PifTask *p_task);
 uint16_t taskUpdateBattery(PifTask *p_task);
 uint16_t taskUpdateRxMain(PifTask *p_task);
@@ -65,15 +64,6 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .desiredPeriod = 10,        // every 10ms
         .taskMode = TM_PERIOD_MS,
         .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
-        .isCreate = false
-    },
-
-    [TASK_SERIAL] = {
-        .taskName = "SERIAL",
-        .taskFunc = taskHandleSerial,
-        .desiredPeriod = 10,        // 100 Hz should be enough to flush up to 115 bytes @ 115200 baud
-        .taskMode = TM_PERIOD_MS,
-        .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
         .isCreate = false
     },
 

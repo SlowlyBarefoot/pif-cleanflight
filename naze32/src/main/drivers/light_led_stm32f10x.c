@@ -21,6 +21,8 @@
 
 #include <platform.h>
 
+#include "core/pif.h"
+
 #include "common/utils.h"
 
 #include "system.h"
@@ -81,3 +83,48 @@ void ledInit(void)
 #endif
 }
 
+void pif_ChangeStatusLed(int num, BOOL state)
+{
+    switch (num) {
+#ifdef LED0
+    case 0:
+        if (state) LED0_ON; else LED0_OFF;
+        break;
+#endif
+#ifdef LED1
+    case 1:
+        if (state) LED1_ON; else LED1_OFF;
+        break;
+#endif
+#ifdef LED2
+    case 2: 
+        if (state) LED2_ON; else LED2_OFF; 
+        break;
+#endif
+    default:
+        break;
+    }
+}
+
+void pif_ToggleStatusLed(int num)
+{
+    switch (num) {
+#ifdef LED0
+    case 0:
+        LED0_TOGGLE;
+        break;
+#endif
+#ifdef LED1
+    case 1:
+        LED1_TOGGLE;
+        break;
+#endif
+#ifdef LED2
+    case 2:
+        LED2_TOGGLE;
+        break;
+#endif
+    default:
+        break;
+    }
+}

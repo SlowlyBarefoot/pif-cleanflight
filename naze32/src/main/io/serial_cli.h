@@ -20,7 +20,4 @@
 
 extern uint8_t cliMode;
 
-void cliProcess(void);
-bool cliIsActiveOnPort(serialPort_t *serialPort);
-
 #endif /* CLI_H_ */

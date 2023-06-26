@@ -144,9 +144,9 @@ static const hmc5883Config_t *hmc5883Config = NULL;
 
 void hmc5883lInit(void* p_param);
 
-static bool hmc5883lRead(int32_t *mag)
+static bool hmc5883lRead(float* p_mag)
 {
-    return pifImuSensor_ReadMag4(&sensor_link.imu_sensor, mag);
+    return pifImuSensor_ReadRawMag(&sensor_link.imu_sensor, p_mag);
 }
 
 void MAG_DATA_READY_EXTI_Handler(void)
@@ -228,6 +228,8 @@ bool hmc5883lDetect(void* p_param)
         hmc5883Config = &nazeHmc5883Config_v5;
     }
 #endif    
+
+    if (!pifHmc5883_Detect(&g_i2c_port)) return false;
 
     if (!pifHmc5883_Init(&hmc5883, PIF_ID_AUTO, &g_i2c_port, &sensor_link.imu_sensor)) return false;
 

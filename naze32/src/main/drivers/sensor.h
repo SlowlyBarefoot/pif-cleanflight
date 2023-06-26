@@ -36,6 +36,7 @@
 #define MAG_NONE        0
 #define MAG_DEFAULT     SENSOR_DEFAULT
 #define MAG_HMC5883     2
+#define MAG_QMC5883     3
 
 #define BARO_NONE       0
 #define BARO_DEFAULT    SENSOR_DEFAULT

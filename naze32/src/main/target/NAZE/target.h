@@ -113,6 +113,7 @@
 
 #define MAG
 #define USE_MAG_HMC5883
+#define USE_MAG_QMC5883
 
 #define MAG_HMC5883_ALIGN IMUS_ALIGN_CW180_DEG
 
@@ -121,14 +122,14 @@
 #define LED0
 #define LED1
 #define INVERTER
-#define DISPLAY
+//#define DISPLAY
 
 #define USE_USART1
 #define USE_USART2
 #define USE_USART3
-#define USE_SOFTSERIAL1
-#define USE_SOFTSERIAL2
-#define SERIAL_PORT_COUNT 5
+//#define USE_SOFTSERIAL1
+//#define USE_SOFTSERIAL2
+#define SERIAL_PORT_COUNT 3
 
 #define SOFTSERIAL_1_TIMER TIM3
 #define SOFTSERIAL_1_TIMER_RX_HARDWARE 4 // PWM 5
@@ -177,9 +178,9 @@
 
 #define GPS
 #define GTUNE
-#define BLACKBOX
-#define TELEMETRY
-#define SERIAL_RX
+//#define BLACKBOX
+//#define TELEMETRY
+//#define SERIAL_RX
 #define USE_SERVOS
 #define USE_CLI
 
@@ -187,8 +188,6 @@
 // USART2, PA3
 #define BIND_PORT  GPIOA
 #define BIND_PIN   Pin_3
-
-#define USE_SERIAL_1WIRE
 
 // STM32F103CBT6-LQFP48 Pin30 (PA9) TX - PC3 connects to onboard CP2102 RX
 #define S1W_TX_GPIO         GPIOA

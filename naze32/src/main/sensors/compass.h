@@ -22,4 +22,4 @@ void compassInit(void);
 void updateCompass(flightDynamicsTrims_t *magZero);
 #endif
 
-extern int32_t magADC[XYZ_AXIS_COUNT];
+extern float magADC[XYZ_AXIS_COUNT];

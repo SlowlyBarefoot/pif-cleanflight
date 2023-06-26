@@ -37,7 +37,7 @@
 #include "hardware_revision.h"
 #endif
 
-int32_t magADC[XYZ_AXIS_COUNT];
+float magADC[XYZ_AXIS_COUNT];
 #ifdef MAG
 static uint8_t magInit = 0;
 

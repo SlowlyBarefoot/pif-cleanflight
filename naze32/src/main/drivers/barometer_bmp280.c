@@ -45,6 +45,8 @@ bool bmp280Detect(void* p_param)
 
     pif_Delay1ms(20);
 
+    if (!pifBmp280_Detect(&g_i2c_port, BMP280_I2C_ADDR(0))) return false;
+
     if (!pifBmp280_Init(&bmp280, PIF_ID_AUTO, &g_i2c_port, BMP280_I2C_ADDR(0))) return false;
 
     // set oversampling + power mode (forced), and start sampling

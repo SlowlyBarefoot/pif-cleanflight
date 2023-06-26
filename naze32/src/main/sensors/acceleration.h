@@ -17,7 +17,7 @@
 
 #pragma once
 
-extern int32_t accADC[XYZ_AXIS_COUNT];
+extern float accADC[XYZ_AXIS_COUNT];
 
 typedef struct rollAndPitchTrims_s {
     int16_t roll;

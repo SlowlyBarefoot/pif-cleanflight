@@ -28,6 +28,8 @@
 
 #include <platform.h>
 
+#include "common/link_driver.h"
+
 #include "system.h"
 #include "gpio.h"
 #include "nvic.h"
@@ -50,30 +52,39 @@ static uartPort_t uartPort3;
 #endif
 
 // Using RX DMA disables the use of receive callbacks
-#define USE_USART1_RX_DMA
+//#define USE_USART1_RX_DMA
+#define USE_USART1_TX_DMA
+
+uartPort_t* getUartPort(PifId id)
+{
+    switch (id) {
+        case PIF_ID_UART(0): return &uartPort1;
+#ifdef USE_USART2
+        case PIF_ID_UART(1): return &uartPort2;
+#endif        
+#ifdef USE_USART3
+        case PIF_ID_UART(2): return &uartPort3;
+#endif        
+    }
+    return NULL;
+}
 
 void usartIrqCallback(uartPort_t *s)
 {
     uint16_t SR = s->USARTx->SR;
+    uint8_t state, data;
 
     if (SR & USART_FLAG_RXNE && !s->rxDMAChannel) {
         // If we registered a callback, pass crap there
-        if (s->port.callback) {
-            s->port.callback(s->USARTx->DR);
-        } else {
-            s->port.rxBuffer[s->port.rxBufferHead++] = s->USARTx->DR;
-            if (s->port.rxBufferHead >= s->port.rxBufferSize) {
-                s->port.rxBufferHead = 0;
-            }
-        }
+        pifComm_PutRxByte(&s->port.comm, s->USARTx->DR);
     }
     if (SR & USART_FLAG_TXE) {
-        if (s->port.txBufferTail != s->port.txBufferHead) {
-            s->USARTx->DR = s->port.txBuffer[s->port.txBufferTail++];
-            if (s->port.txBufferTail >= s->port.txBufferSize) {
-                s->port.txBufferTail = 0;
-            }
-        } else {
+        state = pifComm_GetTxByte(&s->port.comm, &data);
+        if (state & PIF_COMM_SEND_DATA_STATE_DATA) {
+            s->USARTx->DR = data;
+        }
+        if (state & PIF_COMM_SEND_DATA_STATE_EMPTY) {
+            pifComm_FinishTransfer(&s->port.comm);
             USART_ITConfig(s->USARTx, USART_IT_TXE, DISABLE);
         }
     }
@@ -84,20 +95,11 @@ void usartIrqCallback(uartPort_t *s)
 uartPort_t *serialUSART1(uint32_t baudRate, portMode_t mode, portOptions_t options)
 {
     uartPort_t *s;
-    static volatile uint8_t rx1Buffer[UART1_RX_BUFFER_SIZE];
-    static volatile uint8_t tx1Buffer[UART1_TX_BUFFER_SIZE];
     gpio_config_t gpio;
     NVIC_InitTypeDef NVIC_InitStructure;
 
     s = &uartPort1;
-    s->port.vTable = uartVTable;
-    
     s->port.baudRate = baudRate;
-    
-    s->port.rxBuffer = rx1Buffer;
-    s->port.txBuffer = tx1Buffer;
-    s->port.rxBufferSize = UART1_RX_BUFFER_SIZE;
-    s->port.txBufferSize = UART1_TX_BUFFER_SIZE;
     
     s->USARTx = USART1;
 
@@ -106,8 +108,10 @@ uartPort_t *serialUSART1(uint32_t baudRate, portMode_t mode, portOptions_t optio
     s->rxDMAChannel = DMA1_Channel5;
     s->rxDMAPeripheralBaseAddr = (uint32_t)&s->USARTx->DR;
 #endif
+#ifdef USE_USART1_TX_DMA
     s->txDMAChannel = DMA1_Channel4;
     s->txDMAPeripheralBaseAddr = (uint32_t)&s->USARTx->DR;
+#endif    
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
@@ -133,14 +137,16 @@ uartPort_t *serialUSART1(uint32_t baudRate, portMode_t mode, portOptions_t optio
         }
     }
 
+#ifdef USE_USART1_TX_DMA
     // DMA TX Interrupt
     NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel4_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = NVIC_PRIORITY_BASE(NVIC_PRIO_SERIALUART1_TXDMA);
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = NVIC_PRIORITY_SUB(NVIC_PRIO_SERIALUART1_TXDMA);
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
+#endif    
 
-#ifndef USE_USART1_RX_DMA
+#if !defined(USE_USART1_RX_DMA) || !defined(USE_USART1_TX_DMA)
     // RX/TX Interrupt
     NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = NVIC_PRIORITY_BASE(NVIC_PRIO_SERIALUART1);
@@ -152,6 +158,7 @@ uartPort_t *serialUSART1(uint32_t baudRate, portMode_t mode, portOptions_t optio
     return s;
 }
 
+#ifdef USE_USART1_TX_DMA
 
 // USART1 Tx DMA Handler
 void DMA1_Channel4_IRQHandler(void)
@@ -160,11 +167,13 @@ void DMA1_Channel4_IRQHandler(void)
     DMA_ClearITPendingBit(DMA1_IT_TC4);
     DMA_Cmd(s->txDMAChannel, DISABLE);
 
-    if (s->port.txBufferHead != s->port.txBufferTail)
+    if (pifRingBuffer_GetFillSize(s->port.comm._p_tx_buffer))
         uartStartTxDMA(s);
     else
         s->txDMAEmpty = true;
 }
+
+#endif
 
 // USART1 Rx/Tx IRQ Handler
 void USART1_IRQHandler(void)
@@ -180,20 +189,11 @@ void USART1_IRQHandler(void)
 uartPort_t *serialUSART2(uint32_t baudRate, portMode_t mode, portOptions_t options)
 {
     uartPort_t *s;
-    static volatile uint8_t rx2Buffer[UART2_RX_BUFFER_SIZE];
-    static volatile uint8_t tx2Buffer[UART2_TX_BUFFER_SIZE];
     gpio_config_t gpio;
     NVIC_InitTypeDef NVIC_InitStructure;
 
     s = &uartPort2;
-    s->port.vTable = uartVTable;
-    
     s->port.baudRate = baudRate;
-    
-    s->port.rxBufferSize = UART2_RX_BUFFER_SIZE;
-    s->port.txBufferSize = UART2_TX_BUFFER_SIZE;
-    s->port.rxBuffer = rx2Buffer;
-    s->port.txBuffer = tx2Buffer;
     
     s->USARTx = USART2;
 
@@ -249,20 +249,11 @@ void USART2_IRQHandler(void)
 uartPort_t *serialUSART3(uint32_t baudRate, portMode_t mode, portOptions_t options)
 {
     uartPort_t *s;
-    static volatile uint8_t rx3Buffer[UART3_RX_BUFFER_SIZE];
-    static volatile uint8_t tx3Buffer[UART3_TX_BUFFER_SIZE];
     gpio_config_t gpio;
     NVIC_InitTypeDef NVIC_InitStructure;
 
     s = &uartPort3;
-    s->port.vTable = uartVTable;
-
     s->port.baudRate = baudRate;
-
-    s->port.rxBuffer = rx3Buffer;
-    s->port.txBuffer = tx3Buffer;
-    s->port.rxBufferSize = UART3_RX_BUFFER_SIZE;
-    s->port.txBufferSize = UART3_TX_BUFFER_SIZE;
 
     s->USARTx = USART3;
 

@@ -58,6 +58,8 @@ bool mpu6500GyroDetect(void* p_param)
         return false;
     }
 
+    if (!pifMpu6500_Detect(&g_i2c_port, MPU6500_I2C_ADDR(0))) return false;
+
     if (!pifMpu6500_Init(&mpu6500, PIF_ID_AUTO, &g_i2c_port, MPU6500_I2C_ADDR(0), &sensor_link.imu_sensor)) return false;
 
     sensor_link.gyro.hw_name = mpu6500_name;

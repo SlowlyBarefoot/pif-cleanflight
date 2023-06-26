@@ -233,7 +233,7 @@ void configureSmartPortTelemetryPort(void)
         portOptions |= SERIAL_INVERTED;
     }
 
-    smartPortSerialPort = openSerialPort(portConfig->identifier, FUNCTION_TELEMETRY_SMARTPORT, NULL, SMARTPORT_BAUD, SMARTPORT_UART_MODE, portOptions);
+    smartPortSerialPort = openSerialPort(portConfig->identifier, FUNCTION_TELEMETRY_SMARTPORT, NULL, SMARTPORT_BAUD, SMARTPORT_UART_MODE, portOptions, 10);
 
     if (!smartPortSerialPort) {
         return;

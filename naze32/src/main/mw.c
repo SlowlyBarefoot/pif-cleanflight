@@ -105,7 +105,7 @@ int16_t headFreeModeHold;
 
 uint8_t motorControlEnable = false;
 
-int32_t telemTemperature1;      // gyro sensor temperature
+float telemTemperature1;      // gyro sensor temperature
 static uint32_t disarmAt;     // Time of automatic disarm when "Don't spin the motors when armed" is enabled and auto_disarm_delay is nonzero
 
 extern uint8_t dynP8[3], dynI8[3], dynD8[3], PIDweight[3];
@@ -611,6 +611,15 @@ void filterRc(void){
     }
 }
 
+uint16_t taskSystem(PifTask *p_task)
+{
+    UNUSED(p_task);
+
+    checkCliMode();
+    calcurateTaskTime();
+    return 0;
+}
+
 #if defined(BARO) || defined(SONAR)
 static bool haveProcessedAnnexCodeOnce = false;
 #endif
@@ -625,9 +634,9 @@ uint16_t taskMainPidLoop(PifTask *p_task)
     filteredCycleTime = filterApplyPt1(cycleTime, &filteredCycleTimeState, 1, dT);
     
     debug[0] = cycleTime - targetLooptime;
-    debug[1] = cycleTime - filteredCycleTime;
-    debug[2] = filteredCycleTime - targetLooptime;
-    debug[3] = p_task->_trigger_delay;
+    debug[1] = filteredCycleTime - targetLooptime;
+    debug[2] = p_task->_trigger_delay;
+    debug[3] = pif_performance._use_rate;
 
     imuUpdateGyroAndAttitude();
 
@@ -720,13 +729,6 @@ uint16_t taskUpdateAccelerometer(PifTask *p_task)
 {
     UNUSED(p_task);
     imuUpdateAccelerometer(&currentProfile->accelerometerTrims);
-    return 0;
-}
-
-uint16_t taskHandleSerial(PifTask *p_task)
-{
-    UNUSED(p_task);
-    handleSerial();
     return 0;
 }
 

@@ -298,7 +298,7 @@ void configureHoTTTelemetryPort(void)
         return;
     }
 
-    hottPort = openSerialPort(portConfig->identifier, FUNCTION_TELEMETRY_HOTT, NULL, HOTT_BAUDRATE, HOTT_INITIAL_PORT_MODE, SERIAL_NOT_INVERTED);
+    hottPort = openSerialPort(portConfig->identifier, FUNCTION_TELEMETRY_HOTT, NULL, HOTT_BAUDRATE, HOTT_INITIAL_PORT_MODE, SERIAL_NOT_INVERTED, 10);
 
     if (!hottPort) {
         return;
@@ -426,7 +426,7 @@ static void hottCheckSerialData(uint32_t currentMicros)
 
 static void workAroundForHottTelemetryOnUsart(serialPort_t *instance, portMode_t mode) {
 	closeSerialPort(hottPort);
-	hottPort = openSerialPort(instance->identifier, FUNCTION_TELEMETRY_HOTT, NULL, HOTT_BAUDRATE, mode, SERIAL_NOT_INVERTED);
+	hottPort = openSerialPort(instance->identifier, FUNCTION_TELEMETRY_HOTT, NULL, HOTT_BAUDRATE, mode, SERIAL_NOT_INVERTED, 10);
 }
 
 static void hottSendTelemetryData(void) {

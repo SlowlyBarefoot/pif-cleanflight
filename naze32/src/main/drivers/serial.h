@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "core/pif_comm.h"
+
 typedef enum portMode_t {
     MODE_RX = 1 << 0,
     MODE_TX = 1 << 1,
@@ -46,17 +48,7 @@ typedef struct serialPort_s {
 
     uint32_t baudRate;
 
-    uint32_t rxBufferSize;
-    uint32_t txBufferSize;
-    volatile uint8_t *rxBuffer;
-    volatile uint8_t *txBuffer;
-    uint32_t rxBufferHead;
-    uint32_t rxBufferTail;
-    uint32_t txBufferHead;
-    uint32_t txBufferTail;
-
-    // FIXME rename member to rxCallback
-    serialReceiveCallbackPtr callback;
+    PifComm comm;
 } serialPort_t;
 
 struct serialPortVTable {
@@ -90,8 +82,3 @@ void serialSetMode(serialPort_t *instance, portMode_t mode);
 bool isSerialTransmitBufferEmpty(serialPort_t *instance);
 void serialPrint(serialPort_t *instance, const char *str);
 uint32_t serialGetBaudRate(serialPort_t *instance);
-
-// A shim that adapts the bufWriter API to the serialWriteBuf() API.
-void serialWriteBufShim(void *instance, uint8_t *data, int count);
-void serialBeginWrite(serialPort_t *instance);
-void serialEndWrite(serialPort_t *instance);

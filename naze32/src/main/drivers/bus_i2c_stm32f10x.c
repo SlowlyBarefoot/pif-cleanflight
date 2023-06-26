@@ -89,7 +89,9 @@ void I2C2_EV_IRQHandler(void)
     i2c_ev_handler();
 }
 
-#define I2C_DEFAULT_TIMEOUT 30000
+#ifndef I2C_DEFAULT_TIMEOUT
+    #define I2C_DEFAULT_TIMEOUT 30000
+#endif    
 static volatile uint16_t i2cErrorCount = 0;
 
 static volatile bool error = false;

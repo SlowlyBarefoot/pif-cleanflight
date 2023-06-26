@@ -90,7 +90,7 @@ bool sbusInit(rxConfig_t *rxConfig, rxRuntimeConfig_t *rxRuntimeConfig, rcReadRa
         return false;
     }
     portOptions_t options = (rxConfig->sbus_inversion) ? (SBUS_PORT_OPTIONS | SERIAL_INVERTED) : SBUS_PORT_OPTIONS;
-    serialPort_t *sBusPort = openSerialPort(portConfig->identifier, FUNCTION_RX_SERIAL, sbusDataReceive, SBUS_BAUDRATE, MODE_RX, options);
+    serialPort_t *sBusPort = openSerialPort(portConfig->identifier, FUNCTION_RX_SERIAL, sbusDataReceive, SBUS_BAUDRATE, MODE_RX, options, 2);
 
     return sBusPort != NULL;
 }

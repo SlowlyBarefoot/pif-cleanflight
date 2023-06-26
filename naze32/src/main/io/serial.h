@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "protocol/pif_msp.h"
+
 typedef enum {
     PORTSHARING_UNUSED = 0,
     PORTSHARING_NOT_SHARED,
@@ -119,7 +121,8 @@ serialPort_t *openSerialPort(
     serialReceiveCallbackPtr callback,
     uint32_t baudrate,
     portMode_t mode,
-    portOptions_t options
+    portOptions_t options, 
+    uint16_t period
 );
 void closeSerialPort(serialPort_t *serialPort);
 
@@ -131,5 +134,5 @@ baudRate_e lookupBaudRateIndex(uint32_t baudRate);
 //
 // msp/cli/bootloader
 //
-void evaluateOtherData(serialPort_t *serialPort, uint8_t receivedChar);
-void handleSerial(void);
+void evtMspOtherPacket(PifMsp* p_owner, uint8_t receivedChar, PifIssuerP p_issuer);
+void checkCliMode();

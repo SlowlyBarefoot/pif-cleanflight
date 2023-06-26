@@ -599,7 +599,7 @@ bool blackboxDeviceOpen(void)
                 }
 
                 blackboxPort = openSerialPort(portConfig->identifier, FUNCTION_BLACKBOX, NULL, baudRates[baudRateIndex],
-                    BLACKBOX_SERIAL_PORT_MODE, portOptions);
+                    BLACKBOX_SERIAL_PORT_MODE, portOptions, 10);
 
                 /*
                  * The slowest MicroSD cards have a write latency approaching 150ms. The OpenLog's buffer is about 900
