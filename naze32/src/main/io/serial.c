@@ -320,7 +320,7 @@ serialPort_t *openSerialPort(
         if (!pifComm_AllocTxBuffer(&serialPort->comm, size)) return NULL;
     }
 
-    if (!pifComm_AttachTask(&serialPort->comm, TM_PERIOD_MS, period, TRUE, names[function - 1])) return NULL;
+    if (!pifComm_AttachTask(&serialPort->comm, TM_PERIOD_MS, period, names[function - 1])) return NULL;
 
     serialPortUsage->function = function;
     serialPortUsage->serialPort = serialPort;

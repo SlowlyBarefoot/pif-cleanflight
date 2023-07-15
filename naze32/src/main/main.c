@@ -24,6 +24,9 @@
 #include "scheduler.h"
 
 #include "core/pif_i2c.h"
+#ifndef __PIF_NO_LOG__
+    #include "core/pif_log.h"
+#endif
 
 #include "common/axis.h"
 #include "common/color.h"
@@ -96,6 +99,11 @@
 
 #include "build_config.h"
 #include "debug.h"
+
+
+#define TASK_SIZE		30
+#define TIMER_1MS_SIZE	3
+
 
 extern uint8_t motorControlEnable;
 
@@ -339,6 +347,14 @@ void init(void)
 
 
     serialInit(&masterConfig.serialConfig, feature(FEATURE_SOFTSERIAL));
+#ifndef __PIF_NO_LOG__
+    serialPortConfig_t *portConfig = findSerialPortConfig(FUNCTION_MSP);
+    serialPort_t *serialPort = openSerialPort(portConfig->identifier, FUNCTION_MSP, NULL, 115200, MODE_RXTX, SERIAL_NOT_INVERTED, 10);
+
+	if (!pifLog_AttachComm(&serialPort->comm)) return;
+
+	pifLog_Printf(LT_INFO, "Start Cleanflight\n");
+#endif
 
 #ifdef USE_SERVOS
     mixerInit(masterConfig.mixerMode, masterConfig.customMotorMixer, masterConfig.customServoMixer);
@@ -507,7 +523,9 @@ void init(void)
 
     imuInit();
 
+#ifdef __PIF_NO_LOG__
     mspInit(&masterConfig.serialConfig);
+#endif    
 
 #ifdef USE_CLI
     cliInit(&masterConfig.serialConfig);
@@ -665,9 +683,13 @@ void processLoopback(void) {
 int main(void) {
     pif_Init(micros);
 
-    if (!pifTaskManager_Init(30)) goto bootloader;
+    if (!pifTaskManager_Init(TASK_SIZE)) goto bootloader;
 
-    if (!pifTimerManager_Init(&g_timer_1ms, PIF_ID_AUTO, 1000, 3)) goto bootloader;		        // 1000us
+    if (!pifTimerManager_Init(&g_timer_1ms, PIF_ID_AUTO, 1000, TIMER_1MS_SIZE)) goto bootloader;        // 1000us
+
+#ifndef __PIF_NO_LOG__
+    pifLog_Init();
+#endif
 
     if (!createTask(TASK_SYSTEM, TRUE)) goto bootloader;
 
@@ -725,6 +747,10 @@ int main(void) {
 #endif
 #ifdef TRANSPONDER
     if (!createTask(TASK_TRANSPONDER, feature(FEATURE_TRANSPONDER) != 0)) goto bootloader;
+#endif
+
+#ifndef __PIF_NO_LOG__
+	pifLog_Printf(LT_INFO, "Task=%d/%d Timer=%d/%d\n", pifTaskManager_Count(), TASK_SIZE, pifTimerManager_Count(&g_timer_1ms), TIMER_1MS_SIZE);
 #endif
 
     while (1) {

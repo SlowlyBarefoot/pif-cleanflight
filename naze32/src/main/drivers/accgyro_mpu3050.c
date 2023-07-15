@@ -47,8 +47,6 @@ bool mpu3050Detect(void* p_param)
 
     if (!pifMpu30x0_Detect(&g_i2c_port, MPU30X0_I2C_ADDR)) return false;
 
-    if (!pifMpu30x0_Init(&mpu30x0, PIF_ID_AUTO, &g_i2c_port, MPU30X0_I2C_ADDR, &sensor_link.imu_sensor)) return false;
-
     sensor_link.gyro.hw_name = mpu3050_name;
     sensor_link.gyro.init = mpu3050Init;
     sensor_link.gyro.read = mpuGyroRead;
@@ -75,6 +73,8 @@ static void mpu3050Init(void* p_param)
     ack = pifI2cDevice_WriteRegByte(mpu30x0._p_i2c, MPU30X0_REG_SMPLRT_DIV, 0);
     if (!ack)
         failureMode(FAILURE_ACC_INIT);
+
+    if (!pifMpu30x0_Init(&mpu30x0, PIF_ID_AUTO, &g_i2c_port, MPU30X0_I2C_ADDR, &sensor_link.imu_sensor)) return;
 
     dlpf_fs_sync.byte = 0;
     dlpf_fs_sync.bit.fs_sel = MPU30X0_FS_SEL_2000DPS;

@@ -64,8 +64,6 @@ bool mpu6050GyroDetect(void* p_param)
 
     if (!pifMpu60x0_Detect(&g_i2c_port, MPU60X0_I2C_ADDR(0))) return false;
 
-    if (!pifMpu60x0_Init(&mpu60x0, PIF_ID_AUTO, &g_i2c_port, MPU60X0_I2C_ADDR(0), &sensor_link.imu_sensor)) return false;
-
     sensor_link.gyro.hw_name = mpu6050_name;
     sensor_link.gyro.init = mpu6050GyroInit;
     sensor_link.gyro.read = mpuGyroRead;
@@ -104,6 +102,8 @@ static void mpu6050GyroInit(void* p_param)
     if (mpuIntExtiInit()) sensor_link.gyro.can_sync = true;
 
     if (p_param) lpf = ((gyro_param_t*)p_param)->lpf;
+
+    if (!pifMpu60x0_Init(&mpu60x0, PIF_ID_AUTO, &g_i2c_port, MPU60X0_I2C_ADDR(0), &sensor_link.imu_sensor)) return;
 
     pwr_mgmt_1.byte = 0;
     pwr_mgmt_1.bit.device_reset = TRUE;

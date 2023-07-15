@@ -231,8 +231,6 @@ bool hmc5883lDetect(void* p_param)
 
     if (!pifHmc5883_Detect(&g_i2c_port)) return false;
 
-    if (!pifHmc5883_Init(&hmc5883, PIF_ID_AUTO, &g_i2c_port, &sensor_link.imu_sensor)) return false;
-
     sensor_link.mag.hw_name = hmc5883_name;
     sensor_link.mag.init = hmc5883lInit;
     sensor_link.mag.read = hmc5883lRead;
@@ -263,6 +261,8 @@ void hmc5883lInit(void* p_param)
         gpio.mode = Mode_IN_FLOATING;
         gpioInit(hmc5883Config->gpioPort, &gpio);
     }
+
+    if (!pifHmc5883_Init(&hmc5883, PIF_ID_AUTO, &g_i2c_port, &sensor_link.imu_sensor)) return;
 
     delay(50);
     config_a.byte = 0;

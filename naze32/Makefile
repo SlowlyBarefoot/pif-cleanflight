@@ -135,7 +135,8 @@ LD_SCRIPT	 = $(LINKER_DIR)/stm32_flash_f103_$(FLASH_SIZE)k.ld
 ARCH_FLAGS	 = -mthumb -mcpu=cortex-m3
 TARGET_FLAGS = -D$(TARGET) -pedantic
 DEVICE_FLAGS = -DSTM32F10X_MD -DSTM32F10X
-PIF_FLAGS	 = -D__PIF_LOG_COMMAND__ -DPIF_LOG_LINE_SIZE=200 -DPIF_LOG_TX_BUFFER_SIZE=200
+PIF_FLAGS	 = -D__PIF_LOG_COMMAND__ -DPIF_LOG_LINE_SIZE=200 -DPIF_LOG_TX_BUFFER_SIZE=200 -D__PIF_NO_LOG__
+#PIF_FLAGS	 = -D__PIF_LOG_COMMAND__ -DPIF_LOG_LINE_SIZE=200 -DPIF_LOG_TX_BUFFER_SIZE=200
 
 endif
 
@@ -178,7 +179,6 @@ COMMON_SRC = build_config.c \
 		   drivers/sound_beeper.c \
 		   drivers/system.c \
 		   drivers/dma.c \
-		   drivers/buf_writer.c \
 		   drivers/gyro_sync.c \
 		   io/beeper.c \
 		   io/rc_controls.c \

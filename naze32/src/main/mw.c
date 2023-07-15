@@ -613,10 +613,13 @@ void filterRc(void){
 
 uint16_t taskSystem(PifTask *p_task)
 {
+    void reboot();
+
     UNUSED(p_task);
 
     checkCliMode();
     calcurateTaskTime();
+    reboot();
     return 0;
 }
 

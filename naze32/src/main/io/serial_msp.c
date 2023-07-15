@@ -39,7 +39,6 @@
 #include "drivers/gpio.h"
 #include "drivers/timer.h"
 #include "drivers/pwm_rx.h"
-#include "drivers/buf_writer.h"
 #include "rx/rx.h"
 #include "rx/msp.h"
 
@@ -1519,14 +1518,18 @@ static bool processInCommand(PifMspPacket* p_packet)
 
 static void evtMspReceive(PifMsp* p_owner, PifMspPacket* p_packet, PifIssuerP p_issuer)
 {
+    UNUSED(p_issuer);
+
     pifMsp_MakeAnswer(p_owner, p_packet);
     if (!(processOutCommand(p_owner, p_packet) || processInCommand(p_packet))) {
         pifMsp_MakeError(p_owner, p_packet);
     }
     pifMsp_SendAnswer(p_owner);
+}
 
+void reboot()
+{
     if (isRebootScheduled) {
-        waitForSerialPortToFinishTransmitting((serialPort_t*)p_issuer);
         stopMotors();
         handleOneshotFeatureChangeOnRestart();
         systemReset();
