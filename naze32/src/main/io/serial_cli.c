@@ -29,7 +29,7 @@
 
 #include "build_config.h"
 
-#include "core/pif_i2c.h"
+#include "communication/pif_i2c.h"
 #include "core/pif_log.h"
 
 #include "common/axis.h"
@@ -1773,7 +1773,7 @@ void cliEnter(serialPort_t *serialPort)
 
     pifLog_Init();
 
-    if (!pifLog_AttachComm(&serialPort->comm)) return;
+    if (!pifLog_AttachUart(&serialPort->uart)) return;
     if (!pifLog_UseCommand(cmdTable, "\r\n# ")) return;
     pifLog_Print(LT_NONE, "\r\nEntering CLI Mode, type 'exit' to return, or 'help'\r\n");
     ENABLE_ARMING_FLAG(PREVENT_ARMING);

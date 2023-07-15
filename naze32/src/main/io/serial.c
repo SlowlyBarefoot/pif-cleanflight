@@ -314,13 +314,13 @@ serialPort_t *openSerialPort(
     }
 
     if (mode & MODE_RX) {
-        if (!pifComm_AllocRxBuffer(&serialPort->comm, size, size / 2)) return NULL;
+        if (!pifUart_AllocRxBuffer(&serialPort->uart, size, size / 2)) return NULL;
     }
     if (mode & MODE_TX) {
-        if (!pifComm_AllocTxBuffer(&serialPort->comm, size)) return NULL;
+        if (!pifUart_AllocTxBuffer(&serialPort->uart, size)) return NULL;
     }
 
-    if (!pifComm_AttachTask(&serialPort->comm, TM_PERIOD_MS, period, names[function - 1])) return NULL;
+    if (!pifUart_AttachTask(&serialPort->uart, TM_PERIOD_MS, period, names[function - 1])) return NULL;
 
     serialPortUsage->function = function;
     serialPortUsage->serialPort = serialPort;
@@ -396,7 +396,7 @@ bool serialIsPortAvailable(serialPortIdentifier_e identifier)
 
 void waitForSerialPortToFinishTransmitting(serialPort_t *serialPort)
 {
-    while (pifComm_GetFillSizeOfTxBuffer(&serialPort->comm)) {
+    while (pifUart_GetFillSizeOfTxBuffer(&serialPort->uart)) {
         pifTaskManager_YieldMs(10);
     }
 }
@@ -409,7 +409,7 @@ static serialPort_t* p_serial = NULL;
 void checkCliMode()
 {
     if (p_msp) {
-        pifMsp_DetachComm(p_msp);
+        pifMsp_DetachUart(p_msp);
         cliEnter(p_serial);
 
         p_msp = NULL;

@@ -37,9 +37,9 @@
 #include "serial_uart.h"
 #include "serial_uart_impl.h"
 
-static BOOL actCommSetBaudRate(PifComm* p_comm, uint32_t baudrate)
+static BOOL actCommSetBaudRate(PifUart* p_uart, uint32_t baudrate)
 {
-    uartPort_t *uartPort = getUartPort(p_comm->_id);
+    uartPort_t *uartPort = getUartPort(p_uart->_id);
     if (uartPort) {
         uartSetBaudRate(&uartPort->port, baudrate);
         return TRUE;
@@ -47,9 +47,9 @@ static BOOL actCommSetBaudRate(PifComm* p_comm, uint32_t baudrate)
     return FALSE;
 }
 
-static BOOL actUartStartTransfer(PifComm* p_comm)
+static BOOL actUartStartTransfer(PifUart* p_uart)
 {
-    uartPort_t *uartPort = getUartPort(p_comm->_id);
+    uartPort_t *uartPort = getUartPort(p_uart->_id);
     if (uartPort) {
         USART_ITConfig(uartPort->USARTx, USART_IT_TXE, ENABLE);
         return TRUE;
@@ -133,8 +133,8 @@ serialPort_t *uartOpen(USART_TypeDef *USARTx, serialReceiveCallbackPtr callback,
 
     uartReconfigure(s);
 
-    if (!pifComm_Init(&s->port.comm, PIF_ID_UART(id))) return NULL;
-    s->port.comm.act_set_baudrate = actCommSetBaudRate;
+    if (!pifUart_Init(&s->port.uart, PIF_ID_UART(id))) return NULL;
+    s->port.uart.act_set_baudrate = actCommSetBaudRate;
 
     // Receive DMA or IRQ
     DMA_InitTypeDef DMA_InitStructure;
@@ -149,10 +149,10 @@ serialPort_t *uartOpen(USART_TypeDef *USARTx, serialReceiveCallbackPtr callback,
             DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
             DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
 
-            DMA_InitStructure.DMA_BufferSize = s->port.comm._p_rx_buffer->_size;
+            DMA_InitStructure.DMA_BufferSize = s->port.uart._p_rx_buffer->_size;
             DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
             DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
-            DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)pifRingBuffer_GetTailPointer(s->port.comm._p_rx_buffer, 0);
+            DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)pifRingBuffer_GetTailPointer(s->port.uart._p_rx_buffer, 0);
             DMA_DeInit(s->rxDMAChannel);
             DMA_Init(s->rxDMAChannel, &DMA_InitStructure);
             DMA_Cmd(s->rxDMAChannel, ENABLE);
@@ -166,7 +166,7 @@ serialPort_t *uartOpen(USART_TypeDef *USARTx, serialReceiveCallbackPtr callback,
 
     // Transmit DMA or IRQ
     if (mode & MODE_TX) {
-        s->port.comm.act_start_transfer = actUartStartTransfer;
+        s->port.uart.act_start_transfer = actUartStartTransfer;
 
         if (s->txDMAChannel) {
             DMA_StructInit(&DMA_InitStructure);
@@ -178,7 +178,7 @@ serialPort_t *uartOpen(USART_TypeDef *USARTx, serialReceiveCallbackPtr callback,
             DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
             DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
 
-            DMA_InitStructure.DMA_BufferSize = s->port.comm._p_tx_buffer->_size;
+            DMA_InitStructure.DMA_BufferSize = s->port.uart._p_tx_buffer->_size;
             DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
             DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
             DMA_DeInit(s->txDMAChannel);
@@ -215,10 +215,10 @@ void uartStartTxDMA(uartPort_t *s)
 {
     uint16_t size;
 
-    s->txDMAChannel->CMAR = (uint32_t)pifRingBuffer_GetTailPointer(s->port.comm._p_tx_buffer, 0);
-    size = pifRingBuffer_GetLinerSize(s->port.comm._p_tx_buffer, 0);
+    s->txDMAChannel->CMAR = (uint32_t)pifRingBuffer_GetTailPointer(s->port.uart._p_tx_buffer, 0);
+    size = pifRingBuffer_GetLinerSize(s->port.uart._p_tx_buffer, 0);
     s->txDMAChannel->CNDTR = size;
-    pifRingBuffer_Remove(s->port.comm._p_tx_buffer, size);
+    pifRingBuffer_Remove(s->port.uart._p_tx_buffer, size);
     s->txDMAEmpty = false;
     DMA_Cmd(s->txDMAChannel, ENABLE);
 }

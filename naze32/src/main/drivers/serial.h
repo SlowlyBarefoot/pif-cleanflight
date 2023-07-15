@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "core/pif_comm.h"
+#include "communication/pif_uart.h"
 
 typedef enum portMode_t {
     MODE_RX = 1 << 0,
@@ -48,7 +48,7 @@ typedef struct serialPort_s {
 
     uint32_t baudRate;
 
-    PifComm comm;
+    PifUart uart;
 } serialPort_t;
 
 struct serialPortVTable {

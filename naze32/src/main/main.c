@@ -23,7 +23,7 @@
 #include <platform.h>
 #include "scheduler.h"
 
-#include "core/pif_i2c.h"
+#include "communication/pif_i2c.h"
 #ifndef __PIF_NO_LOG__
     #include "core/pif_log.h"
 #endif
@@ -351,7 +351,7 @@ void init(void)
     serialPortConfig_t *portConfig = findSerialPortConfig(FUNCTION_MSP);
     serialPort_t *serialPort = openSerialPort(portConfig->identifier, FUNCTION_MSP, NULL, 115200, MODE_RXTX, SERIAL_NOT_INVERTED, 10);
 
-	if (!pifLog_AttachComm(&serialPort->comm)) return;
+	if (!pifLog_AttachUart(&serialPort->uart)) return;
 
 	pifLog_Printf(LT_INFO, "Start Cleanflight\n");
 #endif

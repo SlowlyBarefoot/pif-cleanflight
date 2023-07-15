@@ -26,7 +26,7 @@
 #include <platform.h>
 #include "scheduler.h"
 
-#include "core/pif_i2c.h"
+#include "communication/pif_i2c.h"
 
 #include "common/axis.h"
 #include "common/color.h"
@@ -326,7 +326,7 @@ void mspAllocateSerialPorts(serialConfig_t *serialConfig)
             resetMspPort(mspPort, serialPort);
             if (pifMsp_Init(&mspPort->pif_msp, &g_timer_1ms, PIF_ID_MSP(portIndex))) {
                 pifMsp_AttachEvtReceive(&mspPort->pif_msp, evtMspReceive, evtMspOtherPacket, serialPort);
-                pifMsp_AttachComm(&mspPort->pif_msp, &serialPort->comm);
+                pifMsp_AttachUart(&mspPort->pif_msp, &serialPort->uart);
             }
             portIndex++;
         }

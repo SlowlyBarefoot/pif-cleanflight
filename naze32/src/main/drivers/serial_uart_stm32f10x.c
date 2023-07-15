@@ -76,15 +76,15 @@ void usartIrqCallback(uartPort_t *s)
 
     if (SR & USART_FLAG_RXNE && !s->rxDMAChannel) {
         // If we registered a callback, pass crap there
-        pifComm_PutRxByte(&s->port.comm, s->USARTx->DR);
+        pifUart_PutRxByte(&s->port.uart, s->USARTx->DR);
     }
     if (SR & USART_FLAG_TXE) {
-        state = pifComm_GetTxByte(&s->port.comm, &data);
-        if (state & PIF_COMM_SEND_DATA_STATE_DATA) {
+        state = pifUart_GetTxByte(&s->port.uart, &data);
+        if (state & PIF_UART_SEND_DATA_STATE_DATA) {
             s->USARTx->DR = data;
         }
-        if (state & PIF_COMM_SEND_DATA_STATE_EMPTY) {
-            pifComm_FinishTransfer(&s->port.comm);
+        if (state & PIF_UART_SEND_DATA_STATE_EMPTY) {
+            pifUart_FinishTransfer(&s->port.uart);
             USART_ITConfig(s->USARTx, USART_IT_TXE, DISABLE);
         }
     }
@@ -167,7 +167,7 @@ void DMA1_Channel4_IRQHandler(void)
     DMA_ClearITPendingBit(DMA1_IT_TC4);
     DMA_Cmd(s->txDMAChannel, DISABLE);
 
-    if (pifRingBuffer_GetFillSize(s->port.comm._p_tx_buffer))
+    if (pifRingBuffer_GetFillSize(s->port.uart._p_tx_buffer))
         uartStartTxDMA(s);
     else
         s->txDMAEmpty = true;
