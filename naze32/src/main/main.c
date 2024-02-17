@@ -24,7 +24,7 @@
 #include "scheduler.h"
 
 #include "communication/pif_i2c.h"
-#ifndef __PIF_NO_LOG__
+#ifndef PIF_NO_LOG
     #include "core/pif_log.h"
 #endif
 
@@ -347,7 +347,7 @@ void init(void)
 
 
     serialInit(&masterConfig.serialConfig, feature(FEATURE_SOFTSERIAL));
-#ifndef __PIF_NO_LOG__
+#ifndef PIF_NO_LOG
     serialPortConfig_t *portConfig = findSerialPortConfig(FUNCTION_MSP);
     serialPort_t *serialPort = openSerialPort(portConfig->identifier, FUNCTION_MSP, NULL, 115200, MODE_RXTX, SERIAL_NOT_INVERTED, 10);
 
@@ -523,7 +523,7 @@ void init(void)
 
     imuInit();
 
-#ifdef __PIF_NO_LOG__
+#ifdef PIF_NO_LOG
     mspInit(&masterConfig.serialConfig);
 #endif    
 
@@ -687,7 +687,7 @@ int main(void) {
 
     if (!pifTimerManager_Init(&g_timer_1ms, PIF_ID_AUTO, 1000, TIMER_1MS_SIZE)) goto bootloader;        // 1000us
 
-#ifndef __PIF_NO_LOG__
+#ifndef PIF_NO_LOG
     pifLog_Init();
 #endif
 
@@ -703,24 +703,24 @@ int main(void) {
         cfTasks[TASK_GYROPID].p_task->pause = FALSE;
     }
 
-    if (!createTask(TASK_ACCEL, sensors(SENSOR_ACC) != 0)) goto bootloader;
+    if (!createTask(TASK_ACCEL, sensors(SENSOR_ACC))) goto bootloader;
 #ifdef BEEPER
     if (!createTask(TASK_BEEPER, TRUE)) goto bootloader;
 #endif
     if (!createTask(TASK_BATTERY, feature(FEATURE_VBAT) || feature(FEATURE_CURRENT_METER))) goto bootloader;
     if (!createTask(TASK_RX, TRUE)) goto bootloader;
 #ifdef GPS
-    if (!createTask(TASK_GPS, feature(FEATURE_GPS) != 0)) goto bootloader;
+    if (!createTask(TASK_GPS, feature(FEATURE_GPS))) goto bootloader;
 #endif
 #ifdef MAG
-    if (!createTask(TASK_COMPASS, sensors(SENSOR_MAG) != 0)) goto bootloader;
+    if (!createTask(TASK_COMPASS, sensors(SENSOR_MAG))) goto bootloader;
 #endif
 #if defined(BARO) || defined(SONAR)
     if (!createTask(TASK_ALTITUDE, FALSE)) goto bootloader;
 #endif
 #ifdef BARO
     if (!sensor_link.baro.p_task) {
-        if (!createTask(TASK_BARO, sensors(SENSOR_BARO) != 0)) goto bootloader;
+        if (!createTask(TASK_BARO, sensors(SENSOR_BARO))) goto bootloader;
     }
     else {
         cfTasks[TASK_BARO].p_task = sensor_link.baro.p_task;
@@ -737,19 +737,19 @@ int main(void) {
     }
 #endif
 #ifdef DISPLAY
-    if (!createTask(TASK_DISPLAY, feature(FEATURE_DISPLAY) != 0)) goto bootloader;
+    if (!createTask(TASK_DISPLAY, feature(FEATURE_DISPLAY))) goto bootloader;
 #endif
 #ifdef TELEMETRY
-    if (!createTask(TASK_TELEMETRY, feature(FEATURE_TELEMETRY) != 0)) goto bootloader;
+    if (!createTask(TASK_TELEMETRY, feature(FEATURE_TELEMETRY))) goto bootloader;
 #endif
 #ifdef LED_STRIP
-    if (!createTask(TASK_LEDSTRIP, feature(FEATURE_LED_STRIP) != 0)) goto bootloader;
+    if (!createTask(TASK_LEDSTRIP, feature(FEATURE_LED_STRIP))) goto bootloader;
 #endif
 #ifdef TRANSPONDER
-    if (!createTask(TASK_TRANSPONDER, feature(FEATURE_TRANSPONDER) != 0)) goto bootloader;
+    if (!createTask(TASK_TRANSPONDER, feature(FEATURE_TRANSPONDER))) goto bootloader;
 #endif
 
-#ifndef __PIF_NO_LOG__
+#ifndef PIF_NO_LOG
 	pifLog_Printf(LT_INFO, "Task=%d/%d Timer=%d/%d\n", pifTaskManager_Count(), TASK_SIZE, pifTimerManager_Count(&g_timer_1ms), TIMER_1MS_SIZE);
 #endif
 

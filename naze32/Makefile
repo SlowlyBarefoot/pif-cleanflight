@@ -135,8 +135,7 @@ LD_SCRIPT	 = $(LINKER_DIR)/stm32_flash_f103_$(FLASH_SIZE)k.ld
 ARCH_FLAGS	 = -mthumb -mcpu=cortex-m3
 TARGET_FLAGS = -D$(TARGET) -pedantic
 DEVICE_FLAGS = -DSTM32F10X_MD -DSTM32F10X
-PIF_FLAGS	 = -D__PIF_LOG_COMMAND__ -DPIF_LOG_LINE_SIZE=200 -DPIF_LOG_TX_BUFFER_SIZE=200 -D__PIF_NO_LOG__
-#PIF_FLAGS	 = -D__PIF_LOG_COMMAND__ -DPIF_LOG_LINE_SIZE=200 -DPIF_LOG_TX_BUFFER_SIZE=200
+PIF_FLAGS	 = -DPIF_CONF
 
 endif
 
@@ -227,8 +226,8 @@ PIF_SRC = \
 			pif/source/core/pif.c \
 			pif/source/communication/pif_uart.c \
 			pif/source/communication/pif_i2c.c \
-			pif/source/core/pif_list.c \
 			pif/source/core/pif_log.c \
+			pif/source/core/pif_obj_array.c \
 			pif/source/core/pif_ring_buffer.c \
 			pif/source/core/pif_task.c \
 			pif/source/core/pif_timer.c \

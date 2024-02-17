@@ -133,7 +133,7 @@ serialPort_t *uartOpen(USART_TypeDef *USARTx, serialReceiveCallbackPtr callback,
 
     uartReconfigure(s);
 
-    if (!pifUart_Init(&s->port.uart, PIF_ID_UART(id))) return NULL;
+    if (!pifUart_Init(&s->port.uart, PIF_ID_UART(id), baudRate)) return NULL;
     s->port.uart.act_set_baudrate = actCommSetBaudRate;
 
     // Receive DMA or IRQ

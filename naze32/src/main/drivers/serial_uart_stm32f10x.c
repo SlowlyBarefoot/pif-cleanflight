@@ -84,7 +84,7 @@ void usartIrqCallback(uartPort_t *s)
             s->USARTx->DR = data;
         }
         if (state & PIF_UART_SEND_DATA_STATE_EMPTY) {
-            pifUart_FinishTransfer(&s->port.uart);
+            pifTask_SetTrigger(s->port.uart._p_task);
             USART_ITConfig(s->USARTx, USART_IT_TXE, DISABLE);
         }
     }
