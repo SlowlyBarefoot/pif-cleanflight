@@ -267,7 +267,7 @@ static void ppmEdgeCallback(timerCCHandlerRec_t* cbRec, captureCompare_t capture
                 captures[i] = PPM_RCVR_TIMEOUT;
             }
             ppmFrameCount++;
-            if (!cfTasks[TASK_RX].p_task->_running) cfTasks[TASK_RX].p_task->immediate = TRUE;
+            if (!cfTasks[TASK_RX].p_task->_running) pifTask_SetTrigger(cfTasks[TASK_RX].p_task);
         }
 
         ppmDev.tracking   = true;

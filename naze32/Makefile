@@ -226,9 +226,8 @@ HIGHEND_SRC = \
 
 PIF_SRC = \
 			pif/source/core/pif.c \
-			pif/source/core/pif_comm.c \
-			pif/source/core/pif_i2c.c \
-			pif/source/core/pif_list.c \
+			pif/source/communication/pif_i2c.c \
+			pif/source/core/pif_obj_array.c \
 			pif/source/core/pif_log.c \
 			pif/source/core/pif_ring_buffer.c \
 			pif/source/core/pif_task.c \
@@ -320,6 +319,7 @@ CFLAGS		 = $(ARCH_FLAGS) \
 		   -D'__FORKNAME__="$(FORKNAME)"' \
 		   -D'__TARGET__="$(TARGET)"' \
 		   -D'__REVISION__="$(REVISION)"' \
+		   -DPIF_CONF \
 		   -save-temps=obj \
 		   -MMD -MP
 

@@ -22,7 +22,7 @@
 
 #include "build_config.h"
 
-#include "core/pif_i2c.h"
+#include "communication/pif_i2c.h"
 
 #include "sensors/sensors.h"
 

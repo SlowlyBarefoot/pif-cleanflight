@@ -54,7 +54,7 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "GYRO/PID",
         .taskFunc = taskMainPidLoopChecker,
         .desiredPeriod = 0,
-        .taskMode = TM_NEED,
+        .taskMode = TM_EXTERNAL_CUTIN,
         .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
         .isCreate = false
     },
@@ -155,7 +155,7 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "ALTITUDE",
         .taskFunc = taskCalculateAltitude,
         .desiredPeriod = 0,
-        .taskMode = TM_NEED,
+        .taskMode = TM_EXTERNAL_ORDER,
         .disallow_yield_id = DISALLOW_YIELD_ID_NONE,
         .isCreate = false
     },

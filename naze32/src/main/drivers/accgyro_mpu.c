@@ -24,7 +24,7 @@
 #include "build_config.h"
 #include "debug.h"
 
-#include "core/pif_i2c.h"
+#include "communication/pif_i2c.h"
 
 #include "common/maths.h"
 
@@ -214,7 +214,7 @@ void MPU_DATA_READY_EXTI_Handler(void)
 
     EXTI_ClearITPendingBit(mpuIntExtiConfig->exti_line);
 
-    if (sensor_link.gyro.p_task) sensor_link.gyro.p_task->immediate = true;;
+    pifTask_SetTrigger(sensor_link.gyro.p_task);
 
 #ifdef DEBUG_MPU_DATA_READY_INTERRUPT
     // Measure the delta in micro seconds between calls to the interrupt handler
@@ -316,9 +316,14 @@ bool mpuAccRead(int32_t *accel)
     uint8_t data[6];
     int16_t accData[AXIS_COUNT];
     int axis;
+    float raw[3];
 
     if (sensor_link.imu_sensor._measure & IMU_MEASURE_ACCELERO) {
-        return pifImuSensor_ReadAccel4(&sensor_link.imu_sensor, accel);
+        if (!pifImuSensor_ReadRawAccel(&sensor_link.imu_sensor, raw)) return false;
+        accel[0] = raw[0];
+        accel[1] = raw[1];
+        accel[2] = raw[2];
+        return true;
     }
 
     bool ack = mpuConfiguration.read(MPU_RA_ACCEL_XOUT_H, 6, data);
@@ -341,9 +346,14 @@ bool mpuGyroRead(int32_t *gyro)
     uint8_t data[6];
     int16_t gyroADC[AXIS_COUNT];
     int axis;
+    float raw[3];
 
     if (sensor_link.imu_sensor._measure & IMU_MEASURE_GYROSCOPE) {
-        return pifImuSensor_ReadGyro4(&sensor_link.imu_sensor, gyro);
+        if (!pifImuSensor_ReadRawGyro(&sensor_link.imu_sensor, raw)) return false;
+        gyro[0] = raw[0];
+        gyro[1] = raw[1];
+        gyro[2] = raw[2];
+        return true;
     }
 
     bool ack = mpuConfiguration.read(mpuConfiguration.gyroReadXRegister, 6, data);

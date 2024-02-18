@@ -22,7 +22,7 @@
 
 #include <platform.h>
 
-#include "core/pif_i2c.h"
+#include "communication/pif_i2c.h"
 
 #include "gpio.h"
 #include "timer.h"

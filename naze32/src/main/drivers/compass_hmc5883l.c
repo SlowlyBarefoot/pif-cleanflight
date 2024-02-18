@@ -26,7 +26,7 @@
 #include "build_config.h"
 #include "debug.h"
 
-#include "core/pif_i2c.h"
+#include "communication/pif_i2c.h"
 
 #include "common/axis.h"
 #include "common/maths.h"
