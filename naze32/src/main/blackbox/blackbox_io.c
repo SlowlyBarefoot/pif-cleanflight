@@ -40,7 +40,6 @@
 
 #include "io/rc_controls.h"
 
-#include "sensors/boardalignment.h"
 #include "sensors/acceleration.h"
 #include "sensors/barometer.h"
 #include "sensors/gyro.h"

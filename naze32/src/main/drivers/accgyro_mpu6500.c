@@ -22,19 +22,14 @@
 #include <platform.h>
 #include "build_config.h"
 
-#include "common/axis.h"
-#include "common/maths.h"
+#include "sensor/pif_mpu6500.h"
 
 #include "system.h"
-#include "exti.h"
-#include "gpio.h"
 #include "gyro_sync.h"
 #include "bus_i2c.h"
 
 #include "accgyro_mpu.h"
 #include "accgyro_mpu6500.h"
-
-#include "sensor/pif_mpu6500.h"
 
 const char* mpu6500_name = "MPU6500";
 
@@ -63,7 +58,7 @@ bool mpu6500GyroDetect(void* p_param)
         return false;
     }
 
-    if (!pifMpu6500_Init(&mpu6500, PIF_ID_AUTO, &g_i2c_port, MPU6500_I2C_ADDR(0), &sensor_link.imu_sensor)) return false;
+    if (!pifMpu6500_Detect(&g_i2c_port, MPU6500_I2C_ADDR(0))) return false;
 
     sensor_link.gyro.hw_name = mpu6500_name;
     sensor_link.gyro.init = mpu6500GyroInit;
@@ -94,6 +89,8 @@ void mpu6500GyroInit(void* p_param)
 
     if (mpuIntExtiInit()) sensor_link.gyro.can_sync = true;
 
+    pifMpu6500_Init(&mpu6500, PIF_ID_AUTO, &g_i2c_port, MPU6500_I2C_ADDR(0), &sensor_link.imu_sensor);
+
     if (p_param) lpf = ((gyro_param_t*)p_param)->lpf;
 
     pifI2cDevice_WriteRegByte(mpu6500._p_i2c, MPU6500_REG_PWR_MGMT_1, MPU6500_BIT_RESET); // Device reset
@@ -106,7 +103,7 @@ void mpu6500GyroInit(void* p_param)
     pif_Delay1ms(100);
 
     pwr_mgmt_1.byte = 0;
-    pwr_mgmt_1.bit.clksel = INV_CLK_PLL;
+    pwr_mgmt_1.bit.clksel = MPU6500_CLKSEL_PLL;
     pifI2cDevice_WriteRegByte(mpu6500._p_i2c, MPU6500_REG_PWR_MGMT_1, pwr_mgmt_1.byte);
 
     gyro_config.byte = 0;

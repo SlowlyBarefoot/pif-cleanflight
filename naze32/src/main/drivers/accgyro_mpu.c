@@ -39,7 +39,6 @@
 #include "accgyro_mpu3050.h"
 #include "accgyro_mpu6050.h"
 #include "accgyro_mpu6500.h"
-#include "accgyro_spi_mpu6500.h"
 #include "accgyro_mpu.h"
 
 #ifdef NAZE
@@ -48,18 +47,10 @@
 
 //#define DEBUG_MPU_DATA_READY_INTERRUPT
 
-static bool mpuReadRegisterI2C(uint8_t reg, uint8_t length, uint8_t* data);
-static bool mpuWriteRegisterI2C(uint8_t reg, uint8_t data);
-
 static void mpu6050FindRevision(void);
-
-#ifdef USE_SPI
-static bool detectSPISensorsAndUpdateDetectionResult(void);
-#endif
 
 mpuDetectionResult_t mpuDetectionResult;
 
-mpuConfiguration_t mpuConfiguration;
 static const extiConfig_t *mpuIntExtiConfig = NULL;
 
 #define MPU_ADDRESS             0x68
@@ -101,7 +92,6 @@ const extiConfig_t *selectMPUIntExtiConfig(void)
 mpuDetectionResult_t *detectMpu()
 {
     memset(&mpuDetectionResult, 0, sizeof(mpuDetectionResult));
-    memset(&mpuConfiguration, 0, sizeof(mpuConfiguration));
 
     mpuIntExtiConfig = selectMPUIntExtiConfig();
 
@@ -113,26 +103,12 @@ mpuDetectionResult_t *detectMpu()
     delay(35);
 
     ack = actI2cRead(MPU_ADDRESS, MPU_RA_WHO_AM_I, 1, &sig, 1);
-    if (ack) {
-        mpuConfiguration.read = mpuReadRegisterI2C;
-        mpuConfiguration.write = mpuWriteRegisterI2C;
-    } else {
-#ifdef USE_SPI
-        bool detectedSpiSensor = detectSPISensorsAndUpdateDetectionResult();
-        UNUSED(detectedSpiSensor);
-#endif
-
-        return &mpuDetectionResult;
-    }
-
-    mpuConfiguration.gyroReadXRegister = MPU_RA_GYRO_XOUT_H;
 
     // If an MPU3050 is connected sig will contain 0.
     ack = actI2cRead(MPU_ADDRESS, MPU_RA_WHO_AM_I_LEGACY, 1, &inquiryResult, 1);
     inquiryResult &= MPU_INQUIRY_MASK;
     if (ack && inquiryResult == MPUx0x0_WHO_AM_I_CONST) {
         mpuDetectionResult.sensor = MPU_3050;
-        mpuConfiguration.gyroReadXRegister = MPU3050_GYRO_OUT;
         return &mpuDetectionResult;
     }
 
@@ -150,23 +126,6 @@ mpuDetectionResult_t *detectMpu()
     return &mpuDetectionResult;
 }
 
-#ifdef USE_SPI
-static bool detectSPISensorsAndUpdateDetectionResult(void)
-{
-#ifdef USE_GYRO_SPI_MPU6500
-    if (mpu6500SpiDetect()) {
-        mpuDetectionResult.sensor = MPU_65xx_SPI;
-        mpuConfiguration.gyroReadXRegister = MPU_RA_GYRO_XOUT_H;
-        mpuConfiguration.read = mpu6500ReadRegister;
-        mpuConfiguration.write = mpu6500WriteRegister;
-        return true;
-    }
-#endif
-
-    return false;
-}
-#endif
-
 static void mpu6050FindRevision(void)
 {
     bool ack;
@@ -180,7 +139,7 @@ static void mpu6050FindRevision(void)
     // See https://android.googlesource.com/kernel/msm.git/+/eaf36994a3992b8f918c18e4f7411e8b2320a35f/drivers/misc/mpu6050/mldl_cfg.c
 
     // determine product ID and accel revision
-    ack = mpuConfiguration.read(MPU_RA_XA_OFFS_H, 6, readBuffer);
+    ack = actI2cRead(MPU_ADDRESS, MPU_RA_XA_OFFS_H, 1, readBuffer, 6);
     revision = ((readBuffer[5] & 0x01) << 2) | ((readBuffer[3] & 0x01) << 1) | (readBuffer[1] & 0x01);
     if (revision) {
         /* Congrats, these parts are better. */
@@ -194,7 +153,7 @@ static void mpu6050FindRevision(void)
             failureMode(FAILURE_ACC_INCOMPATIBLE);
         }
     } else {
-        ack = mpuConfiguration.read(MPU_RA_PRODUCT_ID, 1, &productId);
+        ack = actI2cRead(MPU_ADDRESS, MPU_RA_PRODUCT_ID, 1, &productId, 1);
         revision = productId & 0x0F;
         if (!revision) {
             failureMode(FAILURE_ACC_INCOMPATIBLE);
@@ -299,74 +258,24 @@ bool mpuIntExtiInit()
     return true;
 }
 
-static bool mpuReadRegisterI2C(uint8_t reg, uint8_t length, uint8_t* data)
-{
-    bool ack = i2cRead(MPU_ADDRESS, reg, length, data);
-    return ack;
-}
-
-static bool mpuWriteRegisterI2C(uint8_t reg, uint8_t data)
-{
-    bool ack = i2cWrite(MPU_ADDRESS, reg, data);
-    return ack;
-}
-
 bool mpuAccRead(int32_t *accel)
 {
-    uint8_t data[6];
-    int16_t accData[AXIS_COUNT];
-    int axis;
     float raw[3];
 
-    if (sensor_link.imu_sensor._measure & IMU_MEASURE_ACCELERO) {
-        if (!pifImuSensor_ReadRawAccel(&sensor_link.imu_sensor, raw)) return false;
-        accel[0] = raw[0];
-        accel[1] = raw[1];
-        accel[2] = raw[2];
-        return true;
-    }
-
-    bool ack = mpuConfiguration.read(MPU_RA_ACCEL_XOUT_H, 6, data);
-    if (!ack) {
-        return false;
-    }
-
-    accData[0] = (int16_t)((data[0] << 8) | data[1]);
-    accData[1] = (int16_t)((data[2] << 8) | data[3]);
-    accData[2] = (int16_t)((data[4] << 8) | data[5]);
-
-    for (axis = 0; axis < AXIS_COUNT; axis++) accel[axis] = accData[axis];  // int32_t copy to work with
-    alignSensors(accel, accel, sensor_link.acc.align);
-
+    if (!pifImuSensor_ReadRawAccel(&sensor_link.imu_sensor, raw)) return false;
+    accel[0] = raw[0];
+    accel[1] = raw[1];
+    accel[2] = raw[2];
     return true;
 }
 
 bool mpuGyroRead(int32_t *gyro)
 {
-    uint8_t data[6];
-    int16_t gyroADC[AXIS_COUNT];
-    int axis;
     float raw[3];
 
-    if (sensor_link.imu_sensor._measure & IMU_MEASURE_GYROSCOPE) {
-        if (!pifImuSensor_ReadRawGyro(&sensor_link.imu_sensor, raw)) return false;
-        gyro[0] = raw[0];
-        gyro[1] = raw[1];
-        gyro[2] = raw[2];
-        return true;
-    }
-
-    bool ack = mpuConfiguration.read(mpuConfiguration.gyroReadXRegister, 6, data);
-    if (!ack) {
-        return false;
-    }
-
-    gyroADC[0] = (int16_t)((data[0] << 8) | data[1]);
-    gyroADC[1] = (int16_t)((data[2] << 8) | data[3]);
-    gyroADC[2] = (int16_t)((data[4] << 8) | data[5]);
-
-    for (axis = 0; axis < AXIS_COUNT; axis++) gyro[axis] = gyroADC[axis];  // int32_t copy to work with
-    alignSensors(gyro, gyro, sensor_link.gyro.align);
-
+    if (!pifImuSensor_ReadRawGyro(&sensor_link.imu_sensor, raw)) return false;
+    gyro[0] = raw[0];
+    gyro[1] = raw[1];
+    gyro[2] = raw[2];
     return true;
 }

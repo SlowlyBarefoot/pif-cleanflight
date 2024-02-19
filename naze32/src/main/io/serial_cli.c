@@ -121,9 +121,6 @@ static void cliServoMix(char *cmdline);
 static void cliSet(char *cmdline);
 static void cliGet(char *cmdline);
 static void cliStatus(char *cmdline);
-#ifndef SKIP_TASK_STATISTICS
-static void cliTasks(char *cmdline);
-#endif
 static void cliVersion(char *cmdline);
 static void cliRxRange(char *cmdline);
 
@@ -288,9 +285,6 @@ const clicmd_t cmdTable[] = {
     CLI_COMMAND_DEF("sd_info", "sdcard info", NULL, cliSdInfo),
 #endif
     CLI_COMMAND_DEF("status", "show status", NULL, cliStatus),
-#ifndef SKIP_TASK_STATISTICS
-    CLI_COMMAND_DEF("tasks", "show task stats", NULL, cliTasks),
-#endif
     CLI_COMMAND_DEF("version", "show version", NULL, cliVersion),
 };
 #define CMD_COUNT (sizeof(cmdTable) / sizeof(clicmd_t))
@@ -2460,34 +2454,6 @@ static void cliStatus(char *cmdline)
     cliPrintf("Task Count=%d, Timer Count=%d\r\n", pifTaskManager_Count(), pifTimerManager_Count(&g_timer_1ms));
     cliPrintf("gyro_sync=%d temp=%d.%2d DegC\r\n", sensor_link.gyro.can_sync, (int)sensor_link.baro.temperature, (int)((sensor_link.baro.temperature - (int)sensor_link.baro.temperature) * 100));
 }
-
-#ifndef SKIP_TASK_STATISTICS
-static void cliTasks(char *cmdline)
-{
-    UNUSED(cmdline);
-
-    cfTaskId_e taskId;
-    cfTaskInfo_t taskInfo;
-
-    cliPrintf("Task list:\r\n");
-    for (taskId = 0; taskId < TASK_COUNT; taskId++) {
-        getTaskInfo(taskId, &taskInfo);
-        if (taskInfo.isCreate && taskInfo.totalExecutionTime) {
-            if (taskInfo.averagePeriodTime) {
-                cliPrintf("%d - %s, mode = %d, max = %d us, avg = %d us, total = %d ms, period = %d us\r\n", taskId, taskInfo.taskName, taskInfo.mode, 
-                        taskInfo.maxExecutionTime, taskInfo.averageExecutionTime, taskInfo.totalExecutionTime / 1000, taskInfo.averagePeriodTime);
-            }
-            else {
-                cliPrintf("%d - %s, mode = %d, max = %d us, avg = %d us, total = %d ms\r\n", taskId, taskInfo.taskName, taskInfo.mode, 
-                        taskInfo.maxExecutionTime, taskInfo.averageExecutionTime, taskInfo.totalExecutionTime / 1000);
-            }
-        }
-        else {
-            cliPrintf("%d - %s, mode = %d create = %d\r\n", taskId, taskInfo.taskName, taskInfo.mode, taskInfo.isCreate);
-        }
-    }
-}
-#endif
 
 static void cliVersion(char *cmdline)
 {

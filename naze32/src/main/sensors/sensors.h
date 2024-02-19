@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include "sensors/boardalignment.h"
-
 #include "core/pif_task.h"
 #include "sensor/pif_imu_sensor.h"
 #include "sensor/pif_sensor_event.h"
@@ -54,6 +52,12 @@ typedef enum {
     SENSOR_GPS = 1 << 5,
     SENSOR_GPSMAG = 1 << 6,
 } sensors_e;
+
+typedef struct boardAlignment_s {
+    int16_t rollDegrees;
+    int16_t pitchDegrees;
+    int16_t yawDegrees;
+} boardAlignment_t;
 
 typedef struct sensorAlignmentConfig_s {
     PifImuSensorAlign gyro_align;              // gyro alignment

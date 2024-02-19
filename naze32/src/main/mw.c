@@ -41,7 +41,6 @@
 
 #include "io/rc_controls.h"
 
-#include "sensors/boardalignment.h"
 #include "sensors/sonar.h"
 #include "sensors/compass.h"
 #include "sensors/acceleration.h"
@@ -616,15 +615,19 @@ void filterRc(void){
 static bool haveProcessedAnnexCodeOnce = false;
 #endif
 
-static void taskMainPidLoop(void)
+uint16_t taskMainPidLoop(PifTask *p_task)
 {
+    cycleTime = pifTask_GetDeltaTime(p_task, TRUE);
+
     dT = (float)cycleTime * 0.000001f;
 
     // Calculate average cycle time and average jitter
     filteredCycleTime = filterApplyPt1(cycleTime, &filteredCycleTimeState, 1, dT);
     
-    debug[0] = cycleTime;
+    debug[0] = cycleTime - targetLooptime;
     debug[1] = cycleTime - filteredCycleTime;
+    debug[2] = filteredCycleTime - targetLooptime;
+    debug[3] = p_task->_trigger_delay;
 
     imuUpdateGyroAndAttitude();
 
@@ -709,13 +712,7 @@ static void taskMainPidLoop(void)
         handleBlackbox();
     }
 #endif
-}
 
-// Function for loop trigger
-uint16_t taskMainPidLoopChecker(PifTask *p_task)
-{
-    cycleTime = pifTask_GetDeltaTime(p_task, TRUE);
-    taskMainPidLoop();
     return 0;
 }
 

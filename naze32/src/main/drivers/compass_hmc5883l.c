@@ -24,9 +24,8 @@
 #include <platform.h>
 
 #include "build_config.h"
-#include "debug.h"
 
-#include "communication/pif_i2c.h"
+#include "sensor/pif_hmc5883.h"
 
 #include "common/axis.h"
 #include "common/maths.h"
@@ -107,21 +106,13 @@
  *              1  |  1   |  Sleep Mode
  */
 
-#define MAG_ADDRESS 0x1E
-#define MAG_DATA_REGISTER 0x03
-
-#define HMC58X3_R_CONFA 0
-#define HMC58X3_R_CONFB 1
-#define HMC58X3_R_MODE 2
 #define HMC58X3_X_SELF_TEST_GAUSS (+1.16f)       // X axis level when bias current is applied.
 #define HMC58X3_Y_SELF_TEST_GAUSS (+1.16f)       // Y axis level when bias current is applied.
 #define HMC58X3_Z_SELF_TEST_GAUSS (+1.08f)       // Z axis level when bias current is applied.
-#define SELF_TEST_LOW_LIMIT  (243.0f / 390.0f)    // Low limit when gain is 5.
-#define SELF_TEST_HIGH_LIMIT (575.0f / 390.0f)    // High limit when gain is 5.
-#define HMC_POS_BIAS 1
-#define HMC_NEG_BIAS 2
 
 const char* hmc5883_name = "HMC5883";
+
+static PifHmc5883 hmc5883;
 
 static float magGain[3] = { 1.0f, 1.0f, 1.0f };
 
@@ -152,22 +143,19 @@ static const hmc5883Config_t nazeHmc5883Config_v5 = {
 static const hmc5883Config_t *hmc5883Config = NULL;
 
 void hmc5883lInit(void* p_param);
-bool hmc5883lRead2(int16_t *magData);
 
 static bool hmc5883lRead(int32_t *mag)
 {
-    int16_t magData[AXIS_COUNT];
-    int axis;
+    float raw[3];
 
-    if (!hmc5883lRead2(magData)) return false;
-
-    for (axis = 0; axis < AXIS_COUNT; axis++) mag[axis] = magData[axis];  // int32_t copy to work with
-    alignSensors(mag, mag, sensor_link.mag.align);
-
+    if (!pifImuSensor_ReadRawMag(&sensor_link.imu_sensor, raw)) return false;
+    mag[0] = raw[0];
+    mag[1] = raw[1];
+    mag[2] = raw[2];
     return true;
 }
 
-void MAG_DATA_READY_EXTI_Handler(void)
+static void MAG_DATA_READY_EXTI_Handler(void)
 {
     if (EXTI_GetITStatus(hmc5883Config->exti_line) == RESET) {
         return;
@@ -237,9 +225,6 @@ static void hmc5883lConfigureDataReadyInterruptHandling(void)
 
 bool hmc5883lDetect(void* p_param)
 {
-    bool ack = false;
-    uint8_t sig = 0;
-
     UNUSED(p_param);
 
 #ifdef NAZE
@@ -250,9 +235,7 @@ bool hmc5883lDetect(void* p_param)
     }
 #endif    
 
-    ack = i2cRead(MAG_ADDRESS, 0x0A, 1, &sig);
-    if (!ack || sig != 'H')
-        return false;
+    if (!pifHmc5883_Detect(&g_i2c_port)) return false;
 
     sensor_link.mag.hw_name = hmc5883_name;
     sensor_link.mag.init = hmc5883lInit;
@@ -267,6 +250,7 @@ void hmc5883lInit(void* p_param)
     int i;
     int32_t xyz_total[3] = { 0, 0, 0 }; // 32 bit totals so they won't overflow.
     bool bret = true;           // Error indicator
+    PifHmc5883ConfigA config_a;
 
     (void)p_param;
 
@@ -284,18 +268,23 @@ void hmc5883lInit(void* p_param)
         gpioInit(hmc5883Config->gpioPort, &gpio);
     }
 
+    pifHmc5883_Init(&hmc5883, PIF_ID_AUTO, &g_i2c_port, &sensor_link.imu_sensor);
+
     delay(50);
-    i2cWrite(MAG_ADDRESS, HMC58X3_R_CONFA, 0x010 + HMC_POS_BIAS);   // Reg A DOR = 0x010 + MS1, MS0 set to pos bias
+    config_a.byte = 0;
+    config_a.bit.measure_mode = HMC5883_MEASURE_MODE_POS_BIAS;
+    config_a.bit.data_rate = HMC5883_DATARATE_15HZ;
+    pifI2cDevice_WriteRegByte(hmc5883._p_i2c, HMC5883_REG_CONFIG_A, config_a.byte);   // Reg A DOR = 0x010 + MS1, MS0 set to pos bias
     // Note that the  very first measurement after a gain change maintains the same gain as the previous setting.
     // The new gain setting is effective from the second measurement and on.
-    i2cWrite(MAG_ADDRESS, HMC58X3_R_CONFB, 0x60); // Set the Gain to 2.5Ga (7:5->011)
+    pifHmc5883_SetGain(&hmc5883, HMC5883_GAIN_2_5GA); // Set the Gain to 2.5Ga (7:5->011)
     delay(100);
-    hmc5883lRead2(magADC);
+    pifHmc5883_ReadMag(&hmc5883, magADC);
 
     for (i = 0; i < 10; i++) {  // Collect 10 samples
-        i2cWrite(MAG_ADDRESS, HMC58X3_R_MODE, 1);
+        pifI2cDevice_WriteRegByte(hmc5883._p_i2c, HMC5883_REG_MODE, HMC5883_MODE_SINGLE);
         delay(50);
-        hmc5883lRead2(magADC);       // Get the raw values in case the scales have already been changed.
+        pifHmc5883_ReadMag(&hmc5883, magADC);       // Get the raw values in case the scales have already been changed.
 
         // Since the measurements are noisy, they should be averaged rather than taking the max.
         xyz_total[X] += magADC[X];
@@ -311,11 +300,12 @@ void hmc5883lInit(void* p_param)
     }
 
     // Apply the negative bias. (Same gain)
-    i2cWrite(MAG_ADDRESS, HMC58X3_R_CONFA, 0x010 + HMC_NEG_BIAS);   // Reg A DOR = 0x010 + MS1, MS0 set to negative bias.
+    config_a.bit.measure_mode = HMC5883_MEASURE_MODE_NEG_BIAS;
+    pifI2cDevice_WriteRegByte(hmc5883._p_i2c, HMC5883_REG_CONFIG_A, config_a.byte);   // Reg A DOR = 0x010 + MS1, MS0 set to negative bias.
     for (i = 0; i < 10; i++) {
-        i2cWrite(MAG_ADDRESS, HMC58X3_R_MODE, 1);
+        pifI2cDevice_WriteRegByte(hmc5883._p_i2c, HMC5883_REG_MODE, HMC5883_MODE_SINGLE);
         delay(50);
-        hmc5883lRead2(magADC);               // Get the raw values in case the scales have already been changed.
+        pifHmc5883_ReadMag(&hmc5883, magADC);               // Get the raw values in case the scales have already been changed.
 
         // Since the measurements are noisy, they should be averaged.
         xyz_total[X] -= magADC[X];
@@ -335,9 +325,11 @@ void hmc5883lInit(void* p_param)
     magGain[Z] = fabsf(660.0f * HMC58X3_Z_SELF_TEST_GAUSS * 2.0f * 10.0f / xyz_total[Z]);
 
     // leave test mode
-    i2cWrite(MAG_ADDRESS, HMC58X3_R_CONFA, 0x70);   // Configuration Register A  -- 0 11 100 00  num samples: 8 ; output rate: 15Hz ; normal measurement mode
-    i2cWrite(MAG_ADDRESS, HMC58X3_R_CONFB, 0x20);   // Configuration Register B  -- 001 00000    configuration gain 1.3Ga
-    i2cWrite(MAG_ADDRESS, HMC58X3_R_MODE, 0x00);    // Mode register             -- 000000 00    continuous Conversion Mode
+    config_a.bit.measure_mode = HMC5883_MEASURE_MODE_NORMAL;
+    config_a.bit.samples = HMC5883_SAMPLES_8;
+    pifI2cDevice_WriteRegByte(hmc5883._p_i2c, HMC5883_REG_CONFIG_A, config_a.byte);         // Configuration Register A  -- 0 11 100 00  num samples: 8 ; output rate: 15Hz ; normal measurement mode
+    pifHmc5883_SetGain(&hmc5883, HMC5883_GAIN_1_3GA);                                       // Configuration Register B  -- 001 00000    configuration gain 1.3Ga
+    pifI2cDevice_WriteRegByte(hmc5883._p_i2c, HMC5883_REG_MODE, HMC5883_MODE_CONTINOUS);    // Mode register             -- 000000 00    continuous Conversion Mode
     delay(100);
 
     if (!bret) {                // Something went wrong so get a best guess
@@ -347,21 +339,4 @@ void hmc5883lInit(void* p_param)
     }
 
     hmc5883lConfigureDataReadyInterruptHandling();
-}
-
-bool hmc5883lRead2(int16_t *magData)
-{
-    uint8_t buf[6];
-
-    bool ack = i2cRead(MAG_ADDRESS, MAG_DATA_REGISTER, 6, buf);
-    if (!ack) {
-        return false;
-    }
-    // During calibration, magGain is 1.0, so the read returns normal non-calibrated values.
-    // After calibration is done, magGain is set to calculated gain values.
-    magData[X] = (int16_t)(buf[0] << 8 | buf[1]) * magGain[X];
-    magData[Z] = (int16_t)(buf[2] << 8 | buf[3]) * magGain[Z];
-    magData[Y] = (int16_t)(buf[4] << 8 | buf[5]) * magGain[Y];
-
-    return true;
 }

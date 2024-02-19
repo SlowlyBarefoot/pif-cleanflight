@@ -17,25 +17,17 @@
 
 #pragma once
 
-#define GYRO_NONE       0
-#define GYRO_DEFAULT    SENSOR_DEFAULT
-#define GYRO_MPU6050    2
-#define GYRO_MPU3050    3
-#define GYRO_MPU6500    4
+typedef struct qmc5883Config_s {
+#ifdef STM32F10X
+    uint32_t gpioAPB2Peripherals;
+#endif
+    uint16_t gpioPin;
+    GPIO_TypeDef *gpioPort;
 
-// Type of accelerometer used/detected
-#define ACC_NONE        0
-#define ACC_DEFAULT     SENSOR_DEFAULT
-#define ACC_MPU6050     2
-#define ACC_MPU6500     3
+    uint8_t exti_port_source;
+    uint32_t exti_line;
+    uint8_t exti_pin_source;
+    IRQn_Type exti_irqn;
+} qmc5883Config_t;
 
-// Type of magnetometer used/detected
-#define MAG_NONE        0
-#define MAG_DEFAULT     SENSOR_DEFAULT
-#define MAG_HMC5883     2
-#define MAG_QMC5883     3
-
-#define BARO_NONE       0
-#define BARO_DEFAULT    SENSOR_DEFAULT
-#define BARO_MS5611     2
-#define BARO_BMP280     3
+bool qmc5883lDetect(void* p_param);

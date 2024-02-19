@@ -121,48 +121,6 @@
 // RF = Register Flag
 #define MPU_RF_DATA_RDY_EN (1 << 0)
 
-typedef bool (*mpuReadRegisterFunc)(uint8_t reg, uint8_t length, uint8_t* data);
-typedef bool (*mpuWriteRegisterFunc)(uint8_t reg, uint8_t data);
-
-typedef struct mpuConfiguration_s {
-    uint8_t gyroReadXRegister; // Y and Z must registers follow this, 2 words each
-    mpuReadRegisterFunc read;
-    mpuWriteRegisterFunc write;
-} mpuConfiguration_t;
-
-extern mpuConfiguration_t mpuConfiguration;
-
-enum lpf_e {
-    INV_FILTER_256HZ_NOLPF2 = 0,
-    INV_FILTER_188HZ,
-    INV_FILTER_98HZ,
-    INV_FILTER_42HZ,
-    INV_FILTER_20HZ,
-    INV_FILTER_10HZ,
-    INV_FILTER_5HZ,
-    INV_FILTER_2100HZ_NOLPF,
-    NUM_FILTER
-};
-enum gyro_fsr_e {
-    INV_FSR_250DPS = 0,
-    INV_FSR_500DPS,
-    INV_FSR_1000DPS,
-    INV_FSR_2000DPS,
-    NUM_GYRO_FSR
-};
-enum clock_sel_e {
-    INV_CLK_INTERNAL = 0,
-    INV_CLK_PLL,
-    NUM_CLK
-};
-enum accel_fsr_e {
-    INV_FSR_2G = 0,
-    INV_FSR_4G,
-    INV_FSR_8G,
-    INV_FSR_16G,
-    NUM_ACCEL_FSR
-};
-
 typedef enum {
     MPU_NONE,
     MPU_3050,

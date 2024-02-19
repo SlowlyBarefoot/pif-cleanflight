@@ -198,7 +198,6 @@ COMMON_SRC = build_config.c \
 		   rx/ibus.c \
 		   sensors/acceleration.c \
 		   sensors/battery.c \
-		   sensors/boardalignment.c \
 		   sensors/compass.c \
 		   sensors/gyro.c \
 		   sensors/initialisation.c \
@@ -233,27 +232,27 @@ PIF_SRC = \
 			pif/source/core/pif_task.c \
 			pif/source/core/pif_timer.c \
 			pif/source/sensor/pif_hc_sr04.c \
+			pif/source/sensor/pif_hmc5883.c \
 			pif/source/sensor/pif_imu_sensor.c \
+			pif/source/sensor/pif_mpu30x0.c \
+			pif/source/sensor/pif_mpu60x0.c \
 			pif/source/sensor/pif_mpu6500.c \
+			pif/source/sensor/pif_qmc5883.c \
 			pif/source/sensor/pif_bmp280.c
 
 NAZE_SRC = startup_stm32f10x_md_gcc.S \
-		   drivers/accgyro_adxl345.c \
-		   drivers/accgyro_bma280.c \
-		   drivers/accgyro_mma845x.c \
 		   drivers/accgyro_mpu.c \
 		   drivers/accgyro_mpu3050.c \
 		   drivers/accgyro_mpu6050.c \
 		   drivers/accgyro_mpu6500.c \
-		   drivers/accgyro_spi_mpu6500.c \
 		   drivers/adc.c \
 		   drivers/adc_stm32f10x.c \
-		   drivers/barometer_bmp085.c \
 		   drivers/barometer_ms5611.c \
 		   drivers/barometer_bmp280.c \
 		   drivers/bus_spi.c \
 		   drivers/bus_i2c_stm32f10x.c \
 		   drivers/compass_hmc5883l.c \
+		   drivers/compass_qmc5883l.c \
 		   drivers/display_ug2864hsweg01.c \
 		   drivers/flash_m25p16.c \
 		   drivers/gpio_stm32f10x.c \

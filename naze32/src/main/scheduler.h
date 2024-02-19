@@ -21,16 +21,6 @@
 
 //#define SCHEDULER_DEBUG
 
-typedef struct {
-    const char * taskName;
-    uint8_t      mode;
-    bool         isCreate;
-    uint32_t     maxExecutionTime;
-    uint32_t     totalExecutionTime;
-    uint32_t     averageExecutionTime;
-    uint32_t     averagePeriodTime;
-} cfTaskInfo_t;
-
 typedef enum {
     /* Actual tasks */
     TASK_SYSTEM = 0,
@@ -92,7 +82,6 @@ typedef struct {
 
 extern cfTask_t cfTasks[TASK_COUNT];
 
-void getTaskInfo(cfTaskId_e taskId, cfTaskInfo_t * taskInfo);
 BOOL changeTask(cfTaskId_e taskId, PifTaskMode newMode, uint16_t newPeriod);
 BOOL createTask(cfTaskId_e taskId, BOOL newEnabledState);
 

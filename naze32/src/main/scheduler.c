@@ -58,19 +58,6 @@ uint16_t taskSystem(PifTask *p_task)
     return 0;
 }
 
-#ifndef SKIP_TASK_STATISTICS
-void getTaskInfo(cfTaskId_e taskId, cfTaskInfo_t * taskInfo)
-{
-    taskInfo->taskName = cfTasks[taskId].taskName;
-    taskInfo->mode = cfTasks[taskId].taskMode;
-    taskInfo->isCreate= cfTasks[taskId].isCreate;
-    taskInfo->maxExecutionTime = cfTasks[taskId].p_task->_max_execution_time;
-    taskInfo->totalExecutionTime = cfTasks[taskId].p_task->_total_execution_time;
-    taskInfo->averageExecutionTime = cfTasks[taskId].p_task->_total_execution_time / cfTasks[taskId].p_task->_execution_count;
-    taskInfo->averagePeriodTime = cfTasks[taskId].p_task->_total_period_time / cfTasks[taskId].p_task->_period_count;
-}
-#endif
-
 BOOL changeTask(cfTaskId_e taskId, PifTaskMode newMode, uint16_t newPeriod)
 {
     if (taskId < TASK_COUNT) {

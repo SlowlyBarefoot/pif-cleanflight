@@ -20,6 +20,8 @@
 
 #include <platform.h>
 
+#include "common/utils.h"
+
 #include "sensors/sensors.h"
 
 #include "drivers/gyro_sync.h"
