@@ -4,20 +4,20 @@ COMMON_SRC = \
             build/version.c \
             $(TARGET_DIR_SRC) \
             main.c \
-            common/bitarray.c \
-            common/crc.c \
-            common/encoding.c \
-            common/filter.c \
-            common/huffman.c \
-            common/huffman_table.c \
-            common/maths.c \
-            common/printf.c \
-            common/streambuf.c \
-            common/typeconversion.c \
-            config/config_eeprom.c \
-            config/feature.c \
-            config/parameter_group.c \
-            config/config_streamer.c \
+            ../controller/common/bitarray.c \
+            ../controller/common/crc.c \
+            ../controller/common/encoding.c \
+            ../controller/common/filter.c \
+            ../controller/common/huffman.c \
+            ../controller/common/huffman_table.c \
+            ../controller/common/maths.c \
+            ../controller/common/printf.c \
+            ../controller/common/streambuf.c \
+            ../controller/common/typeconversion.c \
+            ../controller/config/config_eeprom.c \
+            ../controller/config/feature.c \
+            ../controller/config/parameter_group.c \
+            ../controller/config/config_streamer.c \
             drivers/adc.c \
             drivers/buf_writer.c \
             drivers/bus.c \
@@ -47,31 +47,31 @@ COMMON_SRC = \
             drivers/transponder_ir_arcitimer.c \
             drivers/transponder_ir_ilap.c \
             drivers/transponder_ir_erlt.c \
-            fc/config.c \
-            fc/fc_dispatch.c \
-            fc/fc_hardfaults.c \
-            fc/fc_msp.c \
-            fc/fc_msp_box.c \
-            fc/fc_tasks.c \
-            fc/runtime_config.c \
-            io/beeper.c \
-            io/serial.c \
-            io/statusindicator.c \
-            io/transponder_ir.c \
-            msp/msp_serial.c \
-            scheduler/scheduler.c \
-            sensors/battery.c \
-            sensors/current.c \
-            sensors/voltage.c \
+            ../controller/fc/config.c \
+            ../controller/fc/fc_dispatch.c \
+            ../controller/fc/fc_hardfaults.c \
+            ../controller/fc/fc_msp.c \
+            ../controller/fc/fc_msp_box.c \
+            ../controller/fc/fc_tasks.c \
+            ../controller/fc/runtime_config.c \
+            ../controller/io/beeper.c \
+            ../controller/io/serial.c \
+            ../controller/io/statusindicator.c \
+            ../controller/io/transponder_ir.c \
+            ../controller/msp/msp_serial.c \
+            ../controller/scheduler/scheduler.c \
+            ../controller/sensors/battery.c \
+            ../controller/sensors/current.c \
+            ../controller/sensors/voltage.c \
 
 OSD_SLAVE_SRC = \
-            io/displayport_max7456.c \
-            osd_slave/osd_slave_init.c \
-            io/osd_slave.c
+            ../controller/io/displayport_max7456.c \
+            ../controller/osd_slave/osd_slave_init.c \
+            ../controller/io/osd_slave.c
 
 FC_SRC = \
-            fc/fc_init.c \
-            fc/controlrate_profile.c \
+            ../controller/fc/fc_init.c \
+            ../controller/fc/controlrate_profile.c \
             drivers/camera_control.c \
             drivers/gyro_sync.c \
             drivers/rx_nrf24l01.c \
@@ -81,97 +81,97 @@ FC_SRC = \
             drivers/pwm_output.c \
             drivers/rx_pwm.c \
             drivers/serial_softserial.c \
-            fc/fc_core.c \
-            fc/fc_rc.c \
-            fc/rc_adjustments.c \
-            fc/rc_controls.c \
-            fc/rc_modes.c \
-            fc/cli.c \
-            fc/settings.c \
-            flight/altitude.c \
-            flight/failsafe.c \
-            flight/imu.c \
-            flight/mixer.c \
-            flight/pid.c \
-            flight/servos.c \
-            io/serial_4way.c \
-            io/serial_4way_avrootloader.c \
-            io/serial_4way_stk500v2.c \
-            rx/ibus.c \
-            rx/jetiexbus.c \
-            rx/msp.c \
-            rx/nrf24_cx10.c \
-            rx/nrf24_inav.c \
-            rx/nrf24_h8_3d.c \
-            rx/nrf24_syma.c \
-            rx/nrf24_v202.c \
-            rx/pwm.c \
-            rx/rx.c \
-            rx/rx_spi.c \
-            rx/crsf.c \
-            rx/sbus.c \
-            rx/spektrum.c \
-            rx/sumd.c \
-            rx/sumh.c \
-            rx/xbus.c \
-            sensors/acceleration.c \
-            sensors/boardalignment.c \
-            sensors/compass.c \
-            sensors/gyro.c \
-            sensors/gyroanalyse.c \
-            sensors/initialisation.c \
-            blackbox/blackbox.c \
-            blackbox/blackbox_encoding.c \
-            blackbox/blackbox_io.c \
-            cms/cms.c \
-            cms/cms_menu_blackbox.c \
-            cms/cms_menu_builtin.c \
-            cms/cms_menu_imu.c \
-            cms/cms_menu_ledstrip.c \
-            cms/cms_menu_misc.c \
-            cms/cms_menu_osd.c \
-            cms/cms_menu_vtx_rtc6705.c \
-            cms/cms_menu_vtx_smartaudio.c \
-            cms/cms_menu_vtx_tramp.c \
-            common/colorconversion.c \
-            common/gps_conversion.c \
+            ../controller/fc/fc_core.c \
+            ../controller/fc/fc_rc.c \
+            ../controller/fc/rc_adjustments.c \
+            ../controller/fc/rc_controls.c \
+            ../controller/fc/rc_modes.c \
+            ../controller/fc/cli.c \
+            ../controller/fc/settings.c \
+            ../controller/flight/altitude.c \
+            ../controller/flight/failsafe.c \
+            ../controller/flight/imu.c \
+            ../controller/flight/mixer.c \
+            ../controller/flight/pid.c \
+            ../controller/flight/servos.c \
+            ../controller/io/serial_4way.c \
+            ../controller/io/serial_4way_avrootloader.c \
+            ../controller/io/serial_4way_stk500v2.c \
+            ../controller/rx/ibus.c \
+            ../controller/rx/jetiexbus.c \
+            ../controller/rx/msp.c \
+            ../controller/rx/nrf24_cx10.c \
+            ../controller/rx/nrf24_inav.c \
+            ../controller/rx/nrf24_h8_3d.c \
+            ../controller/rx/nrf24_syma.c \
+            ../controller/rx/nrf24_v202.c \
+            ../controller/rx/pwm.c \
+            ../controller/rx/rx.c \
+            ../controller/rx/rx_spi.c \
+            ../controller/rx/crsf.c \
+            ../controller/rx/sbus.c \
+            ../controller/rx/spektrum.c \
+            ../controller/rx/sumd.c \
+            ../controller/rx/sumh.c \
+            ../controller/rx/xbus.c \
+            ../controller/sensors/acceleration.c \
+            ../controller/sensors/boardalignment.c \
+            ../controller/sensors/compass.c \
+            ../controller/sensors/gyro.c \
+            ../controller/sensors/gyroanalyse.c \
+            ../controller/sensors/initialisation.c \
+            ../controller/blackbox/blackbox.c \
+            ../controller/blackbox/blackbox_encoding.c \
+            ../controller/blackbox/blackbox_io.c \
+            ../controller/cms/cms.c \
+            ../controller/cms/cms_menu_blackbox.c \
+            ../controller/cms/cms_menu_builtin.c \
+            ../controller/cms/cms_menu_imu.c \
+            ../controller/cms/cms_menu_ledstrip.c \
+            ../controller/cms/cms_menu_misc.c \
+            ../controller/cms/cms_menu_osd.c \
+            ../controller/cms/cms_menu_vtx_rtc6705.c \
+            ../controller/cms/cms_menu_vtx_smartaudio.c \
+            ../controller/cms/cms_menu_vtx_tramp.c \
+            ../controller/common/colorconversion.c \
+            ../controller/common/gps_conversion.c \
             drivers/display_ug2864hsweg01.c \
             drivers/light_ws2811strip.c \
             drivers/serial_escserial.c \
             drivers/sonar_hcsr04.c \
             drivers/vtx_common.c \
-            flight/navigation.c \
-            io/dashboard.c \
-            io/displayport_max7456.c \
-            io/displayport_msp.c \
-            io/displayport_oled.c \
-            io/displayport_rcdevice.c \
-            io/rcdevice_cam.c \
-            io/rcdevice.c \
-            io/rcdevice_osd.c \
-            io/gps.c \
-            io/ledstrip.c \
-            io/osd.c \
-            sensors/sonar.c \
-            sensors/barometer.c \
-            telemetry/telemetry.c \
-            telemetry/crsf.c \
-            telemetry/srxl.c \
-            telemetry/frsky.c \
-            telemetry/hott.c \
-            telemetry/smartport.c \
-            telemetry/ltm.c \
-            telemetry/mavlink.c \
-            telemetry/msp_shared.c \
-            telemetry/ibus.c \
-            telemetry/ibus_shared.c \
-            sensors/esc_sensor.c \
-            io/vtx_string.c \
-            io/vtx_settings_config.c \
-            io/vtx_rtc6705.c \
-            io/vtx_smartaudio.c \
-            io/vtx_tramp.c \
-            io/vtx_control.c
+            ../controller/flight/navigation.c \
+            ../controller/io/dashboard.c \
+            ../controller/io/displayport_max7456.c \
+            ../controller/io/displayport_msp.c \
+            ../controller/io/displayport_oled.c \
+            ../controller/io/displayport_rcdevice.c \
+            ../controller/io/rcdevice_cam.c \
+            ../controller/io/rcdevice.c \
+            ../controller/io/rcdevice_osd.c \
+            ../controller/io/gps.c \
+            ../controller/io/ledstrip.c \
+            ../controller/io/osd.c \
+            ../controller/sensors/sonar.c \
+            ../controller/sensors/barometer.c \
+            ../controller/telemetry/telemetry.c \
+            ../controller/telemetry/crsf.c \
+            ../controller/telemetry/srxl.c \
+            ../controller/telemetry/frsky.c \
+            ../controller/telemetry/hott.c \
+            ../controller/telemetry/smartport.c \
+            ../controller/telemetry/ltm.c \
+            ../controller/telemetry/mavlink.c \
+            ../controller/telemetry/msp_shared.c \
+            ../controller/telemetry/ibus.c \
+            ../controller/telemetry/ibus_shared.c \
+            ../controller/sensors/esc_sensor.c \
+            ../controller/io/vtx_string.c \
+            ../controller/io/vtx_settings_config.c \
+            ../controller/io/vtx_rtc6705.c \
+            ../controller/io/vtx_smartaudio.c \
+            ../controller/io/vtx_tramp.c \
+            ../controller/io/vtx_control.c
 
 COMMON_DEVICE_SRC = \
             $(CMSIS_SRC) \
@@ -190,10 +190,10 @@ SIZE_OPTIMISED_SRC  := ""
 
 ifneq ($(TARGET),$(filter $(TARGET),$(F1_TARGETS)))
 SPEED_OPTIMISED_SRC := $(SPEED_OPTIMISED_SRC) \
-            common/encoding.c \
-            common/filter.c \
-            common/maths.c \
-            common/typeconversion.c \
+            ../controller/common/encoding.c \
+            ../controller/common/filter.c \
+            ../controller/common/maths.c \
+            ../controller/common/typeconversion.c \
             drivers/adc.c \
             drivers/buf_writer.c \
             drivers/bus.c \
@@ -206,34 +206,34 @@ SPEED_OPTIMISED_SRC := $(SPEED_OPTIMISED_SRC) \
             drivers/serial_uart.c \
             drivers/system.c \
             drivers/timer.c \
-            fc/fc_core.c \
-            fc/fc_tasks.c \
-            fc/fc_rc.c \
-            fc/rc_controls.c \
-            fc/runtime_config.c \
-            flight/imu.c \
-            flight/mixer.c \
-            flight/pid.c \
-            io/serial.c \
-            rx/ibus.c \
-            rx/rx.c \
-            rx/rx_spi.c \
-            rx/crsf.c \
-            rx/sbus.c \
-            rx/spektrum.c \
-            rx/sumd.c \
-            rx/xbus.c \
-            scheduler/scheduler.c \
-            sensors/acceleration.c \
-            sensors/boardalignment.c \
-            sensors/gyro.c \
-            sensors/gyroanalyse.c \
+            ../controller/fc/fc_core.c \
+            ../controller/fc/fc_tasks.c \
+            ../controller/fc/fc_rc.c \
+            ../controller/fc/rc_controls.c \
+            ../controller/fc/runtime_config.c \
+            ../controller/flight/imu.c \
+            ../controller/flight/mixer.c \
+            ../controller/flight/pid.c \
+            ../controller/io/serial.c \
+            ../controller/rx/ibus.c \
+            ../controller/rx/rx.c \
+            ../controller/rx/rx_spi.c \
+            ../controller/rx/crsf.c \
+            ../controller/rx/sbus.c \
+            ../controller/rx/spektrum.c \
+            ../controller/rx/sumd.c \
+            ../controller/rx/xbus.c \
+            ../controller/scheduler/scheduler.c \
+            ../controller/sensors/acceleration.c \
+            ../controller/sensors/boardalignment.c \
+            ../controller/sensors/gyro.c \
+            ../controller/sensors/gyroanalyse.c \
             $(CMSIS_SRC) \
             $(DEVICE_STDPERIPH_SRC) \
             drivers/light_ws2811strip.c \
-            io/displayport_max7456.c \
-            io/osd.c \
-            io/osd_slave.c
+            ../controller/io/displayport_max7456.c \
+            ../controller/io/osd.c \
+            ../controller/io/osd_slave.c
 
 NOT_OPTIMISED_SRC := $(NOT_OPTIMISED_SRC) \
 
@@ -248,31 +248,31 @@ SIZE_OPTIMISED_SRC := $(SIZE_OPTIMISED_SRC) \
             drivers/vtx_rtc6705_soft_spi.c \
             drivers/vtx_rtc6705.c \
             drivers/vtx_common.c \
-            fc/fc_init.c \
-            fc/cli.c \
-            fc/settings.c \
-            config/config_eeprom.c \
-            config/feature.c \
-            config/parameter_group.c \
-            config/config_streamer.c \
-            io/serial_4way.c \
-            io/serial_4way_avrootloader.c \
-            io/serial_4way_stk500v2.c \
-            io/dashboard.c \
-            msp/msp_serial.c \
-            cms/cms.c \
-            cms/cms_menu_blackbox.c \
-            cms/cms_menu_builtin.c \
-            cms/cms_menu_imu.c \
-            cms/cms_menu_ledstrip.c \
-            cms/cms_menu_misc.c \
-            cms/cms_menu_osd.c \
-            io/vtx_string.c \
-            io/vtx_settings_config.c \
-            io/vtx_rtc6705.c \
-            io/vtx_smartaudio.c \
-            io/vtx_tramp.c \
-            io/vtx_control.c
+            ../controller/fc/fc_init.c \
+            ../controller/fc/cli.c \
+            ../controller/fc/settings.c \
+            ../controller/config/config_eeprom.c \
+            ../controller/config/feature.c \
+            ../controller/config/parameter_group.c \
+            ../controller/config/config_streamer.c \
+            ../controller/io/serial_4way.c \
+            ../controller/io/serial_4way_avrootloader.c \
+            ../controller/io/serial_4way_stk500v2.c \
+            ../controller/io/dashboard.c \
+            ../controller/msp/msp_serial.c \
+            ../controller/cms/cms.c \
+            ../controller/cms/cms_menu_blackbox.c \
+            ../controller/cms/cms_menu_builtin.c \
+            ../controller/cms/cms_menu_imu.c \
+            ../controller/cms/cms_menu_ledstrip.c \
+            ../controller/cms/cms_menu_misc.c \
+            ../controller/cms/cms_menu_osd.c \
+            ../controller/io/vtx_string.c \
+            ../controller/io/vtx_settings_config.c \
+            ../controller/io/vtx_rtc6705.c \
+            ../controller/io/vtx_smartaudio.c \
+            ../controller/io/vtx_tramp.c \
+            ../controller/io/vtx_control.c
 endif #!F1
 
 # check if target.mk supplied
@@ -298,7 +298,7 @@ endif
 ifneq ($(filter ONBOARDFLASH,$(FEATURES)),)
 SRC += \
             drivers/flash_m25p16.c \
-            io/flashfs.c
+            ../controller/io/flashfs.c
 endif
 
 SRC += $(COMMON_SRC)
@@ -310,8 +310,8 @@ ifneq ($(filter SDCARD,$(FEATURES)),)
 SRC += \
             drivers/sdcard.c \
             drivers/sdcard_standard.c \
-            io/asyncfatfs/asyncfatfs.c \
-            io/asyncfatfs/fat_standard.c
+            ../controller/io/asyncfatfs/asyncfatfs.c \
+            ../controller/io/asyncfatfs/fat_standard.c
 endif
 
 ifneq ($(filter VCP,$(FEATURES)),)
