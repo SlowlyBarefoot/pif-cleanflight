@@ -19,6 +19,7 @@
 #include <stdint.h>
 
 #include "platform.h"
+#include "pif_linker.h"
 
 #include "light_led.h"
 #include "sound_beeper.h"
@@ -56,6 +57,10 @@ void SysTick_Handler(void)
         sysTickPending = 0;
         (void)(SysTick->CTRL);
     }
+
+    pif_sigTimer1ms();
+	pifTimerManager_sigTick(&g_timer_1ms);
+
 #ifdef USE_HAL_DRIVER
     // used by the HAL for some timekeeping and timeouts, should always be 1ms
     HAL_IncTick();

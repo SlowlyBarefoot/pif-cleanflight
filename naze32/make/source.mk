@@ -63,6 +63,13 @@ COMMON_SRC = \
             ../controller/sensors/battery.c \
             ../controller/sensors/current.c \
             ../controller/sensors/voltage.c \
+            ../controller/pif_linker.c
+
+PIF_SRC = \
+            ../../pif/source/core/pif.c \
+            ../../pif/source/core/pif_obj_array.c \
+            ../../pif/source/core/pif_task.c \
+            ../../pif/source/core/pif_timer.c
 
 OSD_SLAVE_SRC = \
             ../controller/io/displayport_max7456.c \
@@ -301,7 +308,7 @@ SRC += \
             ../controller/io/flashfs.c
 endif
 
-SRC += $(COMMON_SRC)
+SRC += $(COMMON_SRC) $(PIF_SRC)
 
 #excludes
 SRC   := $(filter-out ${MCU_EXCLUDES}, $(SRC))

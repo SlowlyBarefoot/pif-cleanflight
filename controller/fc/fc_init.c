@@ -137,6 +137,10 @@
 #include "build/build_config.h"
 #include "build/debug.h"
 
+#include "pif_linker.h"
+#include "core/pif_task.h"
+#include "core/pif_timer.h"
+
 #ifdef TARGET_PREINIT
 void targetPreInit(void);
 #endif
@@ -258,6 +262,11 @@ void init(void)
 
     printfSupportInit();
 
+    pif_Init(micros);
+
+    pifTaskManager_Init(30);
+
+    pifTimerManager_Init(&g_timer_1ms, PIF_ID_AUTO, 1000, 3);		        // 1000us
     systemInit();
 
     // initialize IO (needed for all IO operations)

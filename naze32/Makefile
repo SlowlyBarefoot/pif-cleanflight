@@ -201,6 +201,7 @@ CFLAGS     += $(ARCH_FLAGS) \
               $(addprefix -D,$(OPTIONS)) \
               $(addprefix -I,$(INCLUDE_DIRS)) \
 			  -I../controller \
+			  -I../../pif/include \
               $(DEBUG_FLAGS) \
               -std=gnu99 \
               -Wall -Wextra -Wunsafe-loop-optimizations -Wdouble-promotion \
@@ -214,6 +215,7 @@ CFLAGS     += $(ARCH_FLAGS) \
               -D'__FORKNAME__="$(FORKNAME)"' \
               -D'__TARGET__="$(TARGET)"' \
               -D'__REVISION__="$(REVISION)"' \
+			  -DPIF_CONF \
               -save-temps=obj \
               -MMD -MP \
               $(EXTRA_FLAGS)
