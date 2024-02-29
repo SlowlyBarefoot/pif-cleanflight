@@ -40,8 +40,12 @@ void dispatchEnable(void)
     dispatchEnabled = true;
 }
 
-void dispatchProcess(uint32_t currentTime)
+uint16_t dispatchProcess(PifTask *p_task)
 {
+    uint32_t currentTime = (*pif_act_timer1us)();
+
+    UNUSED(p_task);
+
     for (dispatchEntry_t **p = &head; *p; ) {
         if (cmp32(currentTime, (*p)->delayedUntil) < 0)
             break;
@@ -50,6 +54,7 @@ void dispatchProcess(uint32_t currentTime)
         *p = (*p)->next;
         (*current->dispatch)(current);
     }
+    return 0;
 }
 
 void dispatchAdd(dispatchEntry_t *entry, int delayUs)

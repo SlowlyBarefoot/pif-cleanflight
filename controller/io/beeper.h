@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "core/pif_task.h"
+
 #include "common/time.h"
 #include "config/parameter_group.h"
 
@@ -63,7 +65,7 @@ PG_DECLARE(beeperConfig_t, beeperConfig);
 
 void beeper(beeperMode_e mode);
 void beeperSilence(void);
-void beeperUpdate(timeUs_t currentTimeUs);
+uint16_t beeperUpdate(PifTask *p_task);
 void beeperConfirmationBeeps(uint8_t beepCount);
 void beeperWarningBeeps(uint8_t beepCount);
 uint32_t getArmingBeepTimeMicros(void);

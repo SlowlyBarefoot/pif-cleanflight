@@ -423,8 +423,10 @@ static void updateGpsIndicator(timeUs_t currentTimeUs)
     }
 }
 
-void gpsUpdate(timeUs_t currentTimeUs)
+uint16_t gpsUpdate(PifTask *p_task)
 {
+    UNUSED(p_task);
+
     // read out available GPS bytes
     if (gpsPort) {
         while (serialRxBytesWaiting(gpsPort))
@@ -464,8 +466,9 @@ void gpsUpdate(timeUs_t currentTimeUs)
             break;
     }
     if (sensors(SENSOR_GPS)) {
-        updateGpsIndicator(currentTimeUs);
+        updateGpsIndicator((*pif_act_timer1us)());
     }
+    return 0;
 }
 
 static void gpsNewData(uint16_t c)

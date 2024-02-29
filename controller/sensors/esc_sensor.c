@@ -281,12 +281,14 @@ static void selectNextMotor(void)
     }
 }
 
-void escSensorProcess(timeUs_t currentTimeUs)
+uint16_t escSensorProcess(PifTask *p_task)
 {
-    const timeMs_t currentTimeMs = currentTimeUs / 1000;
+    const timeMs_t currentTimeMs = (*pif_act_timer1us)() / 1000;
+
+    UNUSED(p_task);
 
     if (!escSensorPort || !pwmAreMotorsEnabled()) {
-        return;
+        return 0;
     }
 
     switch (escSensorTriggerState) {
@@ -340,5 +342,6 @@ void escSensorProcess(timeUs_t currentTimeUs)
 
             break;
     }
+    return 0;
 }
 #endif

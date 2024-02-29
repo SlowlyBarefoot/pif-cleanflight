@@ -1002,10 +1002,14 @@ void cmsUpdate(uint32_t currentTimeUs)
     lastCalledMs = millis();
 }
 
-void cmsHandler(timeUs_t currentTimeUs)
+uint16_t cmsHandler(PifTask *p_task)
 {
+    timeUs_t currentTimeUs = (*pif_act_timer1us)();
+
+    UNUSED(p_task);
+
     if (cmsDeviceCount < 0)
-        return;
+        return 0;
 
 
 
@@ -1015,6 +1019,7 @@ void cmsHandler(timeUs_t currentTimeUs)
         lastCalledUs = currentTimeUs;
         cmsUpdate(currentTimeUs);
     }
+    return 0;
 }
 
 void cmsInit(void)

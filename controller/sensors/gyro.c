@@ -735,7 +735,6 @@ STATIC_UNIT_TESTED void performGyroCalibration(gyroSensor_t *gyroSensor, uint8_t
     }
 
     if (isOnFinalGyroCalibrationCycle(&gyroSensor->calibration)) {
-        schedulerResetTaskStatistics(TASK_SELF); // so calibration cycles do not pollute tasks statistics
         if (!firstArmingCalibrationWasStarted || (getArmingDisableFlags() & ~ARMING_DISABLED_CALIBRATING) == 0) {
             beeper(BEEPER_GYRO_CALIBRATED);
         }

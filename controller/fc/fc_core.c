@@ -196,7 +196,7 @@ void updateArmingStatus(void)
             unsetArmingDisabled(ARMING_DISABLED_ANGLE);
         }
 
-        if (averageSystemLoadPercent > 100) {
+        if (pif_performance._use_rate > 100) {
             setArmingDisabled(ARMING_DISABLED_LOAD);
         } else {
             unsetArmingDisabled(ARMING_DISABLED_LOAD);
@@ -705,18 +705,21 @@ uint8_t setPidUpdateCountDown(void)
 }
 
 // Function for loop trigger
-void taskMainPidLoop(timeUs_t currentTimeUs)
+uint16_t taskMainPidLoop(PifTask *p_task)
 {
     static bool runTaskMainSubprocesses;
     static uint8_t pidUpdateCountdown;
+    timeUs_t currentTimeUs = (*pif_act_timer1us)();
+
+    UNUSED(p_task);
 
 #if defined(SIMULATOR_BUILD) && defined(SIMULATOR_GYROPID_SYNC)
-    if (lockMainPID() != 0) return;
+    if (lockMainPID() != 0) return 0;
 #endif
 
     if (debugMode == DEBUG_CYCLETIME) {
         debug[0] = getTaskDeltaTime(TASK_SELF);
-        debug[1] = averageSystemLoadPercent;
+        debug[1] = pif_performance._use_rate;
     }
 
     if (runTaskMainSubprocesses) {
@@ -742,6 +745,7 @@ void taskMainPidLoop(timeUs_t currentTimeUs)
         subTaskMotorUpdate();
         runTaskMainSubprocesses = true;
     }
+    return 0;
 }
 
 bool isMotorsReversed(void)

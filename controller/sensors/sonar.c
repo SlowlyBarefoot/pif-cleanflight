@@ -106,10 +106,13 @@ static int32_t applySonarMedianFilter(int32_t newSonarReading)
         return newSonarReading;
 }
 
-void sonarUpdate(timeUs_t currentTimeUs)
+uint16_t sonarUpdate(PifTask *p_task)
 {
-    UNUSED(currentTimeUs);
+    UNUSED(p_task);
+
+    UNUSED((*pif_act_timer1us)());
     hcsr04_start_reading();
+    return 0;
 }
 
 /**

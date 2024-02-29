@@ -254,15 +254,18 @@ static void rcdevice5KeySimulationProcess(timeUs_t currentTimeUs)
     }
 }
 
-void rcdeviceUpdate(timeUs_t currentTimeUs)
+uint16_t rcdeviceUpdate(PifTask *p_task)
 {
+    UNUSED(p_task);
+
     if (rcdeviceIsCameraControlEnabled()) {
         rcdeviceCameraControlProcess();
     }
 
     if (rcdeviceIs5KeyEnabled()) {
-        rcdevice5KeySimulationProcess(currentTimeUs);
+        rcdevice5KeySimulationProcess((*pif_act_timer1us)());
     }
+    return 0;
 }
 
 bool rcdeviceInit(void)

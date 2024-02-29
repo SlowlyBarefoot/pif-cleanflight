@@ -18,6 +18,8 @@
 #pragma once
 
 #ifdef USE_OSD_SLAVE
+#include "core/pif_task.h"
+
 #include "common/time.h"
 
 struct displayPort_s;
@@ -28,8 +30,7 @@ extern bool osdSlaveIsLocked;
 void osdSlaveInit(struct displayPort_s *osdDisplayPort);
 
 // task api
-bool osdSlaveCheck(timeUs_t currentTimeUs, timeDelta_t currentDeltaTimeUs);
-void osdSlaveUpdate(timeUs_t currentTimeUs);
+uint16_t osdSlaveUpdate(PifTask *p_task);
 
 // msp api
 void osdSlaveHeartbeat(void);

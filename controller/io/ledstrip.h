@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "core/pif_task.h"
+
 #include "common/color.h"
 #include "common/time.h"
 #include "config/parameter_group.h"
@@ -184,7 +186,7 @@ void reevaluateLedConfig(void);
 
 void ledStripInit(void);
 void ledStripEnable(void);
-void ledStripUpdate(timeUs_t currentTimeUs);
+uint16_t ledStripUpdate(PifTask *p_task);
 
 bool setModeColor(ledModeIndex_e modeIndex, int modeColorIndex, int colorIndex);
 

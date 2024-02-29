@@ -1039,10 +1039,12 @@ static applyLayerFn_timed* layerTable[] = {
     [timRing] = &applyLedThrustRingLayer
 };
 
-void ledStripUpdate(timeUs_t currentTimeUs)
+uint16_t ledStripUpdate(PifTask *p_task)
 {
+    UNUSED(p_task);
+
     if (!(ledStripInitialised && isWS2811LedStripReady())) {
-        return;
+        return 0;
     }
 
     if (IS_RC_MODE_ACTIVE(BOXLEDLOW) && !(ledStripConfig()->ledstrip_visual_beeper && isBeeperOn())) {
@@ -1050,11 +1052,11 @@ void ledStripUpdate(timeUs_t currentTimeUs)
             ledStripDisable();
             ledStripEnabled = false;
         }
-        return;
+        return 0;
     }
     ledStripEnabled = true;
 
-    const uint32_t now = currentTimeUs;
+    const uint32_t now = (*pif_act_timer1us)();
 
     // test all led timers, setting corresponding bits
     uint32_t timActive = 0;
@@ -1071,7 +1073,7 @@ void ledStripUpdate(timeUs_t currentTimeUs)
     }
 
     if (!timActive)
-        return;          // no change this update, keep old state
+        return 0;          // no change this update, keep old state
 
     // apply all layers; triggered timed functions has to update timers
 
@@ -1086,6 +1088,7 @@ void ledStripUpdate(timeUs_t currentTimeUs)
         (*layerTable[timId])(updateNow, timer);
     }
     ws2811UpdateStrip();
+    return 0;
 }
 
 bool parseColor(int index, const char *colorConfig)

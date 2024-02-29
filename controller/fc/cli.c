@@ -3004,9 +3004,8 @@ static void cliStatus(char *cmdline)
 
     const int gyroRate = getTaskDeltaTime(TASK_GYROPID) == 0 ? 0 : (int)(1000000.0f / ((float)getTaskDeltaTime(TASK_GYROPID)));
     const int rxRate = getTaskDeltaTime(TASK_RX) == 0 ? 0 : (int)(1000000.0f / ((float)getTaskDeltaTime(TASK_RX)));
-    const int systemRate = getTaskDeltaTime(TASK_SYSTEM) == 0 ? 0 : (int)(1000000.0f / ((float)getTaskDeltaTime(TASK_SYSTEM)));
-    cliPrintLinef("CPU:%d%%, cycle time: %d, GYRO rate: %d, RX rate: %d, System rate: %d",
-            constrain(averageSystemLoadPercent, 0, 100), getTaskDeltaTime(TASK_GYROPID), gyroRate, rxRate, systemRate);
+    cliPrintLinef("CPU:%d%%, cycle time: %d, GYRO rate: %d, RX rate: %d",
+            constrain(pif_performance._use_rate, 0, 100), getTaskDeltaTime(TASK_GYROPID), gyroRate, rxRate);
 #if defined(OSD) || !defined(MINIMAL_CLI)
     /* Flag strings are present if OSD is compiled so may as well use them even with MINIMAL_CLI */
     cliPrint("Arming disable flags:");
@@ -3062,9 +3061,9 @@ static void cliTasks(char *cmdline)
                 averageLoadSum += averageLoad;
             }
             if (systemConfig()->task_statistics) {
-                cliPrintLinef("%6d %7d %7d %4d.%1d%% %4d.%1d%% %9d",
+                cliPrintLinef("%6d %7d %7d %4d.%1d%% %4d.%1d%%",
                         taskFrequency, taskInfo.maxExecutionTime, taskInfo.averageExecutionTime,
-                        maxLoad/10, maxLoad%10, averageLoad/10, averageLoad%10, taskInfo.totalExecutionTime / 1000);
+                        maxLoad/10, maxLoad%10, averageLoad/10, averageLoad%10);
             } else {
                 cliPrintLinef("%6d", taskFrequency);
             }
@@ -3072,12 +3071,6 @@ static void cliTasks(char *cmdline)
                 cliPrintLinef("   - (%15s) %6d", taskInfo.subTaskName, subTaskFrequency);
             }
         }
-    }
-    if (systemConfig()->task_statistics) {
-        cfCheckFuncInfo_t checkFuncInfo;
-        getCheckFuncInfo(&checkFuncInfo);
-        cliPrintLinef("RX Check Function %19d %7d %25d", checkFuncInfo.maxExecutionTime, checkFuncInfo.averageExecutionTime, checkFuncInfo.totalExecutionTime / 1000);
-        cliPrintLinef("Total (excluding SERIAL) %25d.%1d%% %4d.%1d%%", maxLoadSum/10, maxLoadSum%10, averageLoadSum/10, averageLoadSum%10);
     }
 }
 #endif
@@ -3823,8 +3816,6 @@ void cliEnter(serialPort_t *serialPort)
     cliPort = serialPort;
     setPrintfSerialPort(cliPort);
     cliWriter = bufWriterInit(cliWriteBuffer, sizeof(cliWriteBuffer), (bufWrite_t)serialWriteBufShim, serialPort);
-
-    schedulerSetCalulateTaskStatistics(systemConfig()->task_statistics);
 
 #ifndef MINIMAL_CLI
     cliPrintLine("\r\nEntering CLI Mode, type 'exit' to return, or 'help'");

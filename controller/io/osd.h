@@ -18,6 +18,8 @@
 #pragma once
 
 #ifdef OSD
+#include "core/pif_task.h"
+
 #include "common/time.h"
 #include "config/parameter_group.h"
 
@@ -151,6 +153,6 @@ struct displayPort_s;
 void osdInit(struct displayPort_s *osdDisplayPort);
 void osdResetConfig(osdConfig_t *osdProfile);
 void osdResetAlarms(void);
-void osdUpdate(timeUs_t currentTimeUs);
+uint16_t osdUpdate(PifTask *p_task);
 
 #endif

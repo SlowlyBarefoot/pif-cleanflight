@@ -20,6 +20,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "core/pif_task.h"
+
 #include "common/time.h"
 #include "io/rcdevice.h"
 #include "fc/rc_modes.h"
@@ -37,7 +39,7 @@ extern runcamDevice_t *camDevice;
 extern bool rcdeviceInMenu;
 
 bool rcdeviceInit(void);
-void rcdeviceUpdate(timeUs_t currentTimeUs);
+uint16_t rcdeviceUpdate(PifTask *p_task);
 
 bool rcdeviceIsEnabled(void);
 

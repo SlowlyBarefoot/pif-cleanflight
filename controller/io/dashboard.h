@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "core/pif_task.h"
+
 #include "common/time.h"
 #include "config/parameter_group.h"
 #include "drivers/bus_i2c.h"
@@ -59,7 +61,7 @@ typedef enum {
 } pageId_e;
 
 void dashboardInit(void);
-void dashboardUpdate(timeUs_t currentTimeUs);
+uint16_t dashboardUpdate(PifTask *p_task);
 
 void dashboardShowFixedPage(pageId_e pageId);
 

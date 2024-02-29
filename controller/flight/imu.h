@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "core/pif_task.h"
+
 #include "common/axis.h"
 #include "common/time.h"
 #include "common/maths.h"
@@ -77,7 +79,7 @@ typedef struct imuRuntimeConfig_s {
 void imuConfigure(uint16_t throttle_correction_angle);
 
 float getCosTiltAngle(void);
-void imuUpdateAttitude(timeUs_t currentTimeUs);
+uint16_t imuUpdateAttitude(PifTask *p_task);
 int16_t calculateThrottleAngleCorrection(uint8_t throttle_correction_value);
 
 void imuResetAccelerationSum(void);

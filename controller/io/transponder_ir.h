@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "core/pif_task.h"
+
 #include "common/time.h"
 #include "config/parameter_group.h"
 
@@ -40,7 +42,7 @@ PG_DECLARE(transponderConfig_t, transponderConfig);
 
 void transponderInit(void);
 
-void transponderUpdate(timeUs_t currentTimeUs);
+uint16_t transponderUpdate(PifTask *p_task);
 void transponderUpdateData(void);
 void transponderTransmitOnce(void);
 void transponderStartRepeating(void);

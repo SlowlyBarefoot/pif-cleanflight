@@ -488,7 +488,10 @@ static bool mspCommonProcessOutCommand(uint8_t cmdMSP, sbuf_t *dst, mspPostProce
         // write out id and voltage meter values, once for each meter we support
         uint8_t count = supportedVoltageMeterCount;
 #ifndef USE_OSD_SLAVE
-        count = supportedVoltageMeterCount - (VOLTAGE_METER_ID_ESC_COUNT - getMotorCount());
+        int tmp = VOLTAGE_METER_ID_ESC_COUNT - getMotorCount();
+        if (tmp > 0 && supportedVoltageMeterCount > tmp) {
+            count = supportedVoltageMeterCount - tmp;
+        }
 #endif
 
         for (int i = 0; i < count; i++) {
@@ -507,7 +510,10 @@ static bool mspCommonProcessOutCommand(uint8_t cmdMSP, sbuf_t *dst, mspPostProce
         // write out id and current meter values, once for each meter we support
         uint8_t count = supportedCurrentMeterCount;
 #ifndef USE_OSD_SLAVE
-        count = supportedCurrentMeterCount - (VOLTAGE_METER_ID_ESC_COUNT - getMotorCount());
+        int tmp = VOLTAGE_METER_ID_ESC_COUNT - getMotorCount();
+        if (tmp > 0 && supportedCurrentMeterCount > tmp) {
+            count = supportedCurrentMeterCount - tmp;
+        }
 #endif
         for (int i = 0; i < count; i++) {
 
@@ -688,7 +694,7 @@ static bool mspProcessOutCommand(uint8_t cmdMSP, sbuf_t *dst)
         sbufWriteU16(dst, 0); // sensors
         sbufWriteU32(dst, 0); // flight modes
         sbufWriteU8(dst, 0); // profile
-        sbufWriteU16(dst, constrain(averageSystemLoadPercent, 0, 100));
+        sbufWriteU16(dst, constrain(pif_performance._use_rate, 0, 100));
         if (cmdMSP == MSP_STATUS_EX) {
             sbufWriteU8(dst, 1); // max profiles
             sbufWriteU8(dst, 0); // control rate profile
@@ -723,7 +729,7 @@ static bool mspProcessOutCommand(uint8_t cmdMSP, sbuf_t *dst)
             sbufWriteU16(dst, sensors(SENSOR_ACC) | sensors(SENSOR_BARO) << 1 | sensors(SENSOR_MAG) << 2 | sensors(SENSOR_GPS) << 3 | sensors(SENSOR_SONAR) << 4 | sensors(SENSOR_GYRO) << 5);
             sbufWriteData(dst, &flightModeFlags, 4);        // unconditional part of flags, first 32 bits
             sbufWriteU8(dst, getCurrentPidProfileIndex());
-            sbufWriteU16(dst, constrain(averageSystemLoadPercent, 0, 100));
+            sbufWriteU16(dst, constrain(pif_performance._use_rate, 0, 100));
             if (cmdMSP == MSP_STATUS_EX) {
                 sbufWriteU8(dst, MAX_PROFILE_COUNT);
                 sbufWriteU8(dst, getCurrentControlRateProfileIndex());

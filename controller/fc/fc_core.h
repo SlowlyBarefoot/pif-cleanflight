@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "core/pif_task.h"
+
 #include "common/time.h"
 #include "config/parameter_group.h"
 
@@ -46,5 +48,5 @@ void processRx(timeUs_t currentTimeUs);
 void updateArmingStatus(void);
 void updateRcCommands(void);
 
-void taskMainPidLoop(timeUs_t currentTimeUs);
+uint16_t taskMainPidLoop(PifTask *p_task);
 bool isFlipOverAfterCrashMode(void);

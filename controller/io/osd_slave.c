@@ -110,11 +110,8 @@ void osdSlaveInit(displayPort_t *osdDisplayPortToUse)
     displayDrawScreenQueued = true;
 }
 
-bool osdSlaveCheck(timeUs_t currentTimeUs, timeDelta_t currentDeltaTimeUs)
+static bool osdSlaveCheck()
 {
-    UNUSED(currentTimeUs);
-    UNUSED(currentDeltaTimeUs);
-
     if (!stalled && (cmp32(currentTimeUs, timeoutAt) > 0)) {
         stalled = true;
 
@@ -128,14 +125,16 @@ bool osdSlaveCheck(timeUs_t currentTimeUs, timeDelta_t currentDeltaTimeUs)
 /*
  * Called periodically by the scheduler
  */
-void osdSlaveUpdate(timeUs_t currentTimeUs)
+uint16_t osdSlaveUpdate(PifTask *p_task)
 {
-    UNUSED(currentTimeUs);
+    UNUSED(p_task);
+
+    if (!osdSlaveCheck()) return 0;
 
 #ifdef MAX7456_DMA_CHANNEL_TX
     // don't touch buffers if DMA transaction is in progress
     if (displayIsTransferInProgress(osdDisplayPort)) {
-        return;
+        return 0;
     }
 #endif // MAX7456_DMA_CHANNEL_TX
 
@@ -152,5 +151,6 @@ void osdSlaveUpdate(timeUs_t currentTimeUs)
         displayDrawScreenQueued = false;
         receivingScreen = false;
     }
+    return 0;
 }
 #endif // OSD_SLAVE

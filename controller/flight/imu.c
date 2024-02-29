@@ -455,24 +455,27 @@ static void imuCalculateEstimatedAttitude(timeUs_t currentTimeUs)
     imuCalculateAcceleration(deltaT); // rotate acc vector into earth frame
 }
 
-void imuUpdateAttitude(timeUs_t currentTimeUs)
+uint16_t imuUpdateAttitude(PifTask *p_task)
 {
+    UNUSED(p_task);
+
     if (sensors(SENSOR_ACC) && acc.isAccelUpdatedAtLeastOnce) {
         IMU_LOCK;
 #if defined(SIMULATOR_BUILD) && defined(SIMULATOR_IMU_SYNC)
         if (imuUpdated == false) {
             IMU_UNLOCK;
-            return;
+            return 0;
         }
         imuUpdated = false;
 #endif
-        imuCalculateEstimatedAttitude(currentTimeUs);
+        imuCalculateEstimatedAttitude((*pif_act_timer1us)());
         IMU_UNLOCK;
     } else {
         acc.accSmooth[X] = 0;
         acc.accSmooth[Y] = 0;
         acc.accSmooth[Z] = 0;
     }
+    return 0;
 }
 
 float getCosTiltAngle(void)

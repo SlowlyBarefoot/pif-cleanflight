@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "core/pif_task.h"
+
 #include "config/parameter_group.h"
 #include "common/time.h"
 #include "drivers/sonar_hcsr04.h"
@@ -31,7 +33,7 @@ extern int16_t sonarMaxAltWithTiltCm;
 PG_DECLARE(sonarConfig_t, sonarConfig);
 
 void sonarInit(const sonarConfig_t *sonarConfig);
-void sonarUpdate(timeUs_t currentTimeUs);
+uint16_t sonarUpdate(PifTask *p_task);
 int32_t sonarRead(void);
 int32_t sonarCalculateAltitude(int32_t sonarDistance, float cosTiltAngle);
 int32_t sonarGetLatestAltitude(void);

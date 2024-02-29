@@ -20,6 +20,8 @@
 
 #include <platform.h>
 
+#include "core/pif_task.h"
+
 #include "common/utils.h"
 
 #include "config/feature.h"
@@ -343,8 +345,12 @@ void beeperGpsStatus(void)
  * Beeper handler function to be called periodically in loop. Updates beeper
  * state via time schedule.
  */
-void beeperUpdate(timeUs_t currentTimeUs)
+uint16_t beeperUpdate(PifTask *p_task)
 {
+    timeUs_t currentTimeUs = (*pif_act_timer1us)();
+
+    UNUSED(p_task);
+
     // If beeper option from AUX switch has been selected
     if (IS_RC_MODE_ACTIVE(BOXBEEPERON)) {
 #ifdef GPS
@@ -360,11 +366,11 @@ void beeperUpdate(timeUs_t currentTimeUs)
 
     // Beeper routine doesn't need to update if there aren't any sounds ongoing
     if (currentBeeperEntry == NULL) {
-        return;
+        return 0;
     }
 
     if (beeperNextToggleTime > currentTimeUs) {
-        return;
+        return 0;
     }
 
     if (!beeperIsOn) {
@@ -404,6 +410,7 @@ void beeperUpdate(timeUs_t currentTimeUs)
     }
 
     beeperProcessCommand(currentTimeUs);
+    return 0;
 }
 
 /*
@@ -488,7 +495,7 @@ void beeper(beeperMode_e mode) {UNUSED(mode);}
 void beeperSilence(void) {}
 void beeperConfirmationBeeps(uint8_t beepCount) {UNUSED(beepCount);}
 void beeperWarningBeeps(uint8_t beepCount) {UNUSED(beepCount);}
-void beeperUpdate(timeUs_t currentTimeUs) {UNUSED(currentTimeUs);}
+uint16_t beeperUpdate(PifTask *p_task) {UNUSED(p_task); return 0;}
 uint32_t getArmingBeepTimeMicros(void) {return 0;}
 beeperMode_e beeperModeForTableIndex(int idx) {UNUSED(idx); return BEEPER_SILENCE;}
 uint32_t beeperModeMaskForTableIndex(int idx) {UNUSED(idx); return 0;}

@@ -17,9 +17,11 @@
 
 #pragma once
 
+#include "core/pif_task.h"
+
 #include "common/time.h"
 
-void taskStackCheck(timeUs_t currentTimeUs);
+uint16_t taskStackCheck(PifTask *p_task);
 uint32_t stackUsedSize(void);
 uint32_t stackTotalSize(void);
 uint32_t stackHighMem(void);

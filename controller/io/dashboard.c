@@ -601,19 +601,22 @@ void dashboardSetPage(pageId_e pageId)
     pageState.pageFlags |= PAGE_STATE_FLAG_FORCE_PAGE_CHANGE;
 }
 
-void dashboardUpdate(timeUs_t currentTimeUs)
+uint16_t dashboardUpdate(PifTask *p_task)
 {
     static uint8_t previousArmedState = 0;
+    timeUs_t currentTimeUs = (*pif_act_timer1us)();
+
+    UNUSED(p_task);
 
 #ifdef CMS
     if (displayIsGrabbed(displayPort)) {
-        return;
+        return 0;
     }
 #endif
 
     const bool updateNow = (int32_t)(currentTimeUs - nextDisplayUpdateAt) >= 0L;
     if (!updateNow) {
-        return;
+        return 0;
     }
 
     nextDisplayUpdateAt = currentTimeUs + DISPLAY_UPDATE_FREQUENCY;
@@ -624,7 +627,7 @@ void dashboardUpdate(timeUs_t currentTimeUs)
 
     if (armedState) {
         if (!armedStateChanged) {
-            return;
+            return 0;
         }
         dashboardSetPage(PAGE_ARMED);
         pageState.pageChanging = true;
@@ -655,13 +658,13 @@ void dashboardUpdate(timeUs_t currentTimeUs)
         resetDisplay();
 
         if (!dashboardPresent) {
-            return;
+            return 0;
         }
         handlePageChange();
     }
 
     if (!dashboardPresent) {
-        return;
+        return 0;
     }
 
     pageState.page->drawFn();
@@ -671,7 +674,7 @@ void dashboardUpdate(timeUs_t currentTimeUs)
         updateRxStatus();
         updateTicker();
     }
-
+    return 0;
 }
 
 void dashboardInit(void)

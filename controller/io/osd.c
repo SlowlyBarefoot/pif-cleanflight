@@ -1228,9 +1228,12 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
 /*
  * Called periodically by the scheduler
  */
-void osdUpdate(timeUs_t currentTimeUs)
+uint16_t osdUpdate(PifTask *p_task)
 {
     static uint32_t counter = 0;
+    timeUs_t currentTimeUs = (*pif_act_timer1us)();
+
+    UNUSED(p_task);
 
     if (isBeeperOn()) {
         showVisualBeeper = true;
@@ -1239,7 +1242,7 @@ void osdUpdate(timeUs_t currentTimeUs)
 #ifdef MAX7456_DMA_CHANNEL_TX
     // don't touch buffers if DMA transaction is in progress
     if (displayIsTransferInProgress(osdDisplayPort)) {
-        return;
+        return 0;
     }
 #endif // MAX7456_DMA_CHANNEL_TX
 
@@ -1254,7 +1257,7 @@ void osdUpdate(timeUs_t currentTimeUs)
     static uint32_t idlecounter = 0;
     if (!ARMING_FLAG(ARMED)) {
         if (idlecounter++ % 4 != 0) {
-            return;
+            return 0;
         }
     }
 #endif
@@ -1275,5 +1278,6 @@ void osdUpdate(timeUs_t currentTimeUs)
         unsetArmingDisabled(ARMING_DISABLED_OSD_MENU);
     }
 #endif
+    return 0;
 }
 #endif // OSD

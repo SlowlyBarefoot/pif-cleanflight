@@ -23,6 +23,8 @@
 
 #include "platform.h"
 
+#include "core/pif.h"
+
 #include "build/build_config.h"
 #include "build/debug.h"
 
@@ -383,10 +385,8 @@ void resumeRxSignal(void)
     failsafeOnRxResume();
 }
 
-bool rxUpdateCheck(timeUs_t currentTimeUs, timeDelta_t currentDeltaTime)
+bool rxUpdateCheck(timeUs_t currentTimeUs)
 {
-    UNUSED(currentDeltaTime);
-
     if (rxSignalReceived) {
         if (currentTimeUs >= needRxSignalBefore) {
             rxSignalReceived = false;

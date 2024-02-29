@@ -111,9 +111,9 @@ PG_RESET_TEMPLATE(batteryConfig_t, batteryConfig,
     .vbatfullcellvoltage = 41
 );
 
-void batteryUpdateVoltage(timeUs_t currentTimeUs)
+uint16_t batteryUpdateVoltage(PifTask *p_task)
 {
-    UNUSED(currentTimeUs);
+    UNUSED(p_task);
 
     switch (batteryConfig()->voltageMeterSource) {
 #ifdef USE_ESC_SENSOR
@@ -139,6 +139,7 @@ void batteryUpdateVoltage(timeUs_t currentTimeUs)
         debug[0] = voltageMeter.unfiltered;
         debug[1] = voltageMeter.filtered;
     }
+    return 0;
 }
 
 static void updateBatteryBeeperAlert(void)
@@ -365,12 +366,14 @@ static void batteryUpdateConsumptionState(void)
     }
 }
 
-void batteryUpdateCurrentMeter(timeUs_t currentTimeUs)
+uint16_t batteryUpdateCurrentMeter(PifTask *p_task)
 {
-    UNUSED(currentTimeUs);
+    timeUs_t currentTimeUs = (*pif_act_timer1us)();
+
+    UNUSED(p_task);
     if (batteryCellCount == 0) {
         currentMeterReset(&currentMeter);
-        return;
+        return 0;
     }
 
     static uint32_t ibatLastServiced = 0;
@@ -415,6 +418,7 @@ void batteryUpdateCurrentMeter(timeUs_t currentTimeUs)
             currentMeterReset(&currentMeter);
             break;
     }
+    return 0;
 }
 
 float calculateVbatPidCompensation(void) {

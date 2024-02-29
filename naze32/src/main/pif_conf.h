@@ -33,7 +33,7 @@
 
 // -------- pifLog -------------------------------
 
-//#define PIF_NO_LOG
+#define PIF_NO_LOG
 //#define PIF_LOG_COMMAND
 
 //#define PIF_LOG_LINE_SIZE					80
@@ -81,6 +81,8 @@
 // -------- pifTask ------------------------------
 
 //#define PIF_TASK_TABLE_SIZE				32
+
+#define PIF_USE_TASK_STATISTICS
 
 
 // -------- pifTftLcd ----------------------------

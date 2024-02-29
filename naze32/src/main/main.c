@@ -20,6 +20,8 @@
 
 #include "platform.h"
 
+#include "core/pif_task.h"
+
 #include "fc/fc_init.h"
 
 #include "scheduler/scheduler.h"
@@ -28,7 +30,7 @@ int main(void)
 {
     init();
     while (true) {
-        scheduler();
+        pifTaskManager_Loop();
         processLoopback();
 #ifdef SIMULATOR_BUILD
         delayMicroseconds_real(50); // max rate 20kHz

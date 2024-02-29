@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/pif_task.h"
+
 #include "drivers/display.h"
 
 #include "common/time.h"
@@ -11,7 +13,7 @@ bool cmsDisplayPortRegister(displayPort_t *pDisplay);
 
 // For main.c and scheduler
 void cmsInit(void);
-void cmsHandler(timeUs_t currentTimeUs);
+uint16_t cmsHandler(PifTask *p_task);
 
 long cmsMenuChange(displayPort_t *pPort, const void *ptr);
 long cmsMenuExit(displayPort_t *pPort, const void *ptr);

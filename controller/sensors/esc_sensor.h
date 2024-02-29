@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "core/pif_task.h"
+
 #include "common/time.h"
 
 typedef struct escSensorConfig_s {
@@ -39,7 +41,7 @@ typedef struct {
 #define ESC_BATTERY_AGE_MAX 10
 
 bool escSensorInit(void);
-void escSensorProcess(timeUs_t currentTime);
+uint16_t escSensorProcess(PifTask *p_task);
 
 #define ESC_SENSOR_COMBINED 255
 

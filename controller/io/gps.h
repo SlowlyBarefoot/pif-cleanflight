@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "core/pif_task.h"
+
 #include "common/time.h"
 
 #include "config/parameter_group.h"
@@ -130,7 +132,7 @@ extern uint8_t GPS_svinfo_cno[16];         // Carrier to Noise Ratio (Signal Str
 #define GPS_DBHZ_MAX 55
 
 void gpsInit(void);
-void gpsUpdate(timeUs_t currentTimeUs);
+uint16_t gpsUpdate(PifTask *p_task);
 bool gpsNewFrame(uint8_t c);
 struct serialPort_s;
 void gpsEnablePassthrough(struct serialPort_s *gpsPassthroughPort);
