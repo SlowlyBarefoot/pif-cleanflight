@@ -101,7 +101,6 @@
 #ifdef SERIAL_RX
 #undef SERIAL_RX
 #endif
-//#undef SKIP_TASK_STATISTICS
 
 #else
 

@@ -531,7 +531,7 @@ static void showSensorsPage(void)
 
 }
 
-#ifndef SKIP_TASK_STATISTICS
+#ifdef PIF_USE_TASK_STATISTICS
 static void showTasksPage(void)
 {
     uint8_t rowIndex = PAGE_TITLE_LINE_COUNT;
@@ -581,7 +581,7 @@ static const pageEntry_t pages[PAGE_COUNT] = {
     { PAGE_RX,      "RX",              showRxPage,         PAGE_FLAGS_NONE },
     { PAGE_BATTERY, "BATTERY",         showBatteryPage,    PAGE_FLAGS_NONE },
     { PAGE_SENSORS, "SENSORS",         showSensorsPage,    PAGE_FLAGS_NONE },
-#ifndef SKIP_TASK_STATISTICS
+#ifdef PIF_USE_TASK_STATISTICS
     { PAGE_TASKS,   "TASKS",           showTasksPage,      PAGE_FLAGS_NONE },
 #endif
 #ifdef ENABLE_DEBUG_DASHBOARD_PAGE

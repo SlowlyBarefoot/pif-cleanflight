@@ -43,7 +43,7 @@
 // 3 - time spent executing check function
 
 
-#ifndef SKIP_TASK_STATISTICS
+#ifdef PIF_USE_TASK_STATISTICS
 void getTaskInfo(cfTaskId_e taskId, cfTaskInfo_t * taskInfo)
 {
     taskInfo->taskName = cfTasks[taskId].taskName;
@@ -101,7 +101,7 @@ bool setTaskEnabled(cfTaskId_e taskId, bool enabled)
             }
         }
     }
-    pif_Delay1us(1861);
+    pif_Delay1us(1031);
     return true;
 }
 
