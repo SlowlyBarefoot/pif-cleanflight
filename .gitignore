@@ -3,8 +3,6 @@
 .metadata
 .vscode
 
-makefile
-
 *.bak
 *.d
 *.list
