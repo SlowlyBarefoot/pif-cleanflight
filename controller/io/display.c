@@ -343,7 +343,7 @@ void showProfilePage(void)
     i2c_OLED_send_string(lineBuffer);
 }
 #define SATELLITE_COUNT (sizeof(GPS_svinfo_cno) / sizeof(GPS_svinfo_cno[0]))
-#define SATELLITE_GRAPH_LEFT_OFFSET ((SCREEN_CHARACTER_COLUMN_COUNT - SATELLITE_COUNT) / 2)
+#define SATELLITE_GRAPH_LEFT_OFFSET (uint8_t)((SCREEN_CHARACTER_COLUMN_COUNT - SATELLITE_COUNT) / 2)
 
 #ifdef GPS
 void showGpsPage(uint32_t now) {

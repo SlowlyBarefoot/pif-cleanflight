@@ -58,7 +58,9 @@ SRC_DIR		 = $(ROOT)/src/main
 OBJECT_DIR	 = $(ROOT)/obj/main
 BIN_DIR		 = $(ROOT)/obj
 CMSIS_DIR	 = $(ROOT)/lib/main/CMSIS
-INCLUDE_DIRS	 = $(SRC_DIR)
+INCLUDE_DIRS	 = $(SRC_DIR) \
+			       ../controller \
+				   ../../pif/include
 LINKER_DIR	 = $(ROOT)/src/main/target
 
 # Search path for sources
@@ -272,8 +274,15 @@ COMMON_SRC = build_config.c \
 		   ../controller/sensors/compass.c \
 		   ../controller/sensors/gyro.c \
 		   ../controller/sensors/initialisation.c \
+           ../controller/pif_linker.c \
 		   $(CMSIS_SRC) \
 		   $(DEVICE_STDPERIPH_SRC)
+
+PIF_SRC = \
+            ../../pif/source/core/pif.c \
+            ../../pif/source/core/pif_obj_array.c \
+            ../../pif/source/core/pif_task.c \
+            ../../pif/source/core/pif_timer.c
 
 HIGHEND_SRC = \
 		   ../controller/flight/gtune.c \
@@ -343,7 +352,8 @@ NAZE_SRC = startup_stm32f10x_md_gcc.S \
 		   ../controller/io/flashfs.c \
 		   hardware_revision.c \
 		   $(HIGHEND_SRC) \
-		   $(COMMON_SRC)
+		   $(COMMON_SRC) \
+		   $(PIF_SRC)
 
 ALIENWIIF1_SRC = $(NAZE_SRC)
 
@@ -728,6 +738,7 @@ CFLAGS		 = $(ARCH_FLAGS) \
 		   -D'__FORKNAME__="$(FORKNAME)"' \
 		   -D'__TARGET__="$(TARGET)"' \
 		   -D'__REVISION__="$(REVISION)"' \
+		   -DPIF_CONF \
 		   -save-temps=obj \
 		   -MMD -MP
 

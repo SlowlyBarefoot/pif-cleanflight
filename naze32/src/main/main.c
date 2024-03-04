@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include <platform.h>
+#include "pif_linker.h"
 #include "scheduler.h"
 
 #include "common/axis.h"
@@ -656,6 +657,12 @@ void processLoopback(void) {
 #endif
 
 int main(void) {
+    pif_Init(micros);
+
+    if (!pifTaskManager_Init(30)) goto bootloader;
+
+    if (!pifTimerManager_Init(&g_timer_1ms, PIF_ID_AUTO, 1000, 3)) goto bootloader;		        // 1000us
+
     init();
 
     /* Setup scheduler */
@@ -710,6 +717,8 @@ int main(void) {
         scheduler();
         processLoopback();
     }
+
+bootloader:;
 }
 
 void HardFault_Handler(void)
