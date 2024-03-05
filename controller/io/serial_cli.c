@@ -2414,8 +2414,8 @@ static void cliStatus(char *cmdline)
         vbat,
         batteryCellCount,
         getBatteryStateString(),
-        averageSystemLoadPercent / 100,
-        averageSystemLoadPercent % 100
+        pif_performance._use_rate / 100,
+        pif_performance._use_rate % 100
     );
 
     cliPrintf("CPU Clock=%dMHz", (SystemCoreClock / 1000000));
@@ -2467,7 +2467,7 @@ static void cliTasks(char *cmdline)
     for (taskId = 0; taskId < TASK_COUNT; taskId++) {
         getTaskInfo(taskId, &taskInfo);
         if (taskInfo.isEnabled) {
-            cliPrintf("%d - %s, max = %d us, avg = %d us, total = %d ms\r\n", taskId, taskInfo.taskName, taskInfo.maxExecutionTime, taskInfo.averageExecutionTime, taskInfo.totalExecutionTime / 1000);
+            cliPrintf("%d - %s, max = %d us, avg = %d us\r\n", taskId, taskInfo.taskName, taskInfo.maxExecutionTime, taskInfo.averageExecutionTime);
         }
     }
 }

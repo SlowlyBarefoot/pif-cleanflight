@@ -714,7 +714,7 @@ int main(void) {
 #endif
 
     while (1) {
-        scheduler();
+        pifTaskManager_Loop();
         processLoopback();
     }
 

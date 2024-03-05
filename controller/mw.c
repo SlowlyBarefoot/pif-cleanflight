@@ -113,7 +113,6 @@ uint8_t motorControlEnable = false;
 int16_t telemTemperature1;      // gyro sensor temperature
 static uint32_t disarmAt;     // Time of automatic disarm when "Don't spin the motors when armed" is enabled and auto_disarm_delay is nonzero
 
-extern uint32_t currentTime;
 extern uint8_t dynP8[3], dynI8[3], dynD8[3], PIDweight[3];
 
 static bool isRXDataNew;
@@ -400,7 +399,7 @@ void processRx(void)
 {
     static bool armedBeeperOn = false;
 
-    calculateRxChannelsAndUpdateFailsafe(currentTime);
+    calculateRxChannelsAndUpdateFailsafe(pif_timer1us);
 
     // in 3D mode, we need to be able to disarm by switch at any time
     if (feature(FEATURE_3D)) {
@@ -408,11 +407,11 @@ void processRx(void)
             mwDisarm();
     }
 
-    updateRSSI(currentTime);
+    updateRSSI(pif_timer1us);
 
     if (feature(FEATURE_FAILSAFE)) {
 
-        if (currentTime > FAILSAFE_POWER_ON_DELAY_US && !failsafeIsMonitoring()) {
+        if (pif_timer1us > FAILSAFE_POWER_ON_DELAY_US && !failsafeIsMonitoring()) {
             failsafeStartMonitoring();
         }
 
@@ -631,6 +630,7 @@ void taskMainPidLoop(void)
     
     debug[0] = cycleTime;
     debug[1] = cycleTime - filteredCycleTime;
+    debug[2] = pif_performance._use_rate;
 
     imuUpdateGyroAndAttitude();
 
@@ -718,73 +718,86 @@ void taskMainPidLoop(void)
 }
 
 // Function for loop trigger
-void taskMainPidLoopChecker(void) {
-    // getTaskDeltaTime() returns delta time freezed at the moment of entering the scheduler. currentTime is freezed at the very same point. 
+uint16_t taskMainPidLoopChecker(PifTask *p_task) {
+    (void)p_task;
+
+    // getTaskDeltaTime() returns delta time freezed at the moment of entering the scheduler. pif_timer1us is freezed at the very same point. 
     // To make busy-waiting timeout work we need to account for time spent within busy-waiting loop
     uint32_t currentDeltaTime = getTaskDeltaTime(TASK_SELF);
 
     if (masterConfig.gyroSync) {
         while (1) {
-            if (gyroSyncCheckUpdate() || ((currentDeltaTime + (micros() - currentTime)) >= (targetLooptime + GYRO_WATCHDOG_DELAY))) {
+            if (gyroSyncCheckUpdate() || ((currentDeltaTime + (micros() - pif_timer1us)) >= (targetLooptime + GYRO_WATCHDOG_DELAY))) {
                 break;
             }
         }
     }
 
     taskMainPidLoop();
+    return 0;
 }
 
-void taskUpdateAccelerometer(void)
+uint16_t taskUpdateAccelerometer(PifTask *p_task)
 {
+    (void)p_task;
+
     imuUpdateAccelerometer(&currentProfile->accelerometerTrims);
+    return 0;
 }
 
-void taskHandleSerial(void)
+uint16_t taskHandleSerial(PifTask *p_task)
 {
+    (void)p_task;
+
     handleSerial();
+    return 0;
 }
 
 #ifdef BEEPER
-void taskUpdateBeeper(void)
+uint16_t taskUpdateBeeper(PifTask *p_task)
 {
+    (void)p_task;
+
     beeperUpdate();          //call periodic beeper handler
+    return 0;
 }
 #endif
 
-void taskUpdateBattery(void)
+uint16_t taskUpdateBattery(PifTask *p_task)
 {
     static uint32_t vbatLastServiced = 0;
     static uint32_t ibatLastServiced = 0;
 
+    (void)p_task;
+
     if (feature(FEATURE_VBAT)) {
-        if (cmp32(currentTime, vbatLastServiced) >= VBATINTERVAL) {
-            vbatLastServiced = currentTime;
+        if (cmp32(pif_timer1us, vbatLastServiced) >= VBATINTERVAL) {
+            vbatLastServiced = pif_timer1us;
             updateBattery();
         }
     }
 
     if (feature(FEATURE_CURRENT_METER)) {
-        int32_t ibatTimeSinceLastServiced = cmp32(currentTime, ibatLastServiced);
+        int32_t ibatTimeSinceLastServiced = cmp32(pif_timer1us, ibatLastServiced);
 
         if (ibatTimeSinceLastServiced >= IBATINTERVAL) {
-            ibatLastServiced = currentTime;
+            ibatLastServiced = pif_timer1us;
 
             throttleStatus_e throttleStatus = calculateThrottleStatus(&masterConfig.rxConfig, masterConfig.flight3DConfig.deadband3d_throttle);
 
             updateCurrentMeter(ibatTimeSinceLastServiced, throttleStatus);
         }
     }
+    return 0;
 }
 
-bool taskUpdateRxCheck(uint32_t currentDeltaTime)
+uint16_t taskUpdateRxMain(PifTask *p_task)
 {
-    UNUSED(currentDeltaTime);
-    updateRx(currentTime);
-    return shouldProcessRx(currentTime);
-}
+    (void)p_task;
 
-void taskUpdateRxMain(void)
-{
+    updateRx(pif_timer1us);
+    if (!shouldProcessRx(pif_timer1us)) return 0;
+
     processRx();
     isRXDataNew = true;
 
@@ -805,11 +818,14 @@ void taskUpdateRxMain(void)
         }
     }
 #endif
+    return 0;
 }
 
 #ifdef GPS
-void taskProcessGPS(void)
+uint16_t taskProcessGPS(PifTask *p_task)
 {
+    (void)p_task;
+
     // if GPS feature is enabled, gpsThread() will be called at some intervals to check for stuck
     // hardware, wrong baud rates, init GPS if needed, etc. Don't use SENSOR_GPS here as gpsThread() can and will
     // change this based on available hardware
@@ -818,42 +834,54 @@ void taskProcessGPS(void)
     }
 
     if (sensors(SENSOR_GPS)) {
-        updateGpsIndicator(currentTime);
+        updateGpsIndicator(pif_timer1us);
     }
+    return 0;
 }
 #endif
 
 #ifdef MAG
-void taskUpdateCompass(void)
+uint16_t taskUpdateCompass(PifTask *p_task)
 {
+    (void)p_task;
+
     if (sensors(SENSOR_MAG)) {
         updateCompass(&masterConfig.magZero);
     }
+    return 0;
 }
 #endif
 
 #ifdef BARO
-void taskUpdateBaro(void)
+uint16_t taskUpdateBaro(PifTask *p_task)
 {
+    (void)p_task;
+
     if (sensors(SENSOR_BARO)) {
         uint32_t newDeadline = baroUpdate();
         rescheduleTask(TASK_SELF, newDeadline);
     }
+    return 0;
 }
 #endif
 
 #ifdef SONAR
-void taskUpdateSonar(void)
+uint16_t taskUpdateSonar(PifTask *p_task)
 {
+    (void)p_task;
+
     if (sensors(SENSOR_SONAR)) {
         sonarUpdate();
     }
+    return 0;
 }
 #endif
 
 #if defined(BARO) || defined(SONAR)
-void taskCalculateAltitude(void)
+uint16_t taskCalculateAltitude(PifTask *p_task)
 {
+    (void)p_task;
+
     if (false
 #if defined(BARO)
         || (sensors(SENSOR_BARO) && isBaroReady())
@@ -862,44 +890,58 @@ void taskCalculateAltitude(void)
         || sensors(SENSOR_SONAR)
 #endif
         ) {
-        calculateEstimatedAltitude(currentTime);
-    }}
+        calculateEstimatedAltitude(pif_timer1us);
+    }
+    return 0;
+}
 #endif
 
 #ifdef DISPLAY
-void taskUpdateDisplay(void)
+uint16_t taskUpdateDisplay(PifTask *p_task)
 {
+    (void)p_task;
+
     if (feature(FEATURE_DISPLAY)) {
         updateDisplay();
     }
+    return 0;
 }
 #endif
 
 #ifdef TELEMETRY
-void taskTelemetry(void)
+uint16_t taskTelemetry(PifTask *p_task)
 {
+    (void)p_task;
+
     telemetryCheckState();
 
     if (!cliMode && feature(FEATURE_TELEMETRY)) {
         telemetryProcess(&masterConfig.rxConfig, masterConfig.flight3DConfig.deadband3d_throttle);
     }
+    return 0;
 }
 #endif
 
 #ifdef LED_STRIP
-void taskLedStrip(void)
+uint16_t taskLedStrip(PifTask *p_task)
 {
+    (void)p_task;
+
     if (feature(FEATURE_LED_STRIP)) {
         updateLedStrip();
     }
+    return 0;
 }
 #endif
 
 #ifdef TRANSPONDER
-void taskTransponder(void)
+uint16_t taskTransponder(PifTask *p_task)
 {
+    (void)p_task;
+
     if (feature(FEATURE_TRANSPONDER)) {
         updateTransponder();
     }
+    return 0;
 }
 #endif

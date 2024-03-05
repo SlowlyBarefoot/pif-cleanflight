@@ -17,31 +17,22 @@
 
 #pragma once
 
-//#define SCHEDULER_DEBUG
+#include "pif_linker.h"
 
-typedef enum {
-    TASK_PRIORITY_IDLE = 0,     // Disables dynamic scheduling, task is executed only if no other task is active this cycle
-    TASK_PRIORITY_LOW = 1,
-    TASK_PRIORITY_MEDIUM = 3,
-    TASK_PRIORITY_HIGH = 5,
-    TASK_PRIORITY_REALTIME = 6,
-    TASK_PRIORITY_MAX = 255
-} cfTaskPriority_e;
+//#define SCHEDULER_DEBUG
 
 typedef struct {
     const char * taskName;
     bool         isEnabled;
     uint32_t     desiredPeriod;
-    uint8_t      staticPriority;
+    uint32_t     latestDeltaTime;
     uint32_t     maxExecutionTime;
-    uint32_t     totalExecutionTime;
     uint32_t     averageExecutionTime;
 } cfTaskInfo_t;
 
 typedef enum {
     /* Actual tasks */
-    TASK_SYSTEM = 0,
-    TASK_GYROPID,
+    TASK_GYROPID = 0,
     TASK_ACCEL,
     TASK_SERIAL,
 #ifdef BEEPER
@@ -88,38 +79,21 @@ typedef enum {
 typedef struct {
     /* Configuration */
     const char * taskName;
-    bool (*checkFunc)(uint32_t currentDeltaTime);
-    void (*taskFunc)(void);
-    bool isEnabled;
+    PifEvtTaskLoop taskFunc;
+    PifTaskMode taskMode;
     uint32_t desiredPeriod;     // target period of execution
-    uint8_t staticPriority;     // dynamicPriority grows in steps of this size, shouldn't be zero
 
-    /* Scheduling */
-    uint8_t dynamicPriority;    // measurement of how old task was last executed, used to avoid task starvation
-    uint32_t lastExecutedAt;    // last time of invocation
-    uint32_t lastSignaledAt;    // time of invocation event for event-driven tasks
-    uint16_t taskAgeCycles;
-
-    /* Statistics */
-    uint32_t averageExecutionTime;  // Moving averate over 6 samples, used to calculate guard interval
-    uint32_t taskLatestDeltaTime;   //
-#ifndef SKIP_TASK_STATISTICS
-    uint32_t maxExecutionTime;
-    uint32_t totalExecutionTime;    // total time consumed by task since boot
-#endif
+    /* PIF */
+    PifTask* p_task;
 } cfTask_t;
 
 extern cfTask_t cfTasks[TASK_COUNT];
-extern uint16_t cpuLoad;
-extern uint16_t averageSystemLoadPercent;
 
 void getTaskInfo(cfTaskId_e taskId, cfTaskInfo_t * taskInfo);
 void rescheduleTask(cfTaskId_e taskId, uint32_t newPeriodMicros);
 void setTaskEnabled(cfTaskId_e taskId, bool newEnabledState);
 uint32_t getTaskDeltaTime(cfTaskId_e taskId);
 
-void scheduler(void);
-
 #define LOAD_PERCENTAGE_ONE 100
 
-#define isSystemOverloaded() (averageSystemLoadPercent >= LOAD_PERCENTAGE_ONE)
+#define isSystemOverloaded() (pif_performance._use_rate >= LOAD_PERCENTAGE_ONE)
