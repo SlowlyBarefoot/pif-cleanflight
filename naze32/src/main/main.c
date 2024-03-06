@@ -659,9 +659,9 @@ void processLoopback(void) {
 int main(void) {
     pif_Init(micros);
 
-    if (!pifTaskManager_Init(30)) goto bootloader;
+    if (!pifTaskManager_Init(TASK_SIZE)) goto bootloader;
 
-    if (!pifTimerManager_Init(&g_timer_1ms, PIF_ID_AUTO, 1000, 3)) goto bootloader;		        // 1000us
+    if (!pifTimerManager_Init(&g_timer_1ms, PIF_ID_AUTO, 1000, TIMER_1MS_SIZE)) goto bootloader;	// 1000us
 
     init();
 

@@ -56,11 +56,14 @@ void getTaskInfo(cfTaskId_e taskId, cfTaskInfo_t * taskInfo)
 
 void rescheduleTask(cfTaskId_e taskId, uint32_t newPeriodMicros)
 {
-    if (taskId == TASK_SELF)
-        taskId = currentTaskId;
-
     if (taskId < TASK_COUNT) {
         cfTasks[taskId].desiredPeriod = MAX((uint32_t)100, newPeriodMicros);  // Limit delay to 100us (10 kHz) to prevent scheduler clogging
+        if (cfTasks[taskId].p_task->_mode & TM_UNIT_MASK) {
+            pifTask_ChangePeriod(cfTasks[taskId].p_task, newPeriodMicros);
+        }
+        else {
+            pifTask_ChangePeriod(cfTasks[taskId].p_task, newPeriodMicros / 1000);
+        }
     }
 }
 
@@ -80,17 +83,4 @@ void setTaskEnabled(cfTaskId_e taskId, bool newEnabledState)
         }
     }
     pif_Delay1us(1031);
-}
-
-uint32_t getTaskDeltaTime(cfTaskId_e taskId)
-{
-    if (taskId == TASK_SELF) {
-        return pifTaskManager_CurrentTask()->_delta_time;
-    }
-    else if (taskId < TASK_COUNT) {
-        return cfTasks[taskId].p_task->_delta_time;
-    }
-    else {
-        return 0;
-    }
 }

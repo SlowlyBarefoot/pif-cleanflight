@@ -92,7 +92,6 @@ extern cfTask_t cfTasks[TASK_COUNT];
 void getTaskInfo(cfTaskId_e taskId, cfTaskInfo_t * taskInfo);
 void rescheduleTask(cfTaskId_e taskId, uint32_t newPeriodMicros);
 void setTaskEnabled(cfTaskId_e taskId, bool newEnabledState);
-uint32_t getTaskDeltaTime(cfTaskId_e taskId);
 
 #define LOAD_PERCENTAGE_ONE 100
 

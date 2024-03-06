@@ -106,7 +106,7 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskName = "BARO",
         .taskFunc = taskUpdateBaro,
         .desiredPeriod = 1000 / 20,
-        .taskMode = TM_PERIOD_MS,
+        .taskMode = TM_CHANGE_MS,
     },
 #endif
 

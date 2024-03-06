@@ -2453,6 +2453,7 @@ static void cliStatus(char *cmdline)
 #endif
 
     cliPrintf("Cycle Time: %d, I2C Errors: %d, config size: %d\r\n", cycleTime, i2cErrorCounter, sizeof(master_t));
+    cliPrintf("Task Count: %d / %d, Timer Count: %d / %d\r\n", pifTaskManager_Count(), TASK_SIZE, pifTimerManager_Count(&g_timer_1ms), TIMER_1MS_SIZE);
 }
 
 #ifndef SKIP_TASK_STATISTICS

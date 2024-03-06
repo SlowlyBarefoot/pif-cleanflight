@@ -622,7 +622,6 @@ static bool haveProcessedAnnexCodeOnce = false;
 
 void taskMainPidLoop(void)
 {
-    cycleTime = getTaskDeltaTime(TASK_SELF);
     dT = (float)cycleTime * 0.000001f;
 
     // Calculate average cycle time and average jitter
@@ -719,11 +718,9 @@ void taskMainPidLoop(void)
 
 // Function for loop trigger
 uint16_t taskMainPidLoopChecker(PifTask *p_task) {
-    (void)p_task;
-
     // getTaskDeltaTime() returns delta time freezed at the moment of entering the scheduler. pif_timer1us is freezed at the very same point. 
     // To make busy-waiting timeout work we need to account for time spent within busy-waiting loop
-    uint32_t currentDeltaTime = getTaskDeltaTime(TASK_SELF);
+    uint32_t currentDeltaTime = p_task->_delta_time;
 
     if (masterConfig.gyroSync) {
         while (1) {
@@ -733,6 +730,7 @@ uint16_t taskMainPidLoopChecker(PifTask *p_task) {
         }
     }
 
+    cycleTime = currentDeltaTime;
     taskMainPidLoop();
     return 0;
 }
@@ -859,7 +857,7 @@ uint16_t taskUpdateBaro(PifTask *p_task)
 
     if (sensors(SENSOR_BARO)) {
         uint32_t newDeadline = baroUpdate();
-        rescheduleTask(TASK_SELF, newDeadline);
+        return newDeadline / 1000;   // 1000 : us -> ms
     }
     return 0;
 }
