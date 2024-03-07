@@ -22,6 +22,8 @@
 #include <platform.h>
 #include "scheduler.h"
 
+#define DISALLOW_YIELD_ID_I2C           1
+
 uint16_t taskMainPidLoopChecker(PifTask *p_task);
 uint16_t taskUpdateAccelerometer(PifTask *p_task);
 uint16_t taskHandleSerial(PifTask *p_task);
@@ -44,6 +46,7 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskFunc = taskMainPidLoopChecker,
         .desiredPeriod = 1000,
         .taskMode = TM_PERIOD_US,
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
     },
 
     [TASK_ACCEL] = {
@@ -51,6 +54,7 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskFunc = taskUpdateAccelerometer,
         .desiredPeriod = 1000000 / 100,     // every 10ms
         .taskMode = TM_PERIOD_US,
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
     },
 
     [TASK_SERIAL] = {
@@ -98,6 +102,7 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskFunc = taskUpdateCompass,
         .desiredPeriod = 1000 / 10,      // Compass is updated at 10 Hz
         .taskMode = TM_PERIOD_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
     },
 #endif
 
@@ -107,6 +112,7 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskFunc = taskUpdateBaro,
         .desiredPeriod = 1000 / 20,
         .taskMode = TM_CHANGE_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
     },
 #endif
 

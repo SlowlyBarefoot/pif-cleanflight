@@ -433,18 +433,18 @@ void init(void)
 #ifdef USE_I2C
 #if defined(NAZE)
     if (hardwareRevision != NAZE32_SP) {
-        i2cInit(I2C_DEVICE);
+        initI2cDevice(I2C_DEVICE);
     } else {
         if (!doesConfigurationUsePort(SERIAL_PORT_USART3)) {
-            i2cInit(I2C_DEVICE);
+            initI2cDevice(I2C_DEVICE);
         }
     }
 #elif defined(CC3D)
     if (!doesConfigurationUsePort(SERIAL_PORT_USART3)) {
-        i2cInit(I2C_DEVICE);
+        initI2cDevice(I2C_DEVICE);
     }
 #else
-    i2cInit(I2C_DEVICE);
+    initI2cDevice(I2C_DEVICE);
 #endif
 #endif
 
@@ -474,6 +474,9 @@ void init(void)
         displayInit(&masterConfig.rxConfig);
     }
 #endif
+
+    pifImuSensor_Init(&g_imu_sensor);
+    pifImuSensor_InitBoardAlignment(&g_imu_sensor, masterConfig.boardAlignment.rollDegrees, masterConfig.boardAlignment.pitchDegrees, masterConfig.boardAlignment.yawDegrees);
 
     if (!sensorsAutodetect(&masterConfig.sensorAlignmentConfig, masterConfig.gyro_lpf,
         masterConfig.acc_hardware, masterConfig.mag_hardware, masterConfig.baro_hardware, currentProfile->mag_declination,

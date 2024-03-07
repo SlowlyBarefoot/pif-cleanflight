@@ -67,12 +67,14 @@ void rescheduleTask(cfTaskId_e taskId, uint32_t newPeriodMicros)
     }
 }
 
-void setTaskEnabled(cfTaskId_e taskId, bool newEnabledState)
+bool setTaskEnabled(cfTaskId_e taskId, bool newEnabledState)
 {
     if (taskId < TASK_COUNT) {
         if (newEnabledState) {
             if (!cfTasks[taskId].p_task) {
                 cfTasks[taskId].p_task = pifTaskManager_Add(cfTasks[taskId].taskMode, cfTasks[taskId].desiredPeriod, cfTasks[taskId].taskFunc, NULL, newEnabledState);
+                if (cfTasks[taskId].p_task) return false;
+                cfTasks[taskId].p_task->disallow_yield_id = cfTasks[taskId].disallow_yield_id;
             }
         }
         else {
@@ -83,4 +85,5 @@ void setTaskEnabled(cfTaskId_e taskId, bool newEnabledState)
         }
     }
     pif_Delay1us(1031);
+    return true;
 }

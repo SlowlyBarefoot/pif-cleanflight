@@ -38,6 +38,7 @@
 // SCL  PB6
 // SDA  PB7
 
+static void i2cInit(I2CDevice index);
 static void i2c_er_handler(void);
 static void i2c_ev_handler(void);
 static void i2cUnstick(void);
@@ -62,6 +63,8 @@ static I2C_TypeDef *I2Cx = NULL;
 // Copy of device index for reinit, etc purposes
 static I2CDevice I2Cx_index;
 static bool i2cOverClock;
+
+PifI2cPort g_i2c_port;
 
 void i2cSetOverclock(uint8_t OverClock) {
     i2cOverClock = (OverClock) ? true : false;
@@ -320,7 +323,7 @@ void i2c_ev_handler(void)
     }
 }
 
-void i2cInit(I2CDevice index)
+static void i2cInit(I2CDevice index)
 {
     NVIC_InitTypeDef nvic;
     I2C_InitTypeDef i2c;
@@ -425,6 +428,32 @@ static void i2cUnstick(void)
     cfg.speed = Speed_2MHz;
     cfg.mode = Mode_AF_OD;
     gpioInit(gpio, &cfg);
+}
+
+static PifI2cReturn actI2cWrite(uint8_t addr_, uint32_t iaddr, uint8_t isize, uint8_t* p_data, uint16_t size)
+{
+    (void)isize;
+
+    i2cWriteBuffer(addr_, iaddr, size, p_data);
+    return IR_COMPLETE;
+}
+
+static PifI2cReturn actI2cRead(uint8_t addr_, uint32_t iaddr, uint8_t isize, uint8_t* p_data, uint16_t size)
+{
+    (void)isize;
+
+    i2cRead(addr_, iaddr, size, p_data);
+    return IR_COMPLETE;
+}
+
+BOOL initI2cDevice(I2CDevice index)
+{
+    i2cInit(index);
+
+    if (!pifI2cPort_Init(&g_i2c_port, PIF_ID_AUTO, 5, 16)) return FALSE;
+    g_i2c_port.act_read = actI2cRead;
+    g_i2c_port.act_write = actI2cWrite;
+    return TRUE;
 }
 
 #endif
