@@ -27,6 +27,7 @@
 #include "common/utils.h"
 
 #include "system.h"
+#include "scheduler.h"
 
 #include "nvic.h"
 #include "gpio.h"
@@ -36,7 +37,7 @@
 
 #include "pwm_rx.h"
 
-#define DEBUG_PPM_ISR
+#include "rc/pif_rc_ppm.h"
 
 #define PPM_CAPTURE_COUNT 12
 #define PWM_INPUT_PORT_COUNT 8
@@ -82,27 +83,10 @@ static uint16_t captures[PWM_PORTS_OR_PPM_CAPTURE_COUNT];
 #define PPM_TIMER_PERIOD 0x10000
 #define PWM_TIMER_PERIOD 0x10000
 
-static uint8_t ppmFrameCount = 0;
-static uint8_t lastPPMFrameCount = 0;
+static bool ppmComplete = false;
 static uint8_t ppmCountShift = 0;
 
-typedef struct ppmDevice_s {
-    uint8_t  pulseIndex;
-    //uint32_t previousTime;
-    uint32_t currentCapture;
-    uint32_t currentTime;
-    uint32_t deltaTime;
-    uint32_t captures[PWM_PORTS_OR_PPM_CAPTURE_COUNT];
-    uint32_t largeCounter;
-    int8_t   numChannels;
-    int8_t   numChannelsPrevFrame;
-    uint8_t  stableFramesSeenCount;
-
-    bool     tracking;
-    bool     overflowed;
-} ppmDevice_t;
-
-ppmDevice_t ppmDev;
+static PifRcPpm s_rc_ppm;
 
 
 #define PPM_IN_MIN_SYNC_PULSE_US    2700    // microseconds
@@ -115,12 +99,12 @@ ppmDevice_t ppmDev;
 
 bool isPPMDataBeingReceived(void)
 {
-    return (ppmFrameCount != lastPPMFrameCount);
+    return ppmComplete;
 }
 
 void resetPPMDataReceivedState(void)
 {
-    lastPPMFrameCount = ppmFrameCount;
+    ppmComplete = false;
 }
 
 #define MIN_CHANNELS_BEFORE_PPM_FRAME_CONSIDERED_VALID 4
@@ -130,165 +114,40 @@ void pwmRxInit(inputFilteringMode_e initialInputFilteringMode)
     inputFilteringMode = initialInputFilteringMode;
 }
 
-#ifdef DEBUG_PPM_ISR
-typedef enum {
-    SOURCE_OVERFLOW = 0,
-    SOURCE_EDGE = 1
-} eventSource_e;
-
-typedef struct ppmISREvent_s {
-    eventSource_e source;
-    uint32_t capture;
-} ppmISREvent_t;
-
-static ppmISREvent_t ppmEvents[20];
-static uint8_t ppmEventIndex = 0;
-
-void ppmISREvent(eventSource_e source, uint32_t capture)
+static void _evtRcPpmReceive(PifRc* p_owner, uint16_t* p_channel, PifIssuerP p_issuer)
 {
-    ppmEventIndex = (ppmEventIndex + 1) % (sizeof(ppmEvents) / sizeof(ppmEvents[0]));
+	int i;
+//	PifTask* p_task = (PifTask*)p_issuer;
 
-    ppmEvents[ppmEventIndex].source = source;
-    ppmEvents[ppmEventIndex].capture = capture;
+    (void)p_issuer;
+
+	for (i = 0; i < p_owner->_channel_count; i++) {
+		captures[i] = p_channel[i];
+	}
+    ppmComplete = true;
+//	pifTask_SetTrigger(p_task);
 }
-#else
-void ppmISREvent(eventSource_e source, uint32_t capture) {}
-#endif
 
-static void ppmInit(void)
+static bool ppmInit(void)
 {
-    ppmDev.pulseIndex   = 0;
-    ppmDev.currentCapture = 0;
-    ppmDev.currentTime  = 0;
-    ppmDev.deltaTime    = 0;
-    ppmDev.largeCounter = 0;
-    ppmDev.numChannels  = -1;
-    ppmDev.numChannelsPrevFrame = -1;
-    ppmDev.stableFramesSeenCount = 0;
-    ppmDev.tracking     = false;
-    ppmDev.overflowed   = false;
+    if (!pifRcPpm_Init(&s_rc_ppm, PIF_ID_AUTO, PPM_IN_MAX_NUM_CHANNELS, PPM_IN_MIN_SYNC_PULSE_US)) return false;
+    pifRcPpm_SetValidRange(&s_rc_ppm, PPM_IN_MIN_CHANNEL_PULSE_US, PPM_IN_MAX_CHANNEL_PULSE_US);
+    pifRc_AttachEvtReceive(&s_rc_ppm.parent, _evtRcPpmReceive, cfTasks[TASK_RX].p_task);
+    return true;
 }
 
 static void ppmOverflowCallback(timerOvrHandlerRec_t* cbRec, captureCompare_t capture)
 {
     UNUSED(cbRec);
-    ppmISREvent(SOURCE_OVERFLOW, capture);
-
-    ppmDev.largeCounter += capture + 1;
-    if (capture == PPM_TIMER_PERIOD - 1) {
-        ppmDev.overflowed = true;
-    }
-
+    UNUSED(capture);
 }
 
 static void ppmEdgeCallback(timerCCHandlerRec_t* cbRec, captureCompare_t capture)
 {
     UNUSED(cbRec);
-    ppmISREvent(SOURCE_EDGE, capture);
+    UNUSED(capture);
 
-    int32_t i;
-
-    uint32_t previousTime = ppmDev.currentTime;
-    uint32_t previousCapture = ppmDev.currentCapture;
-
-    /* Grab the new count */
-    uint32_t currentTime = capture;
-
-    /* Convert to 32-bit timer result */
-    currentTime += ppmDev.largeCounter;
-
-    if (capture < previousCapture) {
-        if (ppmDev.overflowed) {
-            currentTime += PPM_TIMER_PERIOD;
-        }
-    }
-
-    // Divide by 8 if Oneshot125 is active and this is a CC3D board
-    currentTime = currentTime >> ppmCountShift;
-
-    /* Capture computation */
-    if (currentTime > previousTime) {
-        ppmDev.deltaTime    = currentTime - (previousTime + (ppmDev.overflowed ? (PPM_TIMER_PERIOD >> ppmCountShift) : 0));
-    } else {
-        ppmDev.deltaTime    = (PPM_TIMER_PERIOD >> ppmCountShift) + currentTime - previousTime;
-    }
-
-    ppmDev.overflowed = false;
-
-
-    /* Store the current measurement */
-    ppmDev.currentTime = currentTime;
-    ppmDev.currentCapture = capture;
-
-#if 1
-    static uint32_t deltaTimes[20];
-    static uint8_t deltaIndex = 0;
-
-    deltaIndex = (deltaIndex + 1) % 20;
-    deltaTimes[deltaIndex] = ppmDev.deltaTime;
-    UNUSED(deltaTimes);
-#endif
-
-
-#if 1
-    static uint32_t captureTimes[20];
-    static uint8_t captureIndex = 0;
-
-    captureIndex = (captureIndex + 1) % 20;
-    captureTimes[captureIndex] = capture;
-    UNUSED(captureTimes);
-#endif
-
-    /* Sync pulse detection */
-    if (ppmDev.deltaTime > PPM_IN_MIN_SYNC_PULSE_US) {
-        if (ppmDev.pulseIndex == ppmDev.numChannelsPrevFrame
-            && ppmDev.pulseIndex >= PPM_IN_MIN_NUM_CHANNELS
-            && ppmDev.pulseIndex <= PPM_IN_MAX_NUM_CHANNELS) {
-            /* If we see n simultaneous frames of the same
-               number of channels we save it as our frame size */
-            if (ppmDev.stableFramesSeenCount < PPM_STABLE_FRAMES_REQUIRED_COUNT) {
-                ppmDev.stableFramesSeenCount++;
-            } else {
-                ppmDev.numChannels = ppmDev.pulseIndex;
-            }
-        } else {
-            debug[2]++;
-            ppmDev.stableFramesSeenCount = 0;
-        }
-
-        /* Check if the last frame was well formed */
-        if (ppmDev.pulseIndex == ppmDev.numChannels && ppmDev.tracking) {
-            /* The last frame was well formed */
-            for (i = 0; i < ppmDev.numChannels; i++) {
-                captures[i] = ppmDev.captures[i];
-            }
-            for (i = ppmDev.numChannels; i < PPM_IN_MAX_NUM_CHANNELS; i++) {
-                captures[i] = PPM_RCVR_TIMEOUT;
-            }
-            ppmFrameCount++;
-        }
-
-        ppmDev.tracking   = true;
-        ppmDev.numChannelsPrevFrame = ppmDev.pulseIndex;
-        ppmDev.pulseIndex = 0;
-
-        /* We rely on the supervisor to set captureValue to invalid
-           if no valid frame is found otherwise we ride over it */
-    } else if (ppmDev.tracking) {
-        /* Valid pulse duration 0.75 to 2.5 ms*/
-        if (ppmDev.deltaTime > PPM_IN_MIN_CHANNEL_PULSE_US
-            && ppmDev.deltaTime < PPM_IN_MAX_CHANNEL_PULSE_US
-            && ppmDev.pulseIndex < PPM_IN_MAX_NUM_CHANNELS) {
-            ppmDev.captures[ppmDev.pulseIndex] = ppmDev.deltaTime;
-            ppmDev.pulseIndex++;
-        } else {
-            /* Not a valid pulse duration */
-            ppmDev.tracking = false;
-            for (i = 0; i < PWM_PORTS_OR_PPM_CAPTURE_COUNT; i++) {
-                ppmDev.captures[i] = PPM_RCVR_TIMEOUT;
-            }
-        }
-    }
+    pifRcPpm_sigTick(&s_rc_ppm, (*pif_act_timer1us)());
 }
 
 #define MAX_MISSED_PWM_EVENTS 10

@@ -284,6 +284,8 @@ PIF_SRC = \
             ../../pif/source/core/pif_obj_array.c \
             ../../pif/source/core/pif_task.c \
             ../../pif/source/core/pif_timer.c \
+            ../../pif/source/rc/pif_rc.c \
+            ../../pif/source/rc/pif_rc_ppm.c \
             ../../pif/source/sensor/pif_imu_sensor.c \
             ../../pif/source/sensor/pif_bmp280.c \
 			../../pif/source/sensor/pif_hc_sr04.c \
