@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "sensor/pif_sensor_event.h"
+
 typedef void (*baroOpFuncPtr)(void);                       // baro start operation
 typedef void (*baroCalculateFuncPtr)(int32_t *pressure, int32_t *temperature); // baro calculation (filled params are pressure and temperature)
 
@@ -28,4 +30,7 @@ typedef struct baro_s {
     baroOpFuncPtr start_up;
     baroOpFuncPtr get_up;
     baroCalculateFuncPtr calculate;
+#ifdef BARO_PIF
+    PifEvtBaroRead evt_read;
+#endif
 } baro_t;

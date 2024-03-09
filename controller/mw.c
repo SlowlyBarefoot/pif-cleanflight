@@ -850,7 +850,7 @@ uint16_t taskUpdateCompass(PifTask *p_task)
 }
 #endif
 
-#ifdef BARO
+#ifndef BARO_PIF
 uint16_t taskUpdateBaro(PifTask *p_task)
 {
     (void)p_task;

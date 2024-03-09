@@ -22,8 +22,6 @@
 #include <platform.h>
 #include "scheduler.h"
 
-#define DISALLOW_YIELD_ID_I2C           1
-
 uint16_t taskMainPidLoopChecker(PifTask *p_task);
 uint16_t taskUpdateAccelerometer(PifTask *p_task);
 uint16_t taskHandleSerial(PifTask *p_task);
@@ -106,7 +104,7 @@ cfTask_t cfTasks[TASK_COUNT] = {
     },
 #endif
 
-#ifdef BARO
+#ifndef BARO_PIF
     [TASK_BARO] = {
         .taskName = "BARO",
         .taskFunc = taskUpdateBaro,

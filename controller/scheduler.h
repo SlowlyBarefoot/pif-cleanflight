@@ -46,7 +46,7 @@ typedef enum {
 #ifdef MAG
     TASK_COMPASS,
 #endif
-#ifdef BARO
+#ifndef BARO_PIF
     TASK_BARO,
 #endif
 #ifdef SONAR
