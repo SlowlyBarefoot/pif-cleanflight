@@ -120,6 +120,7 @@
 #define MAG_QMC5883_ALIGN CW0_DEG
 
 #define SONAR
+#define SONAR_PIF
 #define BEEPER
 #define LED0
 #define LED1

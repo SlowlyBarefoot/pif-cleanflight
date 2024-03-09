@@ -49,7 +49,7 @@ typedef enum {
 #ifndef BARO_PIF
     TASK_BARO,
 #endif
-#ifdef SONAR
+#ifndef SONAR_PIF
     TASK_SONAR,
 #endif
 #if defined(BARO) || defined(SONAR)

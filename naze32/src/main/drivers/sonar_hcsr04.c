@@ -27,6 +27,10 @@
 
 #include "sonar_hcsr04.h"
 
+#ifdef SONAR_PIF
+	#include "sensor/pif_hc_sr04.h"
+#endif
+
 /* HC-SR04 consists of ultrasonic transmitter, receiver, and control circuits.
  * When triggered it sends out a series of 40KHz ultrasonic pulses and receives
  * echo from an object. The distance between the unit and the object is calculated
@@ -41,9 +45,14 @@ STATIC_UNIT_TESTED volatile int32_t measurement = -1;
 static uint32_t lastMeasurementAt;
 static sonarHardware_t const *sonarHardware;
 
+#ifdef SONAR_PIF
+	static PifHcSr04 s_hcsr04;
+#endif
+
 #if !defined(UNIT_TEST)
 static void ECHO_EXTI_IRQHandler(void)
 {
+#ifndef SONAR_PIF
     static uint32_t timing_start;
     uint32_t timing_stop;
 
@@ -55,6 +64,9 @@ static void ECHO_EXTI_IRQHandler(void)
             measurement = timing_stop - timing_start;
         }
     }
+#else
+    pifHcSr04_sigReceiveEcho(&s_hcsr04, digitalIn(sonarHardware->echo_gpio, sonarHardware->echo_pin));
+#endif
 
     EXTI_ClearITPendingBit(sonarHardware->exti_line);
 }
@@ -75,7 +87,26 @@ void EXTI9_5_IRQHandler(void)
 }
 #endif
 
-void hcsr04_init(const sonarHardware_t *initialSonarHardware, sonarRange_t *sonarRange)
+#ifdef SONAR_PIF
+
+static void _actHcSr04Trigger(SWITCH state)
+{
+    if (state) {
+        digitalHi(sonarHardware->trigger_gpio, sonarHardware->trigger_pin);
+    }
+    else {
+        digitalLo(sonarHardware->trigger_gpio, sonarHardware->trigger_pin);
+    }
+}
+
+static void _evtHcSr04Distance(int32_t distance)
+{
+    measurement = distance; 
+}
+
+#endif
+
+bool hcsr04_init(const sonarHardware_t *initialSonarHardware, sonarRange_t *sonarRange)
 {
     sonarHardware = initialSonarHardware;
     sonarRange->maxRangeCm = HCSR04_MAX_RANGE_CM;
@@ -85,6 +116,13 @@ void hcsr04_init(const sonarHardware_t *initialSonarHardware, sonarRange_t *sona
 #if !defined(UNIT_TEST)
     gpio_config_t gpio;
     EXTI_InitTypeDef EXTIInit;
+
+#ifdef SONAR_PIF
+	if (!pifHcSr04_Init(&s_hcsr04, PIF_ID_AUTO)) return false;
+	s_hcsr04.act_trigger = _actHcSr04Trigger;
+	s_hcsr04.evt_read = _evtHcSr04Distance;
+	if (!pifHcSr04_StartTrigger(&s_hcsr04, 50)) return false;       // 50ms
+#endif
 
 #ifdef STM32F10X
     // enable AFIO for EXTI support
@@ -138,7 +176,10 @@ void hcsr04_init(const sonarHardware_t *initialSonarHardware, sonarRange_t *sona
 #else
     lastMeasurementAt = 0; // to avoid "unused" compiler warning
 #endif
+    return true;
 }
+
+#ifndef SONAR_PIF
 
 // measurement reading is done asynchronously, using interrupt
 void hcsr04_start_reading(void)
@@ -161,6 +202,8 @@ void hcsr04_start_reading(void)
 #endif
 }
 
+#endif
+
 /**
  * Get the distance that was measured by the last pulse, in centimeters.
  */
@@ -171,7 +214,11 @@ int32_t hcsr04_get_distance(void)
     // object we take half of the distance traveled.
     //
     // 340 m/s = 0.034 cm/microsecond = 29.41176471 *2 = 58.82352941 rounded to 59
+#ifndef SONAR_PIF    
     int32_t distance = measurement / 59;
+#else
+    int32_t distance = measurement;
+#endif
 
     return distance;
 }
