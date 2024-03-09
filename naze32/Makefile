@@ -286,7 +286,8 @@ PIF_SRC = \
             ../../pif/source/core/pif_timer.c \
             ../../pif/source/sensor/pif_imu_sensor.c \
             ../../pif/source/sensor/pif_bmp280.c \
-            ../../pif/source/sensor/pif_mpu6500.c
+            ../../pif/source/sensor/pif_mpu6500.c \
+            ../../pif/source/sensor/pif_qmc5883.c
 
 HIGHEND_SRC = \
 		   ../controller/flight/gtune.c \
@@ -335,6 +336,7 @@ NAZE_SRC = startup_stm32f10x_md_gcc.S \
 		   drivers/bus_spi.c \
 		   drivers/bus_i2c_stm32f10x.c \
 		   drivers/compass_hmc5883l.c \
+		   drivers/compass_qmc5883l.c \
 		   drivers/display_ug2864hsweg01.h \
 		   drivers/flash_m25p16.c \
 		   drivers/gpio_stm32f10x.c \

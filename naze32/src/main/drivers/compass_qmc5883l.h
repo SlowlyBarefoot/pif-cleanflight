@@ -17,24 +17,6 @@
 
 #pragma once
 
-// Type of magnetometer used/detected
-typedef enum {
-    MAG_DEFAULT = 0,
-    MAG_NONE = 1,
-    MAG_HMC5883 = 2,
-    MAG_AK8975 = 3,
-    MAG_AK8963 = 4,
-    MAG_QMC5883 = 5
-} magSensor_e;
-
-#define MAG_MAX  MAG_QMC5883
-
-#ifdef MAG
-void compassInit(void);
-void updateCompass(flightDynamicsTrims_t *magZero);
-#endif
-
-extern int32_t magADC[XYZ_AXIS_COUNT];
-
-extern sensor_align_e magAlign;
-extern mag_t mag;
+bool qmc5883lDetect(mag_t* mag);
+void qmc5883lInit(void);
+bool qmc5883lRead(int16_t *magData);
