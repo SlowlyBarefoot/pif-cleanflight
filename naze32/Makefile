@@ -290,7 +290,8 @@ PIF_SRC = \
             ../../pif/source/sensor/pif_bmp280.c \
 			../../pif/source/sensor/pif_hc_sr04.c \
             ../../pif/source/sensor/pif_mpu6500.c \
-            ../../pif/source/sensor/pif_qmc5883.c
+            ../../pif/source/sensor/pif_qmc5883.c \
+            ../../pif/source/sound/pif_buzzer.c
 
 HIGHEND_SRC = \
 		   ../controller/flight/gtune.c \

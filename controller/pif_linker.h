@@ -3,6 +3,7 @@
 #include "core/pif_task.h"
 #include "core/pif_timer.h"
 #include "sensor/pif_imu_sensor.h"
+#include "sound/pif_buzzer.h"
 
 
 #define TASK_SIZE				30
@@ -11,5 +12,6 @@
 #define DISALLOW_YIELD_ID_I2C           1
 
 
+extern PifBuzzer g_buzzer;
 extern PifImuSensor g_imu_sensor;
 extern PifTimerManager g_timer_1ms;

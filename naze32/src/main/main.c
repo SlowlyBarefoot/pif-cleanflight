@@ -58,6 +58,7 @@
 
 #include "rx/rx.h"
 
+#include "io/beeper.h"
 #include "io/serial.h"
 #include "io/flashfs.h"
 #include "io/gps.h"
@@ -286,6 +287,7 @@ void init(void)
 #endif
 
     beeperInit(&beeperConfig);
+    beeperAttach();
 #endif
 
 #ifdef BUTTONS
@@ -694,10 +696,10 @@ int main(void) {
     rescheduleTask(TASK_COMPASS, 1000000 / 40);
 #endif
 #endif
-#ifndef BARO_PIF
+#if defined(BARO) && !defined(BARO_PIF)
     setTaskEnabled(TASK_BARO, sensors(SENSOR_BARO));
 #endif
-#ifndef SONAR_PIF
+#if defined(SONAR) && !defined(SONAR_PIF)
     setTaskEnabled(TASK_SONAR, sensors(SENSOR_SONAR));
 #endif
 #if defined(BARO) || defined(SONAR)

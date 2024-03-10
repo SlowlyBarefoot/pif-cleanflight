@@ -20,6 +20,7 @@
 #include <stdlib.h>
 
 #include <platform.h>
+#include "pif_linker.h"
 
 #include "build_config.h"
 
@@ -61,7 +62,7 @@ void systemBeep(bool onoff)
 #endif
 }
 
-void beeperInit(beeperConfig_t *config)
+bool beeperInit(beeperConfig_t *config)
 {
 #ifndef BEEPER
     UNUSED(config);
@@ -71,6 +72,10 @@ void beeperInit(beeperConfig_t *config)
         systemBeepPtr = beepInverted;
     else
         systemBeepPtr = beepNormal;
+#ifdef BEEPER_PIF
+    if (!pifBuzzer_Init(&g_buzzer, PIF_ID_AUTO, (void (*)(BOOL))systemBeepPtr)) return false;
+#endif
     BEEP_OFF;
 #endif
+    return true;
 }

@@ -104,7 +104,7 @@ cfTask_t cfTasks[TASK_COUNT] = {
     },
 #endif
 
-#ifndef BARO_PIF
+#if defined(BARO) && !defined(BARO_PIF)
     [TASK_BARO] = {
         .taskName = "BARO",
         .taskFunc = taskUpdateBaro,
@@ -114,7 +114,7 @@ cfTask_t cfTasks[TASK_COUNT] = {
     },
 #endif
 
-#ifndef SONAR_PIF
+#if defined(SONAR) && !defined(SONAR_PIF)
     [TASK_SONAR] = {
         .taskName = "SONAR",
         .taskFunc = taskUpdateSonar,

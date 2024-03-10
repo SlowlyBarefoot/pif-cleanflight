@@ -20,6 +20,7 @@
 #include "stdlib.h"
 
 #include <platform.h>
+#include "pif_linker.h"
 #include "build_config.h"
 
 #include "io/rc_controls.h"
@@ -48,8 +49,12 @@
 
 #define MAX_MULTI_BEEPS 20   //size limit for 'beep_multiBeeps[]'
 
-#define BEEPER_COMMAND_REPEAT 0xFE
-#define BEEPER_COMMAND_STOP   0xFF
+#ifndef BEEPER_PIF
+    #define BEEPER_COMMAND_REPEAT 0xFE
+    #define BEEPER_COMMAND_STOP   0xFF
+#else
+    #define BEEPER_COMMAND_STOP   PIF_BUZZER_STOP
+#endif
 
 #ifdef BEEPER
 /* Beeper Sound Sequences: (Square wave generation)
@@ -124,6 +129,7 @@ static uint8_t beep_multiBeeps[MAX_MULTI_BEEPS + 2];
 #define BEEPER_CONFIRMATION_BEEP_DURATION 2
 #define BEEPER_CONFIRMATION_BEEP_GAP_DURATION 20
 
+#ifndef BEEPER_PIF
 
 // Beeper off = 0 Beeper on = 1
 static uint8_t beeperIsOn = 0;
@@ -132,10 +138,13 @@ static uint8_t beeperIsOn = 0;
 static uint16_t beeperPos = 0;
 // Time when beeper routine must act next time
 static uint32_t beeperNextToggleTime = 0;
-// Time of last arming beep in microseconds (for blackbox)
-static uint32_t armingBeepTimeMicros = 0;
 
 static void beeperProcessCommand(void);
+
+#endif
+
+// Time of last arming beep in microseconds (for blackbox)
+static uint32_t armingBeepTimeMicros = 0;
 
 typedef struct beeperTableEntry_s {
     uint8_t mode;
@@ -211,12 +220,17 @@ void beeper(beeperMode_e mode)
 
     currentBeeperEntry = selectedCandidate;
 
+#ifndef BEEPER_PIF
     beeperPos = 0;
     beeperNextToggleTime = 0;
+#else
+    pifBuzzer_Start(&g_buzzer, currentBeeperEntry->sequence);
+#endif
 }
 
 void beeperSilence(void)
 {
+#ifndef BEEPER_PIF
     BEEP_OFF;
     warningLedDisable();
     warningLedRefresh();
@@ -226,6 +240,9 @@ void beeperSilence(void)
 
     beeperNextToggleTime = 0;
     beeperPos = 0;
+#else
+    pifBuzzer_Stop(&g_buzzer);
+#endif
 
     currentBeeperEntry = NULL;
 }
@@ -290,6 +307,7 @@ void beeperUpdate(void)
 #endif
     }
 
+#ifndef BEEPER_PIF
     // Beeper routine doesn't need to update if there aren't any sounds ongoing
     if (currentBeeperEntry == NULL) {
         return;
@@ -324,7 +342,10 @@ void beeperUpdate(void)
     }
 
     beeperProcessCommand();
+#endif
 }
+
+#ifndef BEEPER_PIF
 
 /*
  * Calculates array position when next to change beeper state is due.
@@ -341,6 +362,37 @@ static void beeperProcessCommand(void)
         beeperPos++;
     }
 }
+
+#else
+
+static void _evtBuzzerChange(PifId id, BOOL state)
+{
+    (void)id;
+
+    if (state) {
+        warningLedEnable();
+        // if this was arming beep then mark time (for blackbox)
+        if (
+            g_buzzer._state == BS_START
+            && (currentBeeperEntry->mode == BEEPER_ARMING || currentBeeperEntry->mode == BEEPER_ARMING_GPS_FIX)
+        ) {
+            armingBeepTimeMicros = (*pif_act_timer1us)();
+        }
+    }
+    else {
+        warningLedDisable();
+    }
+    warningLedRefresh();
+}
+
+static void _evtBuzzerFinish(PifId id)
+{
+    (void)id;
+
+    currentBeeperEntry = NULL;
+}
+
+#endif
 
 /*
  * Returns the time that the last arming beep occurred (in system-uptime
@@ -381,6 +433,14 @@ int beeperTableEntryCount(void)
     return (int)BEEPER_TABLE_ENTRY_COUNT;
 }
 
+void beeperAttach(void)
+{
+#ifdef BEEPER_PIF
+    g_buzzer.evt_change = _evtBuzzerChange;
+    g_buzzer.evt_finish = _evtBuzzerFinish;
+#endif
+}
+
 #else
 
 // Stub out beeper functions if #BEEPER not defined
@@ -392,5 +452,6 @@ uint32_t getArmingBeepTimeMicros(void) {return 0;}
 beeperMode_e beeperModeForTableIndex(int idx) {UNUSED(idx); return BEEPER_SILENCE;}
 const char *beeperNameForTableIndex(int idx) {UNUSED(idx); return NULL;}
 int beeperTableEntryCount(void) {return 0;}
+void beeperAttach(void) {}
 
 #endif

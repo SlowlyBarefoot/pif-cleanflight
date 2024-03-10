@@ -46,10 +46,10 @@ typedef enum {
 #ifdef MAG
     TASK_COMPASS,
 #endif
-#ifndef BARO_PIF
+#if defined(BARO) && !defined(BARO_PIF)
     TASK_BARO,
 #endif
-#ifndef SONAR_PIF
+#if defined(SONAR) && !defined(SONAR_PIF)
     TASK_SONAR,
 #endif
 #if defined(BARO) || defined(SONAR)

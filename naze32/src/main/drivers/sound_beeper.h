@@ -36,6 +36,6 @@ typedef struct beeperConfig_s {
 } beeperConfig_t;
 
 void systemBeep(bool onoff);
-void beeperInit(beeperConfig_t *beeperConfig);
+bool beeperInit(beeperConfig_t *beeperConfig);
 
 void initBeeperHardware(beeperConfig_t *config);

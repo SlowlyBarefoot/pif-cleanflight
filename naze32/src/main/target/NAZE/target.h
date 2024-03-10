@@ -122,6 +122,7 @@
 #define SONAR
 #define SONAR_PIF
 #define BEEPER
+#define BEEPER_PIF
 #define LED0
 #define LED1
 #define INVERTER

@@ -850,7 +850,7 @@ uint16_t taskUpdateCompass(PifTask *p_task)
 }
 #endif
 
-#ifndef BARO_PIF
+#if defined(BARO) && !defined(BARO_PIF)
 uint16_t taskUpdateBaro(PifTask *p_task)
 {
     (void)p_task;
@@ -863,7 +863,7 @@ uint16_t taskUpdateBaro(PifTask *p_task)
 }
 #endif
 
-#ifndef SONAR_PIF
+#if defined(SONAR) && !defined(SONAR_PIF)
 uint16_t taskUpdateSonar(PifTask *p_task)
 {
     (void)p_task;
