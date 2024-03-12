@@ -8,7 +8,11 @@
 .project
 .settings
 .cproject
-obj/
+obj/**/*.d
+obj/**/*.i
+obj/**/*.s
+obj/**/*.elf
+obj/**/*.map
 patches/
 .vagrant/
 .vscode/

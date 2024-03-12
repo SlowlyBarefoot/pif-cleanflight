@@ -173,6 +173,7 @@ CMSIS_SRC	 = $(notdir $(wildcard $(CMSIS_DIR)/CM3/CoreSupport/*.c \
 			   $(CMSIS_DIR)/CM3/DeviceSupport/ST/STM32F10x/*.c))
 
 INCLUDE_DIRS := $(INCLUDE_DIRS) \
+		   ../controller \
 		   $(STDPERIPH_DIR)/inc \
 		   $(CMSIS_DIR)/CM3/CoreSupport \
 		   $(CMSIS_DIR)/CM3/DeviceSupport/ST/STM32F10x \
@@ -248,132 +249,132 @@ SYSTEM_SRC = \
 		   build/build_config.c \
 		   build/debug.c \
 		   build/version.c \
-		   config/config_streamer.c \
-		   config/parameter_group.c \
-		   config/config_eeprom.c \
-		   common/encoding.c \
-		   common/filter.c \
-		   common/maths.c \
-		   common/printf.c \
-		   common/streambuf.c \
-		   common/typeconversion.c \
-		   common/crc.c \
-		   common/pilot.c \
+		   ../controller/config/config_streamer.c \
+		   ../controller/config/parameter_group.c \
+		   ../controller/config/config_eeprom.c \
+		   ../controller/common/encoding.c \
+		   ../controller/common/filter.c \
+		   ../controller/common/maths.c \
+		   ../controller/common/printf.c \
+		   ../controller/common/streambuf.c \
+		   ../controller/common/typeconversion.c \
+		   ../controller/common/crc.c \
+		   ../controller/common/pilot.c \
 		   drivers/buf_writer.c \
 		   drivers/dma.c \
 		   drivers/serial.c \
 		   drivers/system.c \
-		   scheduler/scheduler.c \
-		   io/serial.c \
-		   io/statusindicator.c \
-		   msp/msp.c \
-		   msp/msp_serial.c \
-		   msp/msp_server.c \
+		   ../controller/scheduler/scheduler.c \
+		   ../controller/io/serial.c \
+		   ../controller/io/statusindicator.c \
+		   ../controller/msp/msp.c \
+		   ../controller/msp/msp_serial.c \
+		   ../controller/msp/msp_server.c \
 		   $(TARGET_SRC) \
 		   $(CMSIS_SRC) \
 		   $(DEVICE_STDPERIPH_SRC)
 
 FC_COMMON_SRC = \
-		   config/feature.c \
-		   config/profile.c \
-		   fc/boot.c \
-		   fc/fc_debug.c \
-		   fc/cleanflight_fc.c \
-		   fc/fc_tasks.c \
-		   fc/rate_profile.c \
-		   fc/rc_adjustments.c \
-		   fc/rc_controls.c \
-		   fc/rc_curves.c \
-		   fc/fc_serial.c \
-		   fc/config.c \
-		   fc/runtime_config.c \
-		   fc/msp_server_fc.c \
-		   flight/altitudehold.c \
-		   flight/failsafe.c \
-		   flight/pid.c \
-		   flight/pid_luxfloat.c \
-		   flight/pid_mwrewrite.c \
-		   flight/pid_mw23.c \
-		   flight/imu.c \
-		   flight/mixer.c \
-		   flight/servos.c \
+		   ../controller/config/feature.c \
+		   ../controller/config/profile.c \
+		   ../controller/fc/boot.c \
+		   ../controller/fc/fc_debug.c \
+		   ../controller/fc/cleanflight_fc.c \
+		   ../controller/fc/fc_tasks.c \
+		   ../controller/fc/rate_profile.c \
+		   ../controller/fc/rc_adjustments.c \
+		   ../controller/fc/rc_controls.c \
+		   ../controller/fc/rc_curves.c \
+		   ../controller/fc/fc_serial.c \
+		   ../controller/fc/config.c \
+		   ../controller/fc/runtime_config.c \
+		   ../controller/fc/msp_server_fc.c \
+		   ../controller/flight/altitudehold.c \
+		   ../controller/flight/failsafe.c \
+		   ../controller/flight/pid.c \
+		   ../controller/flight/pid_luxfloat.c \
+		   ../controller/flight/pid_mwrewrite.c \
+		   ../controller/flight/pid_mw23.c \
+		   ../controller/flight/imu.c \
+		   ../controller/flight/mixer.c \
+		   ../controller/flight/servos.c \
 		   drivers/bus_i2c_soft.c \
 		   drivers/exti.c \
 		   drivers/io.c \
 		   drivers/rcc.c \
 		   drivers/sound_beeper.c \
 		   drivers/gyro_sync.c \
-		   io/beeper.c \
-		   io/gimbal.c \
-		   io/servos.c \
-		   io/motors.c \
-		   io/serial_4way.c \
-		   io/serial_4way_avrootloader.c \
-		   io/serial_4way_stk500v2.c \
-		   io/serial_cli.c \
-		   io/statusindicator.c \
-		   rx/rx.c \
-		   rx/pwm.c \
-		   rx/msp.c \
-		   rx/sbus.c \
-		   rx/sumd.c \
-		   rx/sumh.c \
-		   rx/spektrum.c \
-		   rx/xbus.c \
-		   rx/ibus.c \
-		   rx/srxl.c \
-		   sensors/sensors.c \
-		   sensors/acceleration.c \
-		   sensors/battery.c \
-		   sensors/voltage.c \
-		   sensors/amperage.c \
-		   sensors/boardalignment.c \
-		   sensors/compass.c \
-		   sensors/gyro.c \
-		   sensors/initialisation.c
+		   ../controller/io/beeper.c \
+		   ../controller/io/gimbal.c \
+		   ../controller/io/servos.c \
+		   ../controller/io/motors.c \
+		   ../controller/io/serial_4way.c \
+		   ../controller/io/serial_4way_avrootloader.c \
+		   ../controller/io/serial_4way_stk500v2.c \
+		   ../controller/io/serial_cli.c \
+		   ../controller/io/statusindicator.c \
+		   ../controller/rx/rx.c \
+		   ../controller/rx/pwm.c \
+		   ../controller/rx/msp.c \
+		   ../controller/rx/sbus.c \
+		   ../controller/rx/sumd.c \
+		   ../controller/rx/sumh.c \
+		   ../controller/rx/spektrum.c \
+		   ../controller/rx/xbus.c \
+		   ../controller/rx/ibus.c \
+		   ../controller/rx/srxl.c \
+		   ../controller/sensors/sensors.c \
+		   ../controller/sensors/acceleration.c \
+		   ../controller/sensors/battery.c \
+		   ../controller/sensors/voltage.c \
+		   ../controller/sensors/amperage.c \
+		   ../controller/sensors/boardalignment.c \
+		   ../controller/sensors/compass.c \
+		   ../controller/sensors/gyro.c \
+		   ../controller/sensors/initialisation.c
 
 OSD_SYSTEM_SRC = \
-		   config/feature.c \
-		   osd/boot.c \
-		   osd/cleanflight_osd.c \
-		   osd/fc_state.c \
-		   osd/config.c \
-		   osd/osd_serial.c \
-		   osd/msp_server_osd.c \
-		   osd/msp_client_osd.c \
-		   osd/osd_tasks.c \
-		   osd/osd_debug.c \
-		   sensors/battery.c \
-		   sensors/voltage.c \
-		   sensors/amperage.c \
-		   io/beeper.c
+		   ../controller/config/feature.c \
+		   ../controller/osd/boot.c \
+		   ../controller/osd/cleanflight_osd.c \
+		   ../controller/osd/fc_state.c \
+		   ../controller/osd/config.c \
+		   ../controller/osd/osd_serial.c \
+		   ../controller/osd/msp_server_osd.c \
+		   ../controller/osd/msp_client_osd.c \
+		   ../controller/osd/osd_tasks.c \
+		   ../controller/osd/osd_debug.c \
+		   ../controller/sensors/battery.c \
+		   ../controller/sensors/voltage.c \
+		   ../controller/sensors/amperage.c \
+		   ../controller/io/beeper.c
 
 OSD_COMMON_SRC = \
-		   osd/fc_state.c \
-		   osd/osd.c \
-		   osd/osd_screen.c \
-		   osd/osd_element.c \
-		   osd/osd_element_render.c
+		   ../controller/osd/fc_state.c \
+		   ../controller/osd/osd.c \
+		   ../controller/osd/osd_screen.c \
+		   ../controller/osd/osd_element.c \
+		   ../controller/osd/osd_element_render.c
 
 HIGHEND_SRC = \
-		   flight/gtune.c \
-		   flight/navigation.c \
-		   flight/gps_conversion.c \
-		   common/colorconversion.c \
-		   io/gps.c \
-		   io/ledstrip.c \
-		   io/display.c \
-		   telemetry/telemetry.c \
-		   telemetry/frsky.c \
-		   telemetry/hott.c \
-		   telemetry/smartport.c \
-		   telemetry/ltm.c \
-		   telemetry/mavlink.c \
-		   telemetry/ibus.c \
-		   sensors/sonar.c \
-		   sensors/barometer.c \
-		   blackbox/blackbox.c \
-		   blackbox/blackbox_io.c
+		   ../controller/flight/gtune.c \
+		   ../controller/flight/navigation.c \
+		   ../controller/flight/gps_conversion.c \
+		   ../controller/common/colorconversion.c \
+		   ../controller/io/gps.c \
+		   ../controller/io/ledstrip.c \
+		   ../controller/io/display.c \
+		   ../controller/telemetry/telemetry.c \
+		   ../controller/telemetry/frsky.c \
+		   ../controller/telemetry/hott.c \
+		   ../controller/telemetry/smartport.c \
+		   ../controller/telemetry/ltm.c \
+		   ../controller/telemetry/mavlink.c \
+		   ../controller/telemetry/ibus.c \
+		   ../controller/sensors/sonar.c \
+		   ../controller/sensors/barometer.c \
+		   ../controller/blackbox/blackbox.c \
+		   ../controller/blackbox/blackbox_io.c
 
 VCP_SRC = \
 		   vcp/hw_config.c \
@@ -426,7 +427,7 @@ NAZE_SRC = \
 		   drivers/sound_beeper_stm32f10x.c \
 		   drivers/timer.c \
 		   drivers/timer_stm32f10x.c \
-		   io/flashfs.c \
+		   ../controller/io/flashfs.c \
 		   hardware_revision.c \
 		   $(HIGHEND_SRC) \
 		   $(FC_COMMON_SRC) \
@@ -465,7 +466,7 @@ PORT103R_SRC = \
 		   drivers/sound_beeper_stm32f10x.c \
 		   drivers/timer.c \
 		   drivers/timer_stm32f10x.c \
-		   io/flashfs.c \
+		   ../controller/io/flashfs.c \
 		   $(HIGHEND_SRC) \
 		   $(FC_COMMON_SRC) \
 		   $(SYSTEM_SRC)
@@ -484,9 +485,9 @@ CJMCU_SRC = \
 		   drivers/timer.c \
 		   drivers/timer_stm32f10x.c \
 		   hardware_revision.c \
-		   flight/gtune.c \
-		   blackbox/blackbox.c \
-		   blackbox/blackbox_io.c \
+		   ../controller/flight/gtune.c \
+		   ../controller/blackbox/blackbox.c \
+		   ../controller/blackbox/blackbox_io.c \
 		   $(FC_COMMON_SRC) \
 		   $(SYSTEM_SRC)
 
@@ -513,7 +514,7 @@ CC3D_SRC = \
 		   drivers/sound_beeper_stm32f10x.c \
 		   drivers/timer.c \
 		   drivers/timer_stm32f10x.c \
-		   io/flashfs.c \
+		   ../controller/io/flashfs.c \
 		   $(HIGHEND_SRC) \
 		   $(FC_COMMON_SRC) \
 		   $(SYSTEM_SRC) \
@@ -565,8 +566,8 @@ STM32F3DISCOVERY_SRC = \
 		   drivers/light_ws2811strip_stm32f30x.c \
 		   drivers/sdcard.c \
 		   drivers/sdcard_standard.c \
-		   io/asyncfatfs/asyncfatfs.c \
-		   io/asyncfatfs/fat_standard.c \
+		   ../controller/io/asyncfatfs/asyncfatfs.c \
+		   ../controller/io/asyncfatfs/fat_standard.c \
 		   $(HIGHEND_SRC) \
 		   $(FC_COMMON_SRC) \
 		   $(SYSTEM_SRC)
@@ -657,7 +658,7 @@ RCEXPLORERF3_SRC = \
 		   drivers/light_ws2811strip.c \
 		   drivers/light_ws2811strip_stm32f30x.c \
 		   drivers/sonar_hcsr04.c \
-		   io/flashfs.c \
+		   ../controller/io/flashfs.c \
 		   $(HIGHEND_SRC) \
 		   $(FC_COMMON_SRC) \
 		   $(SYSTEM_SRC) \
@@ -676,7 +677,7 @@ RMDO_SRC = \
 		   drivers/light_ws2811strip_stm32f30x.c \
 		   drivers/serial_softserial.c \
 		   drivers/sonar_hcsr04.c \
-		   io/flashfs.c \
+		   ../controller/io/flashfs.c \
 		   $(HIGHEND_SRC) \
 		   $(FC_COMMON_SRC) \
 		   $(SYSTEM_SRC)
@@ -695,7 +696,7 @@ SPRACINGF3_SRC = \
 		   drivers/light_ws2811strip_stm32f30x.c \
 		   drivers/serial_softserial.c \
 		   drivers/sonar_hcsr04.c \
-		   io/flashfs.c \
+		   ../controller/io/flashfs.c \
 		   $(HIGHEND_SRC) \
 		   $(FC_COMMON_SRC) \
 		   $(SYSTEM_SRC)
@@ -719,9 +720,9 @@ SPRACINGF3EVO_SRC	 = \
 		   drivers/sonar_hcsr04.c \
 		   drivers/transponder_ir.c \
 		   drivers/transponder_ir_stm32f30x.c \
-		   io/asyncfatfs/asyncfatfs.c \
-		   io/asyncfatfs/fat_standard.c \
-		   io/transponder_ir.c \
+		   ../controller/io/asyncfatfs/asyncfatfs.c \
+		   ../controller/io/asyncfatfs/fat_standard.c \
+		   ../controller/io/transponder_ir.c \
 		   $(HIGHEND_SRC) \
 		   $(FC_COMMON_SRC) \
 		   $(SYSTEM_SRC) \
@@ -747,14 +748,14 @@ SPRACINGF3NEO_SRC	 = \
 		   drivers/transponder_ir_stm32f30x.c \
 		   drivers/video_max7456.c \
 		   drivers/vtx_rtc6705.c \
-		   io/asyncfatfs/asyncfatfs.c \
-		   io/asyncfatfs/fat_standard.c \
-		   io/transponder_ir.c \
-		   io/flashfs.c \
-		   io/vtx_rtc6705.c \
-		   io/vtx.c \
-		   osd/fonts/font_max7456_12x18.c \
-		   osd/osd_max7456.c \
+		   ../controller/io/asyncfatfs/asyncfatfs.c \
+		   ../controller/io/asyncfatfs/fat_standard.c \
+		   ../controller/io/transponder_ir.c \
+		   ../controller/io/flashfs.c \
+		   ../controller/io/vtx_rtc6705.c \
+		   ../controller/io/vtx.c \
+		   ../controller/osd/fonts/font_max7456_12x18.c \
+		   ../controller/osd/osd_max7456.c \
 		   $(HIGHEND_SRC) \
 		   $(FC_COMMON_SRC) \
 		   $(OSD_COMMON_SRC) \
@@ -774,7 +775,7 @@ MOTOLAB_SRC = \
 		   drivers/light_ws2811strip_stm32f30x.c \
 		   drivers/serial_usb_vcp.c \
 		   drivers/flash_m25p16.c \
-		   io/flashfs.c \
+		   ../controller/io/flashfs.c \
 		   $(HIGHEND_SRC) \
 		   $(FC_COMMON_SRC) \
 		   $(SYSTEM_SRC) \
@@ -799,9 +800,9 @@ SPRACINGF3MINI_SRC	 = \
 		   drivers/sdcard_standard.c \
 		   drivers/transponder_ir.c \
 		   drivers/transponder_ir_stm32f30x.c \
-		   io/asyncfatfs/asyncfatfs.c \
-		   io/asyncfatfs/fat_standard.c \
-		   io/transponder_ir.c \
+		   ../controller/io/asyncfatfs/asyncfatfs.c \
+		   ../controller/io/asyncfatfs/fat_standard.c \
+		   ../controller/io/transponder_ir.c \
 		   $(HIGHEND_SRC) \
 		   $(FC_COMMON_SRC) \
 		   $(SYSTEM_SRC) \
@@ -814,7 +815,7 @@ IRCFUSIONF3_SRC = \
 		   drivers/accgyro_mpu6050.c \
 		   drivers/barometer_bmp085.c \
 		   drivers/flash_m25p16.c \
-		   io/flashfs.c \
+		   ../controller/io/flashfs.c \
 		   $(HIGHEND_SRC) \
 		   $(FC_COMMON_SRC) \
 		   $(SYSTEM_SRC)
@@ -828,9 +829,9 @@ SPRACINGF1OSD_SRC = \
 		   drivers/io.c \
 		   drivers/exti.c \
 		   drivers/rcc.c \
-		   io/flashfs.c \
-		   osd/fonts/font_max7456_12x18.c \
-		   osd/osd_max7456.c \
+		   ../controller/io/flashfs.c \
+		   ../controller/osd/fonts/font_max7456_12x18.c \
+		   ../controller/osd/osd_max7456.c \
 		   $(SYSTEM_SRC) \
 		   $(OSD_SYSTEM_SRC) \
 		   $(OSD_COMMON_SRC) \
@@ -845,10 +846,10 @@ SPRACINGF3OSD_SRC = \
 		   drivers/rcc.c \
 		   drivers/transponder_ir.c \
 		   drivers/transponder_ir_stm32f30x.c \
-		   io/flashfs.c \
-		   io/transponder_ir.c \
-		   osd/fonts/font_max7456_12x18.c \
-		   osd/osd_max7456.c \
+		   ../controller/io/flashfs.c \
+		   ../controller/io/transponder_ir.c \
+		   ../controller/osd/fonts/font_max7456_12x18.c \
+		   ../controller/osd/osd_max7456.c \
 		   $(SYSTEM_SRC) \
 		   $(OSD_SYSTEM_SRC) \
 		   $(OSD_COMMON_SRC) \
