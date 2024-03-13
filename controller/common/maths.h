@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "core/pif.h"
+
 #ifndef sq
 #define sq(x) ((x)*(x))
 #endif
@@ -29,10 +31,6 @@
 #define M_PIf       3.14159265358979323846f
 
 #define RAD    (M_PIf / 180.0f)
-
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define ABS(x) ((x) > 0 ? (x) : -(x))
 
 typedef struct stdev_s
 {

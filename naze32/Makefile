@@ -69,6 +69,8 @@ OBJECT_DIR	 = $(ROOT)/obj/main
 BIN_DIR		 = $(ROOT)/obj
 CMSIS_DIR	 = $(ROOT)/lib/main/CMSIS
 INCLUDE_DIRS	 = $(SRC_DIR) \
+			    ../controller \
+				../../pif/include \
 				$(ROOT)/src/main/target
 LINKER_DIR	 = $(ROOT)/src/main/target
 
@@ -173,7 +175,6 @@ CMSIS_SRC	 = $(notdir $(wildcard $(CMSIS_DIR)/CM3/CoreSupport/*.c \
 			   $(CMSIS_DIR)/CM3/DeviceSupport/ST/STM32F10x/*.c))
 
 INCLUDE_DIRS := $(INCLUDE_DIRS) \
-		   ../controller \
 		   $(STDPERIPH_DIR)/inc \
 		   $(CMSIS_DIR)/CM3/CoreSupport \
 		   $(CMSIS_DIR)/CM3/DeviceSupport/ST/STM32F10x \
@@ -331,7 +332,14 @@ FC_COMMON_SRC = \
 		   ../controller/sensors/boardalignment.c \
 		   ../controller/sensors/compass.c \
 		   ../controller/sensors/gyro.c \
-		   ../controller/sensors/initialisation.c
+		   ../controller/sensors/initialisation.c \
+		   ../controller/pif_linker.c
+
+PIF_SRC = \
+            ../../pif/source/core/pif.c \
+            ../../pif/source/core/pif_obj_array.c \
+            ../../pif/source/core/pif_task.c \
+            ../../pif/source/core/pif_timer.c
 
 OSD_SYSTEM_SRC = \
 		   ../controller/config/feature.c \
@@ -431,7 +439,8 @@ NAZE_SRC = \
 		   hardware_revision.c \
 		   $(HIGHEND_SRC) \
 		   $(FC_COMMON_SRC) \
-		   $(SYSTEM_SRC)
+		   $(SYSTEM_SRC) \
+		   $(PIF_SRC)
 
 ALIENFLIGHTF1_SRC = $(NAZE_SRC)
 
@@ -908,6 +917,7 @@ CFLAGS		 = $(ARCH_FLAGS) \
 		   -D'__FORKNAME__="$(FORKNAME)"' \
 		   -D'__TARGET__="$(TARGET)"' \
 		   -D'__REVISION__="$(REVISION)"' \
+		   -DPIF_CONF \
 		   -fverbose-asm -ffat-lto-objects \
 		   -save-temps=obj \
 		   -MMD -MP

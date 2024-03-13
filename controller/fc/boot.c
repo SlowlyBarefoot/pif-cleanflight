@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include <platform.h>
+#include "pif_linker.h"
 
 #include "build/build_config.h"
 #include "build/debug.h"
@@ -282,6 +283,12 @@ void init(void)
     drv_pwm_config_t pwm_params;
 
     printfSupportInit();
+
+    pif_Init(micros);
+
+    pifTaskManager_Init(TASK_SIZE);
+
+    pifTimerManager_Init(&g_timer_1ms, PIF_ID_AUTO, 1000, TIMER_1MS_SIZE);		        // 1000us
 
     initEEPROM();
 

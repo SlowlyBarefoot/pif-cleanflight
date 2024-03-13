@@ -24,6 +24,7 @@
 #include <ctype.h>
 
 #include <platform.h>
+#include "pif_linker.h"
 #include "build/version.h"
 
 #include "build/build_config.h"
@@ -2665,6 +2666,8 @@ static void cliStatus(char *cmdline)
 #endif
 
     cliPrintf("PIDd: %d, GYROd: %d, I2C Errors: %d, registry size: %d\r\n", pidDeltaUs, gyroDeltaUs, i2cErrorCounter, PG_REGISTRY_SIZE);
+
+    cliPrintf("Task Count: %d / %d, Timer Count: %d / %d\r\n", pifTaskManager_Count(), TASK_SIZE, pifTimerManager_Count(&g_timer_1ms), TIMER_1MS_SIZE);
 }
 #endif
 

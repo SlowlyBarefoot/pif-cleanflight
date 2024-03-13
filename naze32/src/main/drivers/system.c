@@ -21,6 +21,7 @@
 #include <stdlib.h>
 
 #include <platform.h>
+#include "pif_linker.h"
 
 #include "build/build_config.h"
 
@@ -52,6 +53,9 @@ static void cycleCounterInit(void)
 void SysTick_Handler(void)
 {
     sysTickUptime++;
+
+    pif_sigTimer1ms();
+	pifTimerManager_sigTick(&g_timer_1ms);
 }
 
 // Return system uptime in microseconds (rollover in 70minutes)
