@@ -74,8 +74,6 @@
 
 uint16_t cycleTime = 0;         // this is the number in micro second to achieve a full loop, it can differ a little
 
-extern uint32_t currentTime;    // from scheduler
-
 void taskUpdateCycleTime(void)
 {
     cycleTime = getTaskDeltaTime(TASK_SELF);
@@ -122,16 +120,16 @@ void taskUpdateBattery(void)
     static uint32_t vbatLastServiced = 0;
     static uint32_t ibatLastServiced = 0;
 
-    if (cmp32(currentTime, vbatLastServiced) >= VBATINTERVAL) {
-        vbatLastServiced = currentTime;
+    if (cmp32(pif_timer1us, vbatLastServiced) >= VBATINTERVAL) {
+        vbatLastServiced = pif_timer1us;
         voltageMeterUpdate();
         batteryUpdate();
     }
 
-    int32_t ibatTimeSinceLastServiced = cmp32(currentTime, ibatLastServiced);
+    int32_t ibatTimeSinceLastServiced = cmp32(pif_timer1us, ibatLastServiced);
 
     if (ibatTimeSinceLastServiced >= IBATINTERVAL) {
-        ibatLastServiced = currentTime;
+        ibatLastServiced = pif_timer1us;
 
         amperageUpdateMeter(ibatTimeSinceLastServiced);
     }

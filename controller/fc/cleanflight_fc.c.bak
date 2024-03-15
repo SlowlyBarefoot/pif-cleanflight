@@ -773,7 +773,7 @@ void subTaskMainSubprocesses(void)
 
 void subTaskMotorUpdate(void)
 {
-    const uint32_t startTime = (*pif_act_timer1us)();
+    const uint32_t startTime = micros();
     if (debugMode == DEBUG_CYCLETIME) {
         static uint32_t previousMotorUpdateTime;
         const uint32_t currentDeltaTime = startTime - previousMotorUpdateTime;
@@ -817,7 +817,7 @@ uint16_t taskGyro(PifTask *p_task)
     if (gyroConfig()->gyro_sync) {
         shouldRunPid = gyroReadyCounter >= gyroConfig()->pid_process_denom;
     }
-    shouldRunPid |= gyroDeltaUs >= targetPidLooptime;
+    shouldRunPid |= pidDeltaUs >= targetPidLooptime;
 
     if (shouldRunPid) {
         pifTask_SetTrigger(cfTasks[TASK_PID].p_task);
@@ -828,9 +828,9 @@ uint16_t taskGyro(PifTask *p_task)
 
 uint16_t taskPid(PifTask *p_task)
 {
-    gyroReadyCounter = 0;
-
     pidDeltaUs = p_task->_delta_time;
+
+    gyroReadyCounter = 0;
 
     if (debugMode == DEBUG_PIDLOOP) {
         debug[0] = pidDeltaUs;

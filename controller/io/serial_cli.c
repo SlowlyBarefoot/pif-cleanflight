@@ -2629,8 +2629,8 @@ static void cliStatus(char *cmdline)
         vbat,
         batteryCellCount,
         getBatteryStateString(),
-        averageSystemLoadPercent / 100,
-        averageSystemLoadPercent % 100
+        pif_performance._use_rate / 100,
+        pif_performance._use_rate % 100
     );
 
     cliPrintf("CPU Clock=%dMHz", (SystemCoreClock / 1000000));
@@ -2679,16 +2679,16 @@ static void cliTasks(char *cmdline)
     cfTaskId_e taskId;
     cfTaskInfo_t taskInfo;
 
-    cliPrintf("Task list          max/us  avg/us rate/hz maxload avgload     total/ms\r\n");
+    cliPrintf("Task list          max/us  avg/us rate/hz maxload avgload\r\n");
     for (taskId = 0; taskId < TASK_COUNT; taskId++) {
         getTaskInfo(taskId, &taskInfo);
         if (taskInfo.isEnabled) {
             const int taskFrequency = (int)(1000000.0f / ((float)taskInfo.latestDeltaTime));
             const int maxLoad = (taskInfo.maxExecutionTime * taskFrequency + 5000) / 1000;
             const int averageLoad = (taskInfo.averageExecutionTime * taskFrequency + 5000) / 1000;
-            cliPrintf("%2d - %12s  %6d   %5d   %5d %4d.%1d%% %4d.%1d%%  %8d\r\n",
+            cliPrintf("%2d - %12s  %6d   %5d   %5d %4d.%1d%% %4d.%1d%%\r\n",
                     taskId, taskInfo.taskName, taskInfo.maxExecutionTime, taskInfo.averageExecutionTime,
-                    taskFrequency, maxLoad/10, maxLoad%10, averageLoad/10, averageLoad%10, taskInfo.totalExecutionTime / 1000);
+                    taskFrequency, maxLoad/10, maxLoad%10, averageLoad/10, averageLoad%10);
         }
     }
 }

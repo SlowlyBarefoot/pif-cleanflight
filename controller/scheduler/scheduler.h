@@ -17,20 +17,13 @@
 
 #pragma once
 
+#include "core/pif_task.h"
+
 //#define SCHEDULER_DEBUG
 
 #define TASK_PERIOD_HZ(hz) (1000000 / (hz))
 #define TASK_PERIOD_MS(ms) ((ms) * 1000)
 #define TASK_PERIOD_US(us) (us)
-
-typedef enum {
-    TASK_PRIORITY_IDLE = 0,     // Disables dynamic scheduling, task is executed only if no other task is active this cycle
-    TASK_PRIORITY_LOW = 1,
-    TASK_PRIORITY_MEDIUM = 3,
-    TASK_PRIORITY_HIGH = 5,
-    TASK_PRIORITY_REALTIME = 6,
-    TASK_PRIORITY_MAX = 255
-} cfTaskPriority_e;
 
 #define TASK_SELF -1
 
@@ -38,9 +31,7 @@ typedef struct {
     const char * taskName;
     bool         isEnabled;
     uint32_t     desiredPeriod;
-    uint8_t      staticPriority;
     uint32_t     maxExecutionTime;
-    uint32_t     totalExecutionTime;
     uint32_t     averageExecutionTime;
     uint32_t     latestDeltaTime;
 } cfTaskInfo_t;
@@ -48,27 +39,13 @@ typedef struct {
 typedef struct {
     /* Configuration */
     const char * taskName;
-    bool (*checkFunc)(uint32_t currentDeltaTime);
-    void (*taskFunc)(void);
+    PifEvtTaskLoop taskFunc;
+    PifTaskMode taskMode;
     uint32_t desiredPeriod;         // target period of execution
-    const uint8_t staticPriority;   // dynamicPriority grows in steps of this size, shouldn't be zero
 
-    /* Scheduling */
-    uint16_t dynamicPriority;       // measurement of how old task was last executed, used to avoid task starvation
-    uint16_t taskAgeCycles;
-    uint32_t lastExecutedAt;        // last time of invocation
-    uint32_t lastSignaledAt;        // time of invocation event for event-driven tasks
-
-    /* Statistics */
-    uint32_t averageExecutionTime;  // Moving average over 6 samples, used to calculate guard interval
-    uint32_t taskLatestDeltaTime;   //
-#ifndef SKIP_TASK_STATISTICS
-    uint32_t maxExecutionTime;
-    uint32_t totalExecutionTime;    // total time consumed by task since boot
-#endif
+    /* PIF */
+    PifTask* p_task;
 } cfTask_t;
-
-extern uint16_t averageSystemLoadPercent;
 
 extern cfTask_t* taskQueueArray[];
 extern const uint32_t taskQueueArraySize;
@@ -77,10 +54,7 @@ extern cfTask_t cfTasks[];
 
 void getTaskInfo(const int taskId, cfTaskInfo_t *taskInfo);
 void rescheduleTask(const int taskId, uint32_t newPeriodMicros);
-void setTaskEnabled(const int taskId, bool newEnabledState);
+void setTaskEnabled(const int taskId, bool newEnabledState, PifTaskMode mode);
 uint32_t getTaskDeltaTime(const int taskId);
 
-void schedulerInit(void);
-void scheduler(void);
-
-#define isSystemOverloaded() (averageSystemLoadPercent > 100)
+#define isSystemOverloaded() (pif_performance._use_rate > 100)

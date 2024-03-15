@@ -17,10 +17,11 @@
 
 #pragma once
 
+#include "core/pif_task.h"
+
 typedef enum {
     /* Actual tasks */
-    TASK_SYSTEM = 0,
-    TASK_GYRO,
+    TASK_GYRO = 0,
     TASK_PID,
     TASK_ACCEL,
     TASK_ATTITUDE,
@@ -66,27 +67,22 @@ typedef enum {
     TASK_COUNT
 } cfTaskId_e;
 
-void taskSystem(void);
-bool taskGyroCheck(uint32_t currentDeltaTime);
-void taskGyro(void);
-bool taskPidCheck(uint32_t currentDeltaTime);
-void taskPid(void);
-void taskUpdateAccelerometer(void);
-void taskUpdateAttitude(void);
-bool taskUpdateRxCheck(uint32_t currentDeltaTime);
-void taskUpdateRxMain(void);
-void taskHandleSerial(void);
-void taskHardwareWatchdog(void);
-void taskUpdateBeeper(void);
-void taskUpdateBattery(void);
-void taskUpdateRxMain(void);
-void taskProcessGPS(void);
-void taskUpdateCompass(void);
-void taskUpdateBaro(void);
-void taskUpdateSonar(void);
-void taskCalculateAltitude(void);
-void taskUpdateDisplay(void);
-void taskTelemetry(void);
-void taskLedStrip(void);
-void taskTransponder(void);
-void taskDrawScreen(void);
+uint16_t taskGyro(PifTask *p_task);
+uint16_t taskPid(PifTask *p_task);
+uint16_t taskUpdateAccelerometer(PifTask *p_task);
+uint16_t taskUpdateAttitude(PifTask *p_task);
+uint16_t taskUpdateRxMain(PifTask *p_task);
+uint16_t taskHandleSerial(PifTask *p_task);
+uint16_t taskHardwareWatchdog(PifTask *p_task);
+uint16_t taskUpdateBeeper(PifTask *p_task);
+uint16_t taskUpdateBattery(PifTask *p_task);
+uint16_t taskProcessGPS(PifTask *p_task);
+uint16_t taskUpdateCompass(PifTask *p_task);
+uint16_t taskUpdateBaro(PifTask *p_task);
+uint16_t taskUpdateSonar(PifTask *p_task);
+uint16_t taskCalculateAltitude(PifTask *p_task);
+uint16_t taskUpdateDisplay(PifTask *p_task);
+uint16_t taskTelemetry(PifTask *p_task);
+uint16_t taskLedStrip(PifTask *p_task);
+uint16_t taskTransponder(PifTask *p_task);
+uint16_t taskDrawScreen(PifTask *p_task);

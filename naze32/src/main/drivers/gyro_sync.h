@@ -19,4 +19,3 @@ extern uint32_t gyroIntSignalledAt;
 extern int32_t gyroIntSignalDelta;
 
 void gyroSyncIntHandler(void);
-bool gyroSyncIsDataReady(void);

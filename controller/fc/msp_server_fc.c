@@ -581,7 +581,7 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
             sbufWriteU16(dst, sensors(SENSOR_ACC) | sensors(SENSOR_BARO) << 1 | sensors(SENSOR_MAG) << 2 | sensors(SENSOR_GPS) << 3 | sensors(SENSOR_SONAR) << 4);
             sbufWriteU32(dst, packFlightModeFlags());
             sbufWriteU8(dst, getCurrentProfile());
-            sbufWriteU16(dst, averageSystemLoadPercent);
+            sbufWriteU16(dst, pif_performance._use_rate);
             sbufWriteU16(dst, gyroDeltaUs);
             break;
 

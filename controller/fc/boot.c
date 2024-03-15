@@ -785,62 +785,63 @@ void processLoopback(void) {
 
 void configureScheduler(void)
 {
-    schedulerInit();
-    setTaskEnabled(TASK_SYSTEM, true);
-
     uint16_t gyroPeriodUs = US_FROM_HZ(gyro.sampleFrequencyHz);
-    rescheduleTask(TASK_GYRO, gyroPeriodUs);
-    setTaskEnabled(TASK_GYRO, true);
+    if (gyroConfig()->gyro_sync) {
+        setTaskEnabled(TASK_GYRO, false, TM_EXTERNAL_ORDER);
+    }
+    else {
+        rescheduleTask(TASK_GYRO, gyroPeriodUs);
+        setTaskEnabled(TASK_GYRO, true, 0);
+    }
 
-    rescheduleTask(TASK_PID, gyroPeriodUs);
-    setTaskEnabled(TASK_PID, true);
+    setTaskEnabled(TASK_PID, false, 0);
 
     if (sensors(SENSOR_ACC)) {
-        setTaskEnabled(TASK_ACCEL, true);
+        setTaskEnabled(TASK_ACCEL, true, 0);
         rescheduleTask(TASK_ACCEL, accSamplingInterval);
     }
 
-    setTaskEnabled(TASK_ATTITUDE, sensors(SENSOR_ACC));
-    setTaskEnabled(TASK_SERIAL, true);
-    setTaskEnabled(TASK_HARDWARE_WATCHDOG, true);
+    setTaskEnabled(TASK_ATTITUDE, sensors(SENSOR_ACC), 0);
+    setTaskEnabled(TASK_SERIAL, true, 0);
+    setTaskEnabled(TASK_HARDWARE_WATCHDOG, true, 0);
 #ifdef BEEPER
-    setTaskEnabled(TASK_BEEPER, true);
+    setTaskEnabled(TASK_BEEPER, true, 0);
 #endif
-    setTaskEnabled(TASK_BATTERY, feature(FEATURE_VBAT) || feature(FEATURE_AMPERAGE_METER));
-    setTaskEnabled(TASK_RX, true);
+    setTaskEnabled(TASK_BATTERY, feature(FEATURE_VBAT) || feature(FEATURE_AMPERAGE_METER), 0);
+    setTaskEnabled(TASK_RX, true, 0);
 #ifdef GPS
-    setTaskEnabled(TASK_GPS, feature(FEATURE_GPS));
+    setTaskEnabled(TASK_GPS, feature(FEATURE_GPS), 0);
 #endif
 #ifdef MAG
-    setTaskEnabled(TASK_COMPASS, sensors(SENSOR_MAG));
+    setTaskEnabled(TASK_COMPASS, sensors(SENSOR_MAG), 0);
 #if defined(MPU6500_SPI_INSTANCE) && defined(USE_MAG_AK8963)
     // fixme temporary solution for AK6983 via slave I2C on MPU9250
     rescheduleTask(TASK_COMPASS, 1000000 / 40);
 #endif
 #endif
 #ifdef BARO
-    setTaskEnabled(TASK_BARO, sensors(SENSOR_BARO));
+    setTaskEnabled(TASK_BARO, sensors(SENSOR_BARO), 0);
 #endif
 #ifdef SONAR
-    setTaskEnabled(TASK_SONAR, sensors(SENSOR_SONAR));
+    setTaskEnabled(TASK_SONAR, sensors(SENSOR_SONAR), 0);
 #endif
 #if defined(BARO) || defined(SONAR)
-    setTaskEnabled(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR));
+    setTaskEnabled(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR), 0);
 #endif
 #ifdef DISPLAY
-    setTaskEnabled(TASK_DISPLAY, feature(FEATURE_DISPLAY));
+    setTaskEnabled(TASK_DISPLAY, feature(FEATURE_DISPLAY), 0);
 #endif
 #ifdef TELEMETRY
-    setTaskEnabled(TASK_TELEMETRY, feature(FEATURE_TELEMETRY));
+    setTaskEnabled(TASK_TELEMETRY, feature(FEATURE_TELEMETRY), 0);
 #endif
 #ifdef LED_STRIP
-    setTaskEnabled(TASK_LEDSTRIP, feature(FEATURE_LED_STRIP));
+    setTaskEnabled(TASK_LEDSTRIP, feature(FEATURE_LED_STRIP), 0);
 #endif
 #ifdef TRANSPONDER
-    setTaskEnabled(TASK_TRANSPONDER, feature(FEATURE_TRANSPONDER));
+    setTaskEnabled(TASK_TRANSPONDER, feature(FEATURE_TRANSPONDER), 0);
 #endif
 #ifdef OSD
-    setTaskEnabled(TASK_DRAW_SCREEN, feature(FEATURE_OSD));
+    setTaskEnabled(TASK_DRAW_SCREEN, feature(FEATURE_OSD), 0);
 #endif
 }
 
@@ -850,7 +851,7 @@ int main(void) {
 	configureScheduler();
 
     while (true) {
-        scheduler();
+        pifTaskManager_Loop();
         processLoopback();
     }
 }

@@ -21,22 +21,14 @@
 #include <platform.h>
 #include "build/build_config.h"
 
+#include "fc/fc_tasks.h"
+
+#include "scheduler/scheduler.h"
+
 #include "drivers/system.h"
 #include "drivers/gyro_sync.h"
 
-volatile bool gyroDataReady = false;
-
 void gyroSyncIntHandler(void)
 {
-    gyroDataReady = true;
-}
-
-bool gyroSyncIsDataReady(void)
-{
-    if (gyroDataReady) {
-        gyroDataReady = false;
-        return true;
-    }
-
-    return false;
+    pifTask_SetTrigger(cfTasks[TASK_GYRO].p_task);
 }

@@ -36,69 +36,59 @@ const uint32_t taskCount = TASK_COUNT;
 cfTask_t* taskQueueArray[TASK_QUEUE_ARRAY_SIZE];
 
 cfTask_t cfTasks[] = {
-    [TASK_SYSTEM] = {
-        .taskName = "SYSTEM",
-        .taskFunc = taskSystem,
-        .desiredPeriod = TASK_PERIOD_MS(100),
-        .staticPriority = TASK_PRIORITY_HIGH,
-    },
-
     [TASK_GYRO] = {
         .taskName = "GYRO",
-        .checkFunc = taskGyroCheck,
         .taskFunc = taskGyro,
         .desiredPeriod = TASK_PERIOD_HZ(8000),
-        .staticPriority = TASK_PRIORITY_REALTIME,
+        .taskMode = TM_PERIOD_US,
     },
     [TASK_PID] = {
         .taskName = "PID",
-        .checkFunc = taskPidCheck,
         .taskFunc = taskPid,
         .desiredPeriod = TASK_PERIOD_HZ(8000),
-        .staticPriority = TASK_PRIORITY_REALTIME,
+        .taskMode = TM_EXTERNAL_ORDER,
     },
 
     [TASK_ACCEL] = {
         .taskName = "ACCEL",
         .taskFunc = taskUpdateAccelerometer,
         .desiredPeriod = TASK_PERIOD_MS(1),
-        .staticPriority = TASK_PRIORITY_MEDIUM,
+        .taskMode = TM_PERIOD_US,
     },
 
     [TASK_ATTITUDE] = {
         .taskName = "ATTITUDE",
         .taskFunc = taskUpdateAttitude,
         .desiredPeriod = TASK_PERIOD_HZ(100),
-        .staticPriority = TASK_PRIORITY_MEDIUM,
+        .taskMode = TM_PERIOD_US,
     },
 
     [TASK_RX] = {
         .taskName = "RX",
-        .checkFunc = taskUpdateRxCheck,
         .taskFunc = taskUpdateRxMain,
-        .desiredPeriod = TASK_PERIOD_HZ(50),          // If event-based scheduling doesn't work, fallback to periodic scheduling
-        .staticPriority = TASK_PRIORITY_HIGH,
+        .desiredPeriod = TASK_PERIOD_HZ(50) / 1000,          // If event-based scheduling doesn't work, fallback to periodic scheduling
+        .taskMode = TM_PERIOD_MS,
     },
 
     [TASK_SERIAL] = {
         .taskName = "SERIAL",
         .taskFunc = taskHandleSerial,
         .desiredPeriod = TASK_PERIOD_HZ(100),         // 100 Hz should be enough to flush up to 115 bytes @ 115200 baud
-        .staticPriority = TASK_PRIORITY_LOW,
+        .taskMode = TM_PERIOD_US,
     },
 
     [TASK_HARDWARE_WATCHDOG] = {
         .taskName = "HW_WATCHDOG",
         .taskFunc = taskHardwareWatchdog,
-        .desiredPeriod = TASK_PERIOD_HZ(1),
-        .staticPriority = TASK_PRIORITY_MEDIUM,
+        .desiredPeriod = TASK_PERIOD_HZ(1) / 1000,
+        .taskMode = TM_PERIOD_MS,
     },
 
     [TASK_BATTERY] = {
         .taskName = "BATTERY",
         .taskFunc = taskUpdateBattery,
-        .desiredPeriod = TASK_PERIOD_MS(20),
-        .staticPriority = TASK_PRIORITY_MEDIUM,
+        .desiredPeriod = TASK_PERIOD_MS(20) / 1000,
+        .taskMode = TM_PERIOD_MS,
     },
 
 
@@ -106,8 +96,8 @@ cfTask_t cfTasks[] = {
     [TASK_BEEPER] = {
         .taskName = "BEEPER",
         .taskFunc = taskUpdateBeeper,
-        .desiredPeriod = TASK_PERIOD_MS(10),
-        .staticPriority = TASK_PRIORITY_MEDIUM,
+        .desiredPeriod = TASK_PERIOD_MS(10) / 1000,
+        .taskMode = TM_PERIOD_MS,
     },
 #endif
 
@@ -116,7 +106,7 @@ cfTask_t cfTasks[] = {
         .taskName = "GPS",
         .taskFunc = taskProcessGPS,
         .desiredPeriod = TASK_PERIOD_HZ(100),         // 115 (<256) bytes/call @ 115K
-        .staticPriority = TASK_PRIORITY_MEDIUM,
+        .taskMode = TM_PERIOD_US,
     },
 #endif
 
@@ -125,7 +115,7 @@ cfTask_t cfTasks[] = {
         .taskName = "COMPASS",
         .taskFunc = taskUpdateCompass,
         .desiredPeriod = TASK_PERIOD_MS(100),
-        .staticPriority = TASK_PRIORITY_MEDIUM,
+        .taskMode = TM_PERIOD_US,
     },
 #endif
 
@@ -133,8 +123,8 @@ cfTask_t cfTasks[] = {
     [TASK_BARO] = {
         .taskName = "BARO",
         .taskFunc = taskUpdateBaro,
-        .desiredPeriod = TASK_PERIOD_MS(50),
-        .staticPriority = TASK_PRIORITY_MEDIUM,
+        .desiredPeriod = TASK_PERIOD_MS(50) / 1000,
+        .taskMode = TM_CHANGE_MS,
     },
 #endif
 
@@ -142,8 +132,8 @@ cfTask_t cfTasks[] = {
     [TASK_SONAR] = {
         .taskName = "SONAR",
         .taskFunc = taskUpdateSonar,
-        .desiredPeriod = TASK_PERIOD_MS(70),
-        .staticPriority = TASK_PRIORITY_MEDIUM,
+        .desiredPeriod = TASK_PERIOD_MS(70) / 1000,
+        .taskMode = TM_PERIOD_MS,
     },
 #endif
 
@@ -151,8 +141,8 @@ cfTask_t cfTasks[] = {
     [TASK_ALTITUDE] = {
         .taskName = "ALTITUDE",
         .taskFunc = taskCalculateAltitude,
-        .desiredPeriod = TASK_PERIOD_MS(25),
-        .staticPriority = TASK_PRIORITY_MEDIUM,
+        .desiredPeriod = TASK_PERIOD_MS(25) / 1000,
+        .taskMode = TM_PERIOD_MS,
     },
 #endif
 
@@ -161,7 +151,7 @@ cfTask_t cfTasks[] = {
         .taskName = "TRANSPONDER",
         .taskFunc = taskTransponder,
         .desiredPeriod = TASK_PERIOD_MS(4),
-        .staticPriority = TASK_PRIORITY_LOW,
+        .taskMode = TM_PERIOD_US,
     },
 #endif
 
@@ -169,8 +159,8 @@ cfTask_t cfTasks[] = {
     [TASK_DRAW_SCREEN] = {
         .taskName = "DRAW_SCREEN",
         .taskFunc = taskDrawScreen,
-        .desiredPeriod = 1000000 / 30,           // 30 Hz
-        .staticPriority = TASK_PRIORITY_MEDIUM,
+        .desiredPeriod = 1000 / 30,           // 30 Hz
+        .taskMode = TM_PERIOD_MS,
     },
 #endif
 
@@ -179,7 +169,7 @@ cfTask_t cfTasks[] = {
         .taskName = "DISPLAY",
         .taskFunc = taskUpdateDisplay,
         .desiredPeriod = TASK_PERIOD_MS(100),
-        .staticPriority = TASK_PRIORITY_LOW,
+        .taskMode = TM_PERIOD_US,
     },
 #endif
 
@@ -188,7 +178,7 @@ cfTask_t cfTasks[] = {
         .taskName = "TELEMETRY",
         .taskFunc = taskTelemetry,
         .desiredPeriod = TASK_PERIOD_MS(4),
-        .staticPriority = TASK_PRIORITY_IDLE,
+        .taskMode = TM_IDLE_US,
     },
 #endif
 
@@ -197,7 +187,7 @@ cfTask_t cfTasks[] = {
         .taskName = "LEDSTRIP",
         .taskFunc = taskLedStrip,
         .desiredPeriod = TASK_PERIOD_MS(10),
-        .staticPriority = TASK_PRIORITY_IDLE,
+        .taskMode = TM_IDLE_US,
     },
 #endif
 };

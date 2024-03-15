@@ -326,9 +326,6 @@ typedef struct blackboxSlowState_s {
 //From mixer.c:
 extern uint8_t motorCount;
 
-//From mw.c:
-extern uint32_t currentTime;
-
 //From rx.c:
 extern uint16_t rssi;
 
@@ -911,13 +908,13 @@ static void writeGPSFrame()
 
     /*
      * If we're logging every frame, then a GPS frame always appears just after a frame with the
-     * currentTime timestamp in the log, so the reader can just use that timestamp for the GPS frame.
+     * pif_timer1us timestamp in the log, so the reader can just use that timestamp for the GPS frame.
      *
      * If we're not logging every frame, we need to store the time of this GPS frame.
      */
     if (testBlackboxCondition(FLIGHT_LOG_FIELD_CONDITION_NOT_LOGGING_EVERY_FRAME)) {
         // Predict the time of the last frame in the main log
-        blackboxWriteUnsignedVB(currentTime - blackboxHistory[1]->time);
+        blackboxWriteUnsignedVB(pif_timer1us - blackboxHistory[1]->time);
     }
 
     blackboxWriteUnsignedVB(GPS_numSat);
@@ -941,7 +938,7 @@ static void loadMainState(void)
     blackboxMainState_t *blackboxCurrent = blackboxHistory[0];
     int i;
 
-    blackboxCurrent->time = currentTime;
+    blackboxCurrent->time = pif_timer1us;
 
     for (i = 0; i < XYZ_AXIS_COUNT; i++) {
         blackboxCurrent->axisPID_P[i] = axisPID_P[i];
@@ -1429,7 +1426,7 @@ void handleBlackbox(void)
                 flightLogEvent_loggingResume_t resume;
 
                 resume.logIteration = blackboxIteration;
-                resume.currentTime = currentTime;
+                resume.currentTime = pif_timer1us;
 
                 blackboxLogEvent(FLIGHT_LOG_EVENT_LOGGING_RESUME, (flightLogEventData_t *) &resume);
                 blackboxSetState(BLACKBOX_STATE_RUNNING);
