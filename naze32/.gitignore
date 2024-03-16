@@ -1,0 +1,23 @@
+*.o
+.DS_Store
+*~
+*.uvopt
+*.dep
+*.bak
+*.uvgui.*
+.project
+.settings
+.cproject
+obj/**/*.d
+obj/**/*.i
+obj/**/*.o
+obj/**/*.s
+patches/
+.vagrant/
+.vscode/
+
+# script-generated files
+docs/Manual.pdf
+README.pdf
+
+/Debug/
