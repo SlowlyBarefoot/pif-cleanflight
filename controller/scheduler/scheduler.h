@@ -53,8 +53,8 @@ extern const uint32_t taskCount;
 extern cfTask_t cfTasks[];
 
 void getTaskInfo(const int taskId, cfTaskInfo_t *taskInfo);
-void rescheduleTask(const int taskId, uint32_t newPeriodMicros);
-void setTaskEnabled(const int taskId, bool newEnabledState, PifTaskMode mode);
+void rescheduleTask(const int taskId, uint32_t newPeriodMicros, PifTaskMode mode);
+void setTaskEnabled(const int taskId, bool newEnabledState);
 uint32_t getTaskDeltaTime(const int taskId);
 
 #define isSystemOverloaded() (pif_performance._use_rate > 100)

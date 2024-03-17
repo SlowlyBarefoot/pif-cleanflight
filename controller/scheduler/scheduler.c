@@ -35,42 +35,46 @@
 #ifndef SKIP_TASK_STATISTICS
 void getTaskInfo(const int taskId, cfTaskInfo_t * taskInfo)
 {
-    taskInfo->taskName = cfTasks[taskId].taskName;
-    taskInfo->isEnabled = cfTasks[taskId].p_task != NULL;
-    taskInfo->desiredPeriod = cfTasks[taskId].desiredPeriod;
-    if (cfTasks[taskId].taskMode != TM_PERIOD_US) taskInfo->desiredPeriod *= 1000;
+    cfTask_t *task = &cfTasks[taskId];
+
+    taskInfo->taskName = task->taskName;
+    taskInfo->isEnabled = task->p_task != NULL;
+    taskInfo->desiredPeriod = task->desiredPeriod;
+    if (!(task->taskMode & TM_UNIT_MASK)) taskInfo->desiredPeriod *= 1000;
     if (taskInfo->isEnabled) {
-        taskInfo->maxExecutionTime = cfTasks[taskId].p_task->_max_execution_time;
-        taskInfo->averageExecutionTime = pifTask_GetAverageExecuteTime(cfTasks[taskId].p_task);
-        if (cfTasks[taskId].taskMode != TM_PERIOD_US) {
-            taskInfo->latestDeltaTime = 1000 * pifTask_GetAverageDeltaTime(cfTasks[taskId].p_task);
-        }
-        else {
-            taskInfo->latestDeltaTime = pifTask_GetAverageDeltaTime(cfTasks[taskId].p_task);
-        }
+        taskInfo->maxExecutionTime = task->p_task->_max_execution_time;
+        taskInfo->averageExecutionTime = pifTask_GetAverageExecuteTime(task->p_task);
+        taskInfo->latestDeltaTime = pifTask_GetAverageDeltaTime(task->p_task);
+        if (!(task->taskMode & TM_UNIT_MASK)) taskInfo->latestDeltaTime *= 1000;
     }
 }
 #endif
 
-void rescheduleTask(const int taskId, uint32_t newPeriodMicros)
+void rescheduleTask(const int taskId, uint32_t newPeriodMicros, PifTaskMode mode)
 {
     if (taskId < (int)taskCount) {
-        cfTasks[taskId].desiredPeriod = MAX(100, newPeriodMicros);  // Limit delay to 100us (10 kHz) to prevent scheduler clogging
-        if (cfTasks[taskId].p_task) {
-            if (!(cfTasks[taskId].p_task->_mode & TM_UNIT_MASK)) newPeriodMicros /= 1000;
-            pifTask_ChangePeriod(cfTasks[taskId].p_task, newPeriodMicros);
+        cfTask_t *task = &cfTasks[taskId];
+        task->desiredPeriod = MAX(100, newPeriodMicros);  // Limit delay to 100us (10 kHz) to prevent scheduler clogging
+        if (mode) task->taskMode = mode;
+        if (task->p_task) {
+            if (!(task->p_task->_mode & TM_UNIT_MASK)) newPeriodMicros /= 1000;
+            if (mode) {
+                pifTask_ChangeMode(task->p_task, mode, newPeriodMicros);
+            }
+            else {
+                pifTask_ChangePeriod(task->p_task, newPeriodMicros);
+            }
         }
     }
 }
 
-void setTaskEnabled(const int taskId, bool newEnabledState, PifTaskMode mode)
+void setTaskEnabled(const int taskId, bool newEnabledState)
 {
     if (taskId == TASK_SELF || taskId < (int)taskCount) {
         cfTask_t *task = &cfTasks[taskId];
         if (newEnabledState && task->taskFunc) {
             if (!task->p_task) {
-                if (mode) task->taskMode = mode;
-                task->p_task = pifTaskManager_Add(task->taskMode, task->desiredPeriod, task->taskFunc, NULL, true);
+                task->p_task = pifTaskManager_Add(task->taskMode, task->desiredPeriod, task->taskFunc, task, (task->taskMode & TM_MAIN_MASK) != TM_EXTERNAL);
             }
             else {
                 task->p_task->pause = false;

@@ -775,11 +775,8 @@ void subTaskMotorUpdate(void)
 {
     const uint32_t startTime = (*pif_act_timer1us)();
     if (debugMode == DEBUG_CYCLETIME) {
-        static uint32_t previousMotorUpdateTime;
-        const uint32_t currentDeltaTime = startTime - previousMotorUpdateTime;
-        debug[2] = currentDeltaTime;
-        debug[3] = currentDeltaTime - targetPidLooptime;
-        previousMotorUpdateTime = startTime;
+        debug[2] = pidDeltaUs;
+        debug[3] = pidDeltaUs - targetPidLooptime;
     }
 
     mixTable();
@@ -813,14 +810,10 @@ uint16_t taskGyro(PifTask *p_task)
         debug[0] = gyroDeltaUs;
     }
 
-    bool shouldRunPid = false;
     if (gyroConfig()->gyro_sync) {
-        shouldRunPid = gyroReadyCounter >= gyroConfig()->pid_process_denom;
-    }
-    shouldRunPid |= gyroDeltaUs >= targetPidLooptime;
-
-    if (shouldRunPid) {
-        pifTask_SetTrigger(cfTasks[TASK_PID].p_task);
+        if (gyroReadyCounter >= gyroConfig()->pid_process_denom) {
+            pifTask_SetTrigger(cfTasks[TASK_PID].p_task);
+        }
     }
 
     return 0;
