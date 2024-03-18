@@ -46,7 +46,7 @@ cfTask_t cfTasks[] = {
         .taskName = "PID",
         .taskFunc = taskPid,
         .desiredPeriod = TASK_PERIOD_HZ(8000),
-        .taskMode = TM_PERIOD_US,
+        .taskMode = TM_EXTERNAL_ORDER,
     },
 
     [TASK_ACCEL] = {

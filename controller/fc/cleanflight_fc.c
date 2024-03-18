@@ -815,6 +815,9 @@ uint16_t taskGyro(PifTask *p_task)
             pifTask_SetTrigger(cfTasks[TASK_PID].p_task);
         }
     }
+    else {
+        pifTask_SetTrigger(cfTasks[TASK_PID].p_task);
+    }
 
     return 0;
 }

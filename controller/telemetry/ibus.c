@@ -389,7 +389,7 @@ bool checkIbusTelemetryState(void)
     }
 
     if (newTelemetryEnabledValue) {
-        rescheduleTask(TASK_TELEMETRY, IBUS_TASK_PERIOD_US);
+        rescheduleTask(TASK_TELEMETRY, IBUS_TASK_PERIOD_US, TM_NONE);
         configureIbusTelemetryPort();
     } else {
         freeIbusTelemetryPort();

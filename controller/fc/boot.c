@@ -787,12 +787,11 @@ void configureScheduler(void)
 {
     uint16_t gyroPeriodUs = US_FROM_HZ(gyro.sampleFrequencyHz);
     if (gyroConfig()->gyro_sync) {
-        rescheduleTask(TASK_GYRO, gyroPeriodUs, TM_EXTERNAL_ORDER);
-        rescheduleTask(TASK_PID, targetPidLooptime, TM_EXTERNAL_ORDER);
+        rescheduleTask(TASK_GYRO, gyroPeriodUs, TM_EXTERNAL_CUTIN);
     }
     else {
         rescheduleTask(TASK_GYRO, gyroPeriodUs, TM_NONE);
-        rescheduleTask(TASK_PID, targetPidLooptime, TM_NONE);
+        rescheduleTask(TASK_PID, targetPidLooptime, TM_EXTERNAL_CUTIN);
     }
     setTaskEnabled(TASK_GYRO, true);
     setTaskEnabled(TASK_PID, true);
