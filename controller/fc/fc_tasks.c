@@ -24,6 +24,8 @@
 
 #include "scheduler/scheduler.h"
 
+#define DISALLOW_YIELD_ID_I2C           1
+
 // No need for a linked list for the queue, since items are only inserted at startup
 #ifdef UNIT_TEST
 #define TASK_QUEUE_ARRAY_SIZE (TASK_COUNT + 2) // 1 extra space so test code can check for buffer overruns
@@ -41,6 +43,7 @@ cfTask_t cfTasks[] = {
         .taskFunc = taskGyro,
         .desiredPeriod = TASK_PERIOD_HZ(8000),
         .taskMode = TM_PERIOD_US,
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
     },
     [TASK_PID] = {
         .taskName = "PID",
@@ -54,6 +57,7 @@ cfTask_t cfTasks[] = {
         .taskFunc = taskUpdateAccelerometer,
         .desiredPeriod = TASK_PERIOD_MS(1),
         .taskMode = TM_PERIOD_US,
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
     },
 
     [TASK_ATTITUDE] = {
@@ -116,6 +120,7 @@ cfTask_t cfTasks[] = {
         .taskFunc = taskUpdateCompass,
         .desiredPeriod = TASK_PERIOD_MS(100),
         .taskMode = TM_PERIOD_US,
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
     },
 #endif
 
@@ -125,6 +130,7 @@ cfTask_t cfTasks[] = {
         .taskFunc = taskUpdateBaro,
         .desiredPeriod = TASK_PERIOD_MS(50) / 1000,
         .taskMode = TM_CHANGE_MS,
+        .disallow_yield_id = DISALLOW_YIELD_ID_I2C,
     },
 #endif
 

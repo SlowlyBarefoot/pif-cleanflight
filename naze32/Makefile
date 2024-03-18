@@ -336,10 +336,13 @@ FC_COMMON_SRC = \
 		   ../controller/pif_linker.c
 
 PIF_SRC = \
-            ../../pif/source/core/pif.c \
+            ../../pif/source/communication/pif_i2c.c \
+			../../pif/source/core/pif.c \
             ../../pif/source/core/pif_obj_array.c \
             ../../pif/source/core/pif_task.c \
-            ../../pif/source/core/pif_timer.c
+            ../../pif/source/core/pif_timer.c \
+            ../../pif/source/sensor/pif_imu_sensor.c \
+            ../../pif/source/sensor/pif_mpu6500.c
 
 OSD_SYSTEM_SRC = \
 		   ../controller/config/feature.c \

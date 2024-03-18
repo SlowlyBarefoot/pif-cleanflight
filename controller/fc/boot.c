@@ -535,18 +535,18 @@ void init(void)
 #ifdef USE_I2C
 #if defined(NAZE)
     if (hardwareRevision != NAZE32_SP) {
-        i2cInit(I2C_DEVICE);
+        initI2cDevice(I2C_DEVICE);
     } else {
         if (!doesConfigurationUsePort(SERIAL_PORT_UART3)) {
-            i2cInit(I2C_DEVICE);
+            initI2cDevice(I2C_DEVICE);
         }
     }
 #elif defined(CC3D)
     if (!doesConfigurationUsePort(SERIAL_PORT_UART3)) {
-        i2cInit(I2C_DEVICE);
+        initI2cDevice(I2C_DEVICE);
     }
 #else
-    i2cInit(I2C_DEVICE);
+    initI2cDevice(I2C_DEVICE);
 #endif
 #endif
 
@@ -596,6 +596,9 @@ void init(void)
         gyroConfig()->gyro_sync = 0;
     }
 #endif
+
+    pifImuSensor_Init(&g_imu_sensor);
+    pifImuSensor_InitBoardAlignment(&g_imu_sensor, boardAlignment()->rollDegrees, boardAlignment()->pitchDegrees, boardAlignment()->yawDegrees);
 
     if (!sensorsAutodetect()) {
         // if gyro was not detected due to whatever reason, we give up now.

@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "communication/pif_i2c.h"
+
 #define I2C_SHORT_TIMEOUT            ((uint32_t)0x1000)
 #define I2C_LONG_TIMEOUT             ((uint32_t)(10 * I2C_SHORT_TIMEOUT))
 #define I2C_DEFAULT_TIMEOUT          I2C_LONG_TIMEOUT
@@ -27,9 +29,12 @@ typedef enum I2CDevice {
     I2CDEV_MAX = I2CDEV_2,
 } I2CDevice;
 
-void i2cInit(I2CDevice index);
+extern PifI2cPort g_i2c_port;
+
 bool i2cWriteBuffer(uint8_t addr_, uint8_t reg_, uint8_t len_, uint8_t *data);
 bool i2cWrite(uint8_t addr_, uint8_t reg, uint8_t data);
 bool i2cRead(uint8_t addr_, uint8_t reg, uint8_t len, uint8_t* buf);
 uint16_t i2cGetErrorCounter(void);
 void i2cSetOverclock(uint8_t OverClock);
+
+BOOL initI2cDevice(I2CDevice index);

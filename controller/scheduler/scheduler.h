@@ -41,6 +41,7 @@ typedef struct {
     const char * taskName;
     PifEvtTaskLoop taskFunc;
     PifTaskMode taskMode;
+    uint8_t disallow_yield_id;
     uint32_t desiredPeriod;         // target period of execution
 
     /* PIF */

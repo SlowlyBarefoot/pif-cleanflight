@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include <platform.h>
+#include "pif_linker.h"
 #include "build/build_config.h"
 #include "build/debug.h"
 
@@ -293,3 +294,28 @@ bool mpuGyroRead(int16_t *gyroADC)
     return true;
 }
 
+bool pifMpuAccRead(int16_t *accData)
+{
+    float data[6];
+
+    if (!pifImuSensor_ReadRawAccel(&g_imu_sensor, data)) return false;
+
+    accData[0] = (int16_t)data[0];
+    accData[1] = (int16_t)data[1];
+    accData[2] = (int16_t)data[2];
+
+    return true;
+}
+
+bool pifMpuGyroRead(int16_t *gyroADC)
+{
+    float data[6];
+
+    if (!pifImuSensor_ReadRawGyro(&g_imu_sensor, data)) return false;
+
+    gyroADC[0] = (int16_t)data[0];
+    gyroADC[1] = (int16_t)data[1];
+    gyroADC[2] = (int16_t)data[2];
+
+    return true;
+}
