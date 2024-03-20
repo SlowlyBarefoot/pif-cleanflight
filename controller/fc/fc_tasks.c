@@ -19,12 +19,11 @@
 #include <stdint.h>
 
 #include <platform.h>
+#include "pif_linker.h"
 
 #include "fc/fc_tasks.h"
 
 #include "scheduler/scheduler.h"
-
-#define DISALLOW_YIELD_ID_I2C           1
 
 // No need for a linked list for the queue, since items are only inserted at startup
 #ifdef UNIT_TEST
@@ -124,7 +123,7 @@ cfTask_t cfTasks[] = {
     },
 #endif
 
-#ifdef BARO
+#ifndef BARO_PIF
     [TASK_BARO] = {
         .taskName = "BARO",
         .taskFunc = taskUpdateBaro,

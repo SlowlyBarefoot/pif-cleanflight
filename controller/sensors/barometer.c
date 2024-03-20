@@ -34,10 +34,23 @@
 #include "drivers/system.h"
 
 //#include "fc/config.h"
+#include "fc/runtime_config.h"
 
 #include "sensors/barometer.h"
+#include "sensors/sensors.h"
+
+#ifndef BARO_PIF
 
 baro_t baro;                        // barometer access functions
+
+#else
+
+static void evtBaroRead(float pressure, float temperature);
+
+baro_t baro = { .evt_read = &evtBaroRead };     // barometer access functions
+
+#endif
+
 uint16_t calibratingB = 0;      // baro calibration = get new ground pressure value
 int32_t baroPressure = 0;
 int32_t baroTemperature = 0;
@@ -131,6 +144,8 @@ bool isBaroReady(void) {
 	return baroReady;
 }
 
+#ifndef BARO_PIF
+
 uint32_t baroUpdate(void)
 {
     static barometerState_e state = BAROMETER_NEEDS_SAMPLES;
@@ -154,6 +169,19 @@ uint32_t baroUpdate(void)
         break;
     }
 }
+
+#else
+
+static void evtBaroRead(float pressure, float temperature)
+{
+    if (sensors(SENSOR_BARO)) {
+        baroPressure = pressure * 100;
+        baroTemperature = temperature * 100;
+        baroPressureSum = recalculateBarometerTotal(barometerConfig()->baro_sample_count, baroPressureSum, baroPressure);
+    }
+}
+
+#endif
 
 int32_t baroCalculateAltitude(void)
 {

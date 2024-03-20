@@ -19,6 +19,7 @@
 #include <stdint.h>
 
 #include <platform.h>
+#include "pif_linker.h"
 
 #include "build/build_config.h"
 
@@ -29,7 +30,11 @@
 
 #include "barometer_bmp280.h"
 
+#include "sensor/pif_bmp280.h"
+
 #ifdef BARO
+
+#ifndef BARO_PIF
 
 // BMP280, address 0x76
 
@@ -208,5 +213,35 @@ STATIC_UNIT_TESTED void bmp280_calculate(int32_t *pressure, int32_t *temperature
     if (temperature)
         *temperature = t;
 }
+
+#else
+
+static bool bmp280InitDone = false;
+static PifBmp280 bmp280;
+
+bool bmp280Detect(baro_t *baro)
+{
+    if (!baro->evt_read) return false;
+
+    if (bmp280InitDone)
+        return true;
+
+    pif_Delay1ms(20);
+
+    if (!pifBmp280_Detect(&g_i2c_port, BMP280_I2C_ADDR(0))) return false;
+
+    if (!pifBmp280_Init(&bmp280, PIF_ID_AUTO, &g_i2c_port, BMP280_I2C_ADDR(0))) return false;
+
+    // set oversampling + power mode (forced), and start sampling
+    pifBmp280_SetOverSamplingRate(&bmp280, BMP280_OSRS_X8, BMP280_OSRS_X1);
+
+    if (!pifBmp280_AddTaskForReading(&bmp280, 50, baro->evt_read, TRUE)) return false;   // 50ms : 20hz update rate (20hz LPF on acc)
+    bmp280._p_task->disallow_yield_id = DISALLOW_YIELD_ID_I2C;
+
+    bmp280InitDone = true;
+    return true;
+}
+
+#endif
 
 #endif

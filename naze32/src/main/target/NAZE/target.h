@@ -107,8 +107,11 @@
 #define ACC_MPU6500_ALIGN CW0_DEG
 
 #define BARO
+#define BARO_PIF
+#ifndef BARO_PIF
 #define USE_BARO_MS5611
 #define USE_BARO_BMP085
+#endif
 #define USE_BARO_BMP280
 
 #define MAG

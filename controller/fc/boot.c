@@ -822,7 +822,7 @@ void configureScheduler(void)
     rescheduleTask(TASK_COMPASS, 1000000 / 40, TM_NONE);
 #endif
 #endif
-#ifdef BARO
+#ifndef BARO_PIF
     setTaskEnabled(TASK_BARO, sensors(SENSOR_BARO));
 #endif
 #ifdef SONAR
