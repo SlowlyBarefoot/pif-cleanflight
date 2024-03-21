@@ -343,7 +343,8 @@ PIF_SRC = \
             ../../pif/source/core/pif_timer.c \
             ../../pif/source/sensor/pif_imu_sensor.c \
             ../../pif/source/sensor/pif_bmp280.c \
-            ../../pif/source/sensor/pif_mpu6500.c
+            ../../pif/source/sensor/pif_mpu6500.c \
+			../../pif/source/sensor/pif_qmc5883.c
 
 OSD_SYSTEM_SRC = \
 		   ../controller/config/feature.c \
@@ -426,6 +427,7 @@ NAZE_SRC = \
 		   drivers/barometer_bmp280.c \
 		   drivers/bus_spi.c \
 		   drivers/compass_hmc5883l.c \
+		   drivers/compass_qmc5883l.c \
 		   drivers/display_ug2864hsweg01.h \
 		   drivers/flash_m25p16.c \
 		   drivers/inverter.c \

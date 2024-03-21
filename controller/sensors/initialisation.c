@@ -59,6 +59,7 @@
 #include "drivers/compass_hmc5883l.h"
 #include "drivers/compass_ak8975.h"
 #include "drivers/compass_ak8963.h"
+#include "drivers/compass_qmc5883l.h"
 
 #include "drivers/sonar_hcsr04.h"
 
@@ -646,6 +647,18 @@ retry:
                 magAlign = MAG_AK8963_ALIGN;
 #endif
                 magHardware = MAG_AK8963;
+                break;
+            }
+#endif
+            ; // fallthrough
+
+        case MAG_QMC5883:
+#ifdef USE_MAG_QMC5883
+            if (qmc5883lDetect(&mag)) {
+#ifdef MAG_QMC5883_ALIGN
+                magAlign = MAG_QMC5883_ALIGN;
+#endif
+                magHardware = MAG_QMC5883;
                 break;
             }
 #endif
