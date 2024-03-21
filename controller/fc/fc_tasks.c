@@ -133,7 +133,7 @@ cfTask_t cfTasks[] = {
     },
 #endif
 
-#ifdef SONAR
+#ifndef SONAR_PIF
     [TASK_SONAR] = {
         .taskName = "SONAR",
         .taskFunc = taskUpdateSonar,

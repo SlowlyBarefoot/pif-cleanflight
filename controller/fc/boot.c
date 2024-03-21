@@ -825,7 +825,7 @@ void configureScheduler(void)
 #ifndef BARO_PIF
     setTaskEnabled(TASK_BARO, sensors(SENSOR_BARO));
 #endif
-#ifdef SONAR
+#ifndef SONAR_PIF
     setTaskEnabled(TASK_SONAR, sensors(SENSOR_SONAR));
 #endif
 #if defined(BARO) || defined(SONAR)

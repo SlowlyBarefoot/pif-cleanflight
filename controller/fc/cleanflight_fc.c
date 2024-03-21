@@ -1004,7 +1004,7 @@ uint16_t taskUpdateBaro(PifTask *p_task)
 }
 #endif
 
-#ifdef SONAR
+#ifndef SONAR_PIF
 uint16_t taskUpdateSonar(PifTask *p_task)
 {
     (void)p_task;
