@@ -45,7 +45,7 @@ void getTaskInfo(const int taskId, cfTaskInfo_t * taskInfo)
         taskInfo->maxExecutionTime = task->p_task->_max_execution_time;
         taskInfo->averageExecutionTime = pifTask_GetAverageExecuteTime(task->p_task);
         taskInfo->latestDeltaTime = pifTask_GetAverageDeltaTime(task->p_task);
-        if (!(task->taskMode & TM_UNIT_MASK)) taskInfo->latestDeltaTime *= 1000;
+        if ((task->taskMode & TM_MAIN_MASK) != TM_EXTERNAL && !(task->taskMode & TM_UNIT_MASK)) taskInfo->latestDeltaTime *= 1000;
     }
 }
 #endif

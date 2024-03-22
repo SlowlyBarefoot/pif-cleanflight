@@ -66,17 +66,24 @@ cfTask_t cfTasks[] = {
         .taskMode = TM_PERIOD_US,
     },
 
+    [TASK_RX_CHECK] = {
+        .taskName = "RX_CHECK",
+        .taskFunc = taskUpdateRxCheck,
+        .desiredPeriod = TASK_PERIOD_HZ(1000),             // If event-based scheduling doesn't work, fallback to periodic scheduling
+        .taskMode = TM_PERIOD_US,
+    },
+
     [TASK_RX] = {
         .taskName = "RX",
         .taskFunc = taskUpdateRxMain,
-        .desiredPeriod = TASK_PERIOD_HZ(50) / 1000,          // If event-based scheduling doesn't work, fallback to periodic scheduling
-        .taskMode = TM_PERIOD_MS,
+        .desiredPeriod = TASK_PERIOD_HZ(50) / 1000,     // If event-based scheduling doesn't work, fallback to periodic scheduling
+        .taskMode = TM_EXTERNAL_ORDER,
     },
 
     [TASK_SERIAL] = {
         .taskName = "SERIAL",
         .taskFunc = taskHandleSerial,
-        .desiredPeriod = TASK_PERIOD_HZ(100),         // 100 Hz should be enough to flush up to 115 bytes @ 115200 baud
+        .desiredPeriod = TASK_PERIOD_HZ(100),           // 100 Hz should be enough to flush up to 115 bytes @ 115200 baud
         .taskMode = TM_PERIOD_US,
     },
 

@@ -927,12 +927,20 @@ uint16_t taskUpdateBattery(PifTask *p_task)
     return 0;
 }
 
+uint16_t taskUpdateRxCheck(PifTask *p_task)
+{
+    UNUSED(p_task);
+
+    updateRx(pif_timer1us);
+    if (shouldProcessRx(pif_timer1us)) {
+    	pifTask_SetTrigger(cfTasks[TASK_RX].p_task);
+    }
+    return 0;
+}
+
 uint16_t taskUpdateRxMain(PifTask *p_task)
 {
     (void)p_task;
-
-    updateRx(pif_timer1us);
-    if (!shouldProcessRx(pif_timer1us)) return 0;
 
     processRx();
     isRXDataNew = true;

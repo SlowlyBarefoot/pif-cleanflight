@@ -811,6 +811,7 @@ void configureScheduler(void)
     setTaskEnabled(TASK_BEEPER, true);
 #endif
     setTaskEnabled(TASK_BATTERY, feature(FEATURE_VBAT) || feature(FEATURE_AMPERAGE_METER));
+    setTaskEnabled(TASK_RX_CHECK, true);
     setTaskEnabled(TASK_RX, true);
 #ifdef GPS
     setTaskEnabled(TASK_GPS, feature(FEATURE_GPS));

@@ -25,6 +25,7 @@ typedef enum {
     TASK_PID,
     TASK_ACCEL,
     TASK_ATTITUDE,
+    TASK_RX_CHECK,
     TASK_RX,
     TASK_SERIAL,
     TASK_BATTERY,
@@ -71,6 +72,7 @@ uint16_t taskGyro(PifTask *p_task);
 uint16_t taskPid(PifTask *p_task);
 uint16_t taskUpdateAccelerometer(PifTask *p_task);
 uint16_t taskUpdateAttitude(PifTask *p_task);
+uint16_t taskUpdateRxCheck(PifTask *p_task);
 uint16_t taskUpdateRxMain(PifTask *p_task);
 uint16_t taskHandleSerial(PifTask *p_task);
 uint16_t taskHardwareWatchdog(PifTask *p_task);

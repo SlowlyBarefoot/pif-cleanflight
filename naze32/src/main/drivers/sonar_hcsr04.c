@@ -72,6 +72,8 @@ void hcsr04_extiHandler(extiCallbackRec_t* cb)
         }
     }
 #else
+    UNUSED(cb);
+
     pifHcSr04_sigReceiveEcho(&s_hcsr04, digitalIn(sonarHardware->echo_gpio, sonarHardware->echo_pin));
 #endif
 }
