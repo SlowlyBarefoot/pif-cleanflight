@@ -38,8 +38,10 @@ void pwmInConfig(const timerHardware_t *timerHardwarePtr, uint8_t channel);
 uint16_t pwmRead(uint8_t channel);
 uint16_t ppmRead(uint8_t channel);
 
+#ifndef RX_PPM_PIF
 bool isPPMDataBeingReceived(void);
 void resetPPMDataReceivedState(void);
+#endif
 
 void pwmRxInit(void);
 

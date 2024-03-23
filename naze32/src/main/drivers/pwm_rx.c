@@ -28,8 +28,13 @@
 
 #include "config/parameter_group.h"
 
-#include "system.h"
+#include "fc/fc_tasks.h"
 
+#include "rx/rx.h"
+
+#include "scheduler/scheduler.h"
+
+#include "system.h"
 #include "nvic.h"
 #include "gpio.h"
 #include "timer.h"
@@ -37,6 +42,8 @@
 #include "pwm_mapping.h"
 
 #include "pwm_rx.h"
+
+#include "rc/pif_rc_ppm.h"
 
 #define DEBUG_PPM_ISR
 
@@ -82,9 +89,12 @@ static uint16_t captures[PWM_PORTS_OR_PPM_CAPTURE_COUNT];
 #define PPM_TIMER_PERIOD 0x10000
 #define PWM_TIMER_PERIOD 0x10000
 
+static uint8_t ppmCountShift = 0;
+
+#ifndef RX_PPM_PIF
+
 static uint8_t ppmFrameCount = 0;
 static uint8_t lastPPMFrameCount = 0;
-static uint8_t ppmCountShift = 0;
 
 typedef struct ppmDevice_s {
     uint8_t  pulseIndex;
@@ -104,6 +114,12 @@ typedef struct ppmDevice_s {
 
 ppmDevice_t ppmDev;
 
+#else
+
+static PifRcPpm s_rc_ppm;
+
+#endif
+
 
 #define PPM_IN_MIN_SYNC_PULSE_US    2700    // microseconds
 #define PPM_IN_MIN_CHANNEL_PULSE_US 750     // microseconds
@@ -112,6 +128,7 @@ ppmDevice_t ppmDev;
 #define PPM_IN_MIN_NUM_CHANNELS     4
 #define PPM_IN_MAX_NUM_CHANNELS     PWM_PORTS_OR_PPM_CAPTURE_COUNT
 
+#ifndef RX_PPM_PIF
 
 bool isPPMDataBeingReceived(void)
 {
@@ -123,11 +140,13 @@ void resetPPMDataReceivedState(void)
     lastPPMFrameCount = ppmFrameCount;
 }
 
-#define MIN_CHANNELS_BEFORE_PPM_FRAME_CONSIDERED_VALID 4
+#endif
 
 void pwmRxInit(void)
 {
 }
+
+#ifndef RX_PPM_PIF
 
 #ifdef DEBUG_PPM_ISR
 typedef enum {
@@ -154,8 +173,26 @@ void ppmISREvent(eventSource_e source, uint32_t capture)
 void ppmISREvent(eventSource_e source, uint32_t capture) {}
 #endif
 
-static void ppmInit(void)
+#else
+
+static void _evtRcPpmReceive(PifRc* p_owner, uint16_t* p_channel, PifIssuerP p_issuer)
 {
+	int i;
+
+    (void)p_issuer;
+
+	for (i = 0; i < p_owner->_channel_count; i++) {
+		captures[i] = p_channel[i];
+	}
+    receiveRxPpm();
+	pifTask_SetTrigger((PifTask*)p_issuer);
+}
+
+#endif
+
+static bool ppmInit(void)
+{
+#ifndef RX_PPM_PIF
     ppmDev.pulseIndex   = 0;
     ppmDev.currentCapture = 0;
     ppmDev.currentTime  = 0;
@@ -166,23 +203,33 @@ static void ppmInit(void)
     ppmDev.stableFramesSeenCount = 0;
     ppmDev.tracking     = false;
     ppmDev.overflowed   = false;
+#else
+    if (!pifRcPpm_Init(&s_rc_ppm, PIF_ID_AUTO, PPM_IN_MAX_NUM_CHANNELS, PPM_IN_MIN_SYNC_PULSE_US)) return false;
+    pifRcPpm_SetValidRange(&s_rc_ppm, PPM_IN_MIN_CHANNEL_PULSE_US, PPM_IN_MAX_CHANNEL_PULSE_US);
+    pifRc_AttachEvtReceive(&s_rc_ppm.parent, _evtRcPpmReceive, cfTasks[TASK_RX].p_task);
+#endif
+    return true;
 }
 
 static void ppmOverflowCallback(timerOvrHandlerRec_t* cbRec, captureCompare_t capture)
 {
     UNUSED(cbRec);
+#ifndef RX_PPM_PIF
     ppmISREvent(SOURCE_OVERFLOW, capture);
 
     ppmDev.largeCounter += capture + 1;
     if (capture == PPM_TIMER_PERIOD - 1) {
         ppmDev.overflowed = true;
     }
-
+#else
+    UNUSED(capture);
+#endif
 }
 
 static void ppmEdgeCallback(timerCCHandlerRec_t* cbRec, captureCompare_t capture)
 {
     UNUSED(cbRec);
+#ifndef RX_PPM_PIF
     ppmISREvent(SOURCE_EDGE, capture);
 
     int32_t i;
@@ -287,6 +334,9 @@ static void ppmEdgeCallback(timerCCHandlerRec_t* cbRec, captureCompare_t capture
             }
         }
     }
+#else
+    pifRcPpm_sigTick(&s_rc_ppm, capture >> ppmCountShift);
+#endif
 }
 
 #define MAX_MISSED_PWM_EVENTS 10

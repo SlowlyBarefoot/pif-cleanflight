@@ -370,6 +370,7 @@ void updateRx(uint32_t currentTime)
         }
     }
 
+#ifndef RX_PPM_PIF
     if (feature(FEATURE_RX_PPM)) {
         if (isPPMDataBeingReceived()) {
             rxSignalReceivedNotDataDriven = true;
@@ -378,6 +379,7 @@ void updateRx(uint32_t currentTime)
             resetPPMDataReceivedState();
         }
     }
+#endif
 
     if (feature(FEATURE_RX_PARALLEL_PWM)) {
         if (isPWMDataBeingReceived()) {
@@ -387,6 +389,12 @@ void updateRx(uint32_t currentTime)
         }
     }
 
+}
+
+void receiveRxPpm()
+{
+    rxSignalReceivedNotDataDriven = true;
+    rxIsInFailsafeModeNotDataDriven = false;
 }
 
 bool shouldProcessRx(uint32_t currentTime)

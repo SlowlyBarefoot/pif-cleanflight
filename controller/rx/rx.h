@@ -146,6 +146,7 @@ extern rxRuntimeConfig_t rxRuntimeConfig;
 void updateRx(uint32_t currentTime);
 bool rxIsReceivingSignal(void);
 bool rxAreFlightChannelsValid(void);
+void receiveRxPpm();
 bool shouldProcessRx(uint32_t currentTime);
 void calculateRxChannelsAndUpdateFailsafe(uint32_t currentTime);
 

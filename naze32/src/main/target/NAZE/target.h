@@ -127,6 +127,8 @@
 #define INVERTER
 //#define DISPLAY
 
+#define RX_PPM_PIF
+
 #define SONAR
 #define SONAR_PIF
 #define SONAR_PWM_TRIGGER_PIN       Pin_8   // PWM5 (PB8) - 5v tolerant
