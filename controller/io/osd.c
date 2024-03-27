@@ -1231,7 +1231,7 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
 uint16_t osdUpdate(PifTask *p_task)
 {
     static uint32_t counter = 0;
-    timeUs_t currentTimeUs = (*pif_act_timer1us)();
+    timeUs_t currentTimeUs = pif_timer1us;
 
     UNUSED(p_task);
 

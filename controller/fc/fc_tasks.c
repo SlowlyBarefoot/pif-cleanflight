@@ -89,11 +89,27 @@ uint16_t taskBstMasterProcess(PifTask *p_task);
 #define TASK_PERIOD_MS(ms) ((ms) * 1000)
 #define TASK_PERIOD_US(us) (us)
 
+static uint16_t taskSerialCheck(PifTask *p_task)
+{
+    if (debugMode == DEBUG_SERIAL_TASK) {
+        debug[0] = p_task->_delta_time;
+    }
+
+    if (mspSerialWaiting()) {
+        pifTask_SetTrigger(cfTasks[TASK_SERIAL].p_task);
+    }
+    return 0;
+}
+
 static uint16_t taskHandleSerial(PifTask *p_task)
 {
-    UNUSED(p_task);
+    static int16_t pre_delta_time = 0;
 
-    if (!mspSerialWaiting()) return 0;
+    if (debugMode == DEBUG_SERIAL_TASK) {
+        debug[1] = p_task->_delta_time / 1000;
+        debug[2] = debug[1] - pre_delta_time;
+        pre_delta_time = debug[1];
+    }
 
 #ifdef USE_CLI
     // in cli mode, all serial stuff goes to here. enter cli mode by sending #
@@ -119,7 +135,7 @@ uint16_t taskBatteryAlerts(PifTask *p_task)
         // the battery *might* fall out in flight, but if that happens the FC will likely be off too unless the user has battery backup.
         batteryUpdatePresence();
     }
-    batteryUpdateStates((*pif_act_timer1us)());
+    batteryUpdateStates(pif_timer1us);
     batteryUpdateAlarms();
     return 0;
 }
@@ -135,13 +151,15 @@ static uint16_t taskUpdateAccelerometer(PifTask *p_task)
 
 static uint16_t taskUpdateRxMain(PifTask *p_task)
 {
-    timeUs_t currentTimeUs = (*pif_act_timer1us)();
+    static uint32_t pre_delta_time = 0;
 
-    UNUSED(p_task);
+    if (debugMode == DEBUG_RC_TASK) {
+        debug[1] = p_task->_delta_time;
+        debug[2] = p_task->_delta_time - pre_delta_time;
+        pre_delta_time = p_task->_delta_time;
+    }
 
-    if (!rxUpdateCheck(currentTimeUs)) return 0;
-
-    processRx(currentTimeUs);
+    processRx(pif_timer1us);
     isRXDataNew = true;
 
 #if !defined(BARO) && !defined(SONAR)
@@ -171,7 +189,7 @@ static uint16_t taskUpdateCompass(PifTask *p_task)
     UNUSED(p_task);
 
     if (sensors(SENSOR_MAG)) {
-        compassUpdate((*pif_act_timer1us)(), &compassConfigMutable()->magZero);
+        compassUpdate(pif_timer1us, &compassConfigMutable()->magZero);
     }
     return 0;
 }
@@ -205,7 +223,7 @@ static uint16_t taskCalculateAltitude(PifTask *p_task)
         || sensors(SENSOR_SONAR)
 #endif
         ) {
-        calculateEstimatedAltitude((*pif_act_timer1us)());
+        calculateEstimatedAltitude(pif_timer1us);
     }
     return 0;
 }
@@ -219,7 +237,7 @@ static uint16_t taskTelemetry(PifTask *p_task)
     telemetryCheckState();
 
     if (!cliMode && feature(FEATURE_TELEMETRY)) {
-        telemetryProcess((*pif_act_timer1us)());
+        telemetryProcess(pif_timer1us);
     }
     return 0;
 }
@@ -235,7 +253,7 @@ uint16_t taskVtxControl(PifTask *p_task)
         return 0;
 
 #ifdef VTX_COMMON
-    vtxCommonProcess((*pif_act_timer1us)());
+    vtxCommonProcess(pif_timer1us);
 #endif
     return 0;
 }
@@ -251,7 +269,7 @@ uint16_t taskCameraControl(PifTask *p_task)
         return 0;
     }
 
-    cameraControlProcess((*pif_act_timer1us)());
+    cameraControlProcess(pif_timer1us);
     return 0;
 }
 #endif
@@ -259,6 +277,7 @@ uint16_t taskCameraControl(PifTask *p_task)
 void fcTasksInit(void)
 {
     schedulerInit();
+    setTaskEnabled(TASK_SERIAL_CHECK, true);
     setTaskEnabled(TASK_SERIAL, true);
 
     const bool useBatteryVoltage = batteryConfig()->voltageMeterSource != VOLTAGE_METER_NONE;
@@ -295,9 +314,9 @@ void fcTasksInit(void)
 
     setTaskEnabled(TASK_ATTITUDE, sensors(SENSOR_ACC));
 
-    rescheduleTask(TASK_SERIAL, TASK_PERIOD_HZ(serialConfig()->serial_update_rate_hz));
+    rescheduleTask(TASK_SERIAL_CHECK, TASK_PERIOD_HZ(serialConfig()->serial_update_rate_hz));
 
-
+    setTaskEnabled(TASK_RX_CHECK, true);
     setTaskEnabled(TASK_RX, true);
 
     setTaskEnabled(TASK_DISPATCH, dispatchIsEnabled());
@@ -372,9 +391,9 @@ void fcTasksInit(void)
 }
 
 cfTask_t cfTasks[TASK_COUNT] = {
-    [TASK_SERIAL] = {
-        .taskName = "SERIAL",
-        .taskFunc = taskHandleSerial,
+    [TASK_SERIAL_CHECK] = {
+        .taskName = "SERIAL_CHECK",
+        .taskFunc = taskSerialCheck,
 #ifdef USE_OSD_SLAVE
         .desiredPeriod = TASK_PERIOD_HZ(100),
         .taskMode = TM_PERIOD_US
@@ -382,6 +401,13 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .desiredPeriod = TASK_PERIOD_HZ(100),       // 100 Hz should be enough to flush up to 115 bytes @ 115200 baud
         .taskMode = TM_PERIOD_US
 #endif
+    },
+
+    [TASK_SERIAL] = {
+        .taskName = "SERIAL",
+        .taskFunc = taskHandleSerial,
+        .desiredPeriod = TASK_PERIOD_HZ(100),       // 100 Hz should be enough to flush up to 115 bytes @ 115200 baud
+        .taskMode = TM_EXTERNAL_ORDER
     },
 
     [TASK_BATTERY_ALERTS] = {
@@ -454,11 +480,18 @@ cfTask_t cfTasks[TASK_COUNT] = {
         .taskMode = TM_PERIOD_US
     },
 
+    [TASK_RX_CHECK] = {
+        .taskName = "RX_CHECK",
+        .taskFunc = taskUpdateRxCheck,
+        .desiredPeriod = TASK_PERIOD_HZ(1000),      // If event-based scheduling doesn't work, fallback to periodic scheduling
+        .taskMode = TM_PERIOD_US
+    },
+
     [TASK_RX] = {
         .taskName = "RX",
         .taskFunc = taskUpdateRxMain,
         .desiredPeriod = TASK_PERIOD_HZ(50) / 1000, // If event-based scheduling doesn't work, fallback to periodic scheduling
-        .taskMode = TM_PERIOD_MS
+        .taskMode = TM_EXTERNAL_ORDER
     },
 
     [TASK_DISPATCH] = {

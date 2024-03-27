@@ -110,7 +110,6 @@ uint16_t sonarUpdate(PifTask *p_task)
 {
     UNUSED(p_task);
 
-    UNUSED((*pif_act_timer1us)());
     hcsr04_start_reading();
     return 0;
 }

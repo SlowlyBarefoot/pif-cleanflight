@@ -20,6 +20,8 @@
 #include "common/time.h"
 #include "config/parameter_group.h"
 
+#include "core/pif_task.h"
+
 #define STICK_CHANNEL_COUNT 4
 
 #define PWM_RANGE_ZERO 0 // FIXME should all usages of this be changed to use PWM_RANGE_MIN?
@@ -160,7 +162,7 @@ typedef struct rxRuntimeConfig_s {
 extern rxRuntimeConfig_t rxRuntimeConfig; //!!TODO remove this extern, only needed once for channelCount
 
 void rxInit(void);
-bool rxUpdateCheck(timeUs_t currentTimeUs);
+uint16_t taskUpdateRxCheck(PifTask *p_task);
 bool rxIsReceivingSignal(void);
 bool rxAreFlightChannelsValid(void);
 void calculateRxChannelsAndUpdateFailsafe(timeUs_t currentTimeUs);

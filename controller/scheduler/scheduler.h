@@ -25,7 +25,6 @@ typedef struct {
     const char * taskName;
     const char * subTaskName;
     bool         isEnabled;
-    uint16_t     desiredPeriod;
     timeDelta_t  latestDeltaTime;
     timeUs_t     maxExecutionTime;
     timeUs_t     averageExecutionTime;
@@ -36,7 +35,9 @@ typedef enum {
     TASK_GYROPID = 0,
     TASK_ACCEL,
     TASK_ATTITUDE,
+    TASK_RX_CHECK,
     TASK_RX,
+    TASK_SERIAL_CHECK,
     TASK_SERIAL,
     TASK_DISPATCH,
     TASK_BATTERY_VOLTAGE,

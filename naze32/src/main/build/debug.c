@@ -57,5 +57,7 @@ const char * const debugModeNames[DEBUG_COUNT] = {
     "DUAL_GYRO_COMBINE",
     "DUAL_GYRO_DIFF",
     "MAX7456_SIGNAL",
-    "MAX7456_SPICLOCK"
+    "MAX7456_SPICLOCK",
+    "RC_TASK",
+    "SERIAL_TASK"
 };

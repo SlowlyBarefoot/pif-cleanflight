@@ -28,6 +28,8 @@
 #include "build/build_config.h"
 #include "build/debug.h"
 
+#include "scheduler/scheduler.h"
+
 #include "common/maths.h"
 #include "common/utils.h"
 
@@ -385,8 +387,14 @@ void resumeRxSignal(void)
     failsafeOnRxResume();
 }
 
-bool rxUpdateCheck(timeUs_t currentTimeUs)
+uint16_t taskUpdateRxCheck(PifTask *p_task)
 {
+    timeUs_t currentTimeUs = pif_timer1us;
+
+    if (debugMode == DEBUG_RC_TASK) {
+        debug[0] = p_task->_delta_time;
+    }
+
     if (rxSignalReceived) {
         if (currentTimeUs >= needRxSignalBefore) {
             rxSignalReceived = false;
@@ -420,7 +428,10 @@ bool rxUpdateCheck(timeUs_t currentTimeUs)
             needRxSignalBefore = currentTimeUs + needRxSignalMaxDelayUs;
         }
     }
-    return rxDataReceived || (currentTimeUs >= rxUpdateAt); // data driven or 50Hz
+    if (rxDataReceived || (currentTimeUs >= rxUpdateAt)) {       // data driven or 50Hz
+        pifTask_SetTrigger(cfTasks[TASK_RX].p_task);
+    }
+    return 0;
 }
 
 static uint16_t calculateChannelMovingAverage(uint8_t chan, uint16_t sample)

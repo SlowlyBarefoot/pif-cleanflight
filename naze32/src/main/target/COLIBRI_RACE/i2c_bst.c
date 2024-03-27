@@ -708,7 +708,7 @@ static uint8_t sendCounter = 0;
 
 uint16_t taskBstMasterProcess(PifTask *p_task)
 {
-    timeUs_t currentTimeUs = (*pif_act_timer1us)();
+    timeUs_t currentTimeUs = pif_timer1us;
 
     UNUSED(p_task);
 

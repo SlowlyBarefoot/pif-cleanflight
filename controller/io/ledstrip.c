@@ -1056,7 +1056,7 @@ uint16_t ledStripUpdate(PifTask *p_task)
     }
     ledStripEnabled = true;
 
-    const uint32_t now = (*pif_act_timer1us)();
+    const uint32_t now = pif_timer1us;
 
     // test all led timers, setting corresponding bits
     uint32_t timActive = 0;

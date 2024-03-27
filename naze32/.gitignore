@@ -1,6 +1,6 @@
 *.i
 *.o
-*.s
+obj/**/*.s
 .DS_Store
 *~
 *.uvopt
@@ -13,7 +13,6 @@
 .settings
 .cproject
 patches/
-#startup_stm32f10x_md_gcc.s
 .idea
 
 # script-generated files

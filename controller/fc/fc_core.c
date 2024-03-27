@@ -709,16 +709,14 @@ uint16_t taskMainPidLoop(PifTask *p_task)
 {
     static bool runTaskMainSubprocesses;
     static uint8_t pidUpdateCountdown;
-    timeUs_t currentTimeUs = (*pif_act_timer1us)();
-
-    UNUSED(p_task);
+    timeUs_t currentTimeUs = pif_timer1us;
 
 #if defined(SIMULATOR_BUILD) && defined(SIMULATOR_GYROPID_SYNC)
     if (lockMainPID() != 0) return 0;
 #endif
 
     if (debugMode == DEBUG_CYCLETIME) {
-        debug[0] = getTaskDeltaTime(TASK_SELF);
+        debug[0] = p_task->_delta_time;
         debug[1] = pif_performance._use_rate;
     }
 

@@ -604,7 +604,7 @@ void dashboardSetPage(pageId_e pageId)
 uint16_t dashboardUpdate(PifTask *p_task)
 {
     static uint8_t previousArmedState = 0;
-    timeUs_t currentTimeUs = (*pif_act_timer1us)();
+    timeUs_t currentTimeUs = pif_timer1us;
 
     UNUSED(p_task);
 

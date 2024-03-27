@@ -42,12 +42,10 @@ void dispatchEnable(void)
 
 uint16_t dispatchProcess(PifTask *p_task)
 {
-    uint32_t currentTime = (*pif_act_timer1us)();
-
     UNUSED(p_task);
 
     for (dispatchEntry_t **p = &head; *p; ) {
-        if (cmp32(currentTime, (*p)->delayedUntil) < 0)
+        if (cmp32(pif_timer1us, (*p)->delayedUntil) < 0)
             break;
         // unlink entry first, so handler can replan self
         dispatchEntry_t *current = *p;

@@ -46,21 +46,17 @@
 #ifdef PIF_USE_TASK_STATISTICS
 void getTaskInfo(cfTaskId_e taskId, cfTaskInfo_t * taskInfo)
 {
-    taskInfo->taskName = cfTasks[taskId].taskName;
-    taskInfo->subTaskName = cfTasks[taskId].subTaskName;
-    taskInfo->isEnabled = cfTasks[taskId].p_task != NULL;
-    taskInfo->desiredPeriod = cfTasks[taskId].desiredPeriod;
-    if (cfTasks[taskId].taskMode != TM_PERIOD_US) taskInfo->desiredPeriod *= 1000;
+    cfTask_t *task = &cfTasks[taskId];
+
+    taskInfo->taskName = task->taskName;
+    taskInfo->subTaskName = task->subTaskName;
+    taskInfo->isEnabled = task->p_task != NULL;
     if (taskInfo->isEnabled) {
-        taskInfo->maxExecutionTime = cfTasks[taskId].p_task->_max_execution_time;
-        taskInfo->averageExecutionTime = pifTask_GetAverageExecuteTime(cfTasks[taskId].p_task);
-        if (cfTasks[taskId].taskMode != TM_PERIOD_US) {
-            taskInfo->latestDeltaTime = 1000 * pifTask_GetAverageDeltaTime(cfTasks[taskId].p_task);
-        }
-        else {
-            taskInfo->latestDeltaTime = pifTask_GetAverageDeltaTime(cfTasks[taskId].p_task);
-        }
-    }
+        taskInfo->maxExecutionTime = task->p_task->_max_execution_time;
+        taskInfo->averageExecutionTime = pifTask_GetAverageExecuteTime(task->p_task);
+        taskInfo->latestDeltaTime = pifTask_GetAverageDeltaTime(task->p_task);
+         if ((task->taskMode & TM_MAIN_MASK) != TM_EXTERNAL && !(task->taskMode & TM_UNIT_MASK)) taskInfo->latestDeltaTime *= 1000;
+   }
 }
 #endif
 

@@ -263,7 +263,7 @@ uint16_t rcdeviceUpdate(PifTask *p_task)
     }
 
     if (rcdeviceIs5KeyEnabled()) {
-        rcdevice5KeySimulationProcess((*pif_act_timer1us)());
+        rcdevice5KeySimulationProcess(pif_timer1us);
     }
     return 0;
 }

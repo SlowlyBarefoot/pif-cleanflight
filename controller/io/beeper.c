@@ -347,7 +347,7 @@ void beeperGpsStatus(void)
  */
 uint16_t beeperUpdate(PifTask *p_task)
 {
-    timeUs_t currentTimeUs = (*pif_act_timer1us)();
+    timeUs_t currentTimeUs = pif_timer1us;
 
     UNUSED(p_task);
 

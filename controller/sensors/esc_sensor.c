@@ -283,7 +283,7 @@ static void selectNextMotor(void)
 
 uint16_t escSensorProcess(PifTask *p_task)
 {
-    const timeMs_t currentTimeMs = (*pif_act_timer1us)() / 1000;
+    const timeMs_t currentTimeMs = pif_timer1us / 1000;
 
     UNUSED(p_task);
 

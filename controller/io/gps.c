@@ -466,7 +466,7 @@ uint16_t gpsUpdate(PifTask *p_task)
             break;
     }
     if (sensors(SENSOR_GPS)) {
-        updateGpsIndicator((*pif_act_timer1us)());
+        updateGpsIndicator(pif_timer1us);
     }
     return 0;
 }

@@ -468,7 +468,7 @@ uint16_t imuUpdateAttitude(PifTask *p_task)
         }
         imuUpdated = false;
 #endif
-        imuCalculateEstimatedAttitude((*pif_act_timer1us)());
+        imuCalculateEstimatedAttitude(pif_timer1us);
         IMU_UNLOCK;
     } else {
         acc.accSmooth[X] = 0;
